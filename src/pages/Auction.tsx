@@ -7,6 +7,7 @@ import { CategoryBadge } from '@/components/CategoryBadge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { BidHistory } from '@/components/BidHistory';
 import { useToast } from '@/hooks/use-toast';
 import { Player, Owner, CurrentAuction, MIN_TEAM_REQUIREMENTS, ROLE_LABELS, PlayerCategory, TeamPlayer } from '@/lib/types';
 import { Gavel, Users, TrendingUp, Clock, User, AlertCircle, Square, Timer } from 'lucide-react';
@@ -623,6 +624,11 @@ export default function Auction() {
                   </div>
                 </CardContent>
               </Card>
+            )}
+
+            {/* Bid History */}
+            {currentAuction?.is_active && currentPlayer && (
+              <BidHistory playerId={currentPlayer.id} owners={owners} />
             )}
 
             {/* Other Teams */}
