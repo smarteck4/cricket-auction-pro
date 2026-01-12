@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Player, Owner, CurrentAuction, MIN_TEAM_REQUIREMENTS, ROLE_LABELS, PlayerCategory, TeamPlayer } from '@/lib/types';
-import { Gavel, Users, TrendingUp, Clock, User, AlertCircle } from 'lucide-react';
+import { Gavel, Users, TrendingUp, Clock, User, AlertCircle, Square } from 'lucide-react';
 
 export default function Auction() {
   const { user, role, owner } = useAuth();
@@ -276,6 +276,38 @@ export default function Auction() {
     setBidding(false);
   };
 
+  const closeBid = async () => {
+    if (!currentAuction) return;
+
+    if (currentBidder && currentPlayer) {
+      // Player sold to current bidder
+      await supabase.from('team_players').insert({
+        owner_id: currentBidder.id,
+        player_id: currentPlayer.id,
+        bought_price: currentAuction.current_bid,
+      });
+      
+      // Deduct points from owner
+      await supabase.from('owners').update({
+        remaining_points: currentBidder.remaining_points - currentAuction.current_bid
+      }).eq('id', currentBidder.id);
+      
+      await supabase.from('players').update({ auction_status: 'sold' }).eq('id', currentPlayer.id);
+      toast({ title: 'Player Sold!', description: `${currentPlayer.name} sold to ${currentBidder.team_name} for ${currentAuction.current_bid} points` });
+    } else if (currentPlayer) {
+      await supabase.from('players').update({ auction_status: 'unsold' }).eq('id', currentPlayer.id);
+      toast({ title: 'Player Unsold', description: `${currentPlayer.name} received no bids` });
+    }
+    
+    // Reset auction
+    await supabase.from('current_auction').update({ 
+      is_active: false, 
+      player_id: null, 
+      current_bidder_id: null, 
+      current_bid: 0 
+    }).eq('id', currentAuction.id);
+  };
+
   const getBidIncrement = () => {
     if (!currentAuction) return 50;
     return Math.max(50, Math.floor(currentAuction.current_bid * 0.1));
@@ -366,25 +398,40 @@ export default function Auction() {
                       </div>
                       {currentBidder && (
                         <div className="text-right">
-                          <p className="text-sm text-muted-foreground mb-1">Leading Bidder</p>
-                          <div className="flex items-center gap-3">
+                          <p className="text-sm text-muted-foreground mb-2">Leading Bidder</p>
+                          <div className="flex items-center gap-4">
                             {currentBidder.team_logo_url ? (
                               <img
                                 src={currentBidder.team_logo_url}
                                 alt={currentBidder.team_name}
-                                className="w-12 h-12 rounded-lg object-cover"
+                                className="w-16 h-16 rounded-xl object-cover ring-4 ring-primary/30 shadow-lg animate-pulse-slow"
                               />
                             ) : (
-                              <div className="w-12 h-12 rounded-lg gradient-gold flex items-center justify-center">
-                                <Users className="w-6 h-6 text-primary-foreground" />
+                              <div className="w-16 h-16 rounded-xl gradient-gold flex items-center justify-center ring-4 ring-primary/30 shadow-lg animate-pulse-slow">
+                                <Users className="w-8 h-8 text-primary-foreground" />
                               </div>
                             )}
-                            <span className="font-semibold">{currentBidder.team_name}</span>
+                            <span className="font-display font-bold text-lg">{currentBidder.team_name}</span>
                           </div>
                         </div>
                       )}
                     </div>
                   </div>
+
+                  {/* Admin Close Bid Button */}
+                  {role === 'admin' && (
+                    <div className="mb-6">
+                      <Button
+                        size="lg"
+                        variant="destructive"
+                        className="w-full h-12"
+                        onClick={closeBid}
+                      >
+                        <Square className="w-5 h-5 mr-2" />
+                        Close Bid {currentBidder ? `(Sell to ${currentBidder.team_name})` : '(Mark Unsold)'}
+                      </Button>
+                    </div>
+                  )}
 
                   {/* Player Stats */}
                   <div className="grid grid-cols-4 gap-4 mb-6">
