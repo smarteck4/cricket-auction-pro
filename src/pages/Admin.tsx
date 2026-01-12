@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Player, Owner, CategorySetting, PlayerCategory, PlayerRole, BattingHand, CATEGORY_LABELS, ROLE_LABELS } from '@/lib/types';
-import { Plus, Play, Square, Users, Settings, Trash2, Edit, Gavel } from 'lucide-react';
+import { Plus, Play, Square, Users, Settings, Trash2, Edit, Gavel, Timer } from 'lucide-react';
 
 export default function Admin() {
   const { user, role } = useAuth();
@@ -35,6 +35,7 @@ export default function Admin() {
   });
   
   const [newOwner, setNewOwner] = useState({ team_name: '', total_points: 10000, team_logo_url: '' });
+  const [timerDuration, setTimerDuration] = useState(30);
 
   useEffect(() => {
     if (!user || role !== 'admin') {
@@ -92,6 +93,7 @@ export default function Admin() {
 
   const startAuction = async (player: Player) => {
     const { data: existing } = await supabase.from('current_auction').select('id').limit(1);
+    const now = new Date().toISOString();
     
     if (existing && existing.length > 0) {
       await supabase.from('current_auction').update({
@@ -99,19 +101,23 @@ export default function Admin() {
         current_bid: player.base_price || 100,
         current_bidder_id: null,
         is_active: true,
-        started_at: new Date().toISOString(),
+        started_at: now,
+        timer_duration: timerDuration,
+        timer_started_at: now,
       }).eq('id', existing[0].id);
     } else {
       await supabase.from('current_auction').insert({
         player_id: player.id,
         current_bid: player.base_price || 100,
         is_active: true,
-        started_at: new Date().toISOString(),
+        started_at: now,
+        timer_duration: timerDuration,
+        timer_started_at: now,
       });
     }
     
     await supabase.from('players').update({ auction_status: 'active' }).eq('id', player.id);
-    toast({ title: 'Auction started!', description: `Bidding open for ${player.name}` });
+    toast({ title: 'Auction started!', description: `Bidding open for ${player.name} (${timerDuration}s timer)` });
   };
 
   const endAuction = async () => {
@@ -253,8 +259,25 @@ export default function Admin() {
           <TabsContent value="auction">
             <Card className="card-shadow">
               <CardHeader><CardTitle>Auction Control</CardTitle></CardHeader>
-              <CardContent>
-                <Button variant="destructive" onClick={endAuction}><Square className="w-4 h-4 mr-2" />End Current Auction</Button>
+              <CardContent className="space-y-6">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <Timer className="w-5 h-5 text-muted-foreground" />
+                    <Label>Timer Duration (seconds)</Label>
+                  </div>
+                  <Input 
+                    type="number" 
+                    value={timerDuration} 
+                    onChange={e => setTimerDuration(Math.max(10, +e.target.value))}
+                    className="w-24"
+                    min={10}
+                    max={300}
+                  />
+                  <span className="text-sm text-muted-foreground">Resets on each new bid</span>
+                </div>
+                <div className="flex gap-4">
+                  <Button variant="destructive" onClick={endAuction}><Square className="w-4 h-4 mr-2" />End Current Auction</Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

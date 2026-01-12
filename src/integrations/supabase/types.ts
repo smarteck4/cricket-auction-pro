@@ -89,6 +89,8 @@ export type Database = {
           is_active: boolean | null
           player_id: string | null
           started_at: string | null
+          timer_duration: number
+          timer_started_at: string | null
           updated_at: string | null
         }
         Insert: {
@@ -99,6 +101,8 @@ export type Database = {
           is_active?: boolean | null
           player_id?: string | null
           started_at?: string | null
+          timer_duration?: number
+          timer_started_at?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -109,6 +113,8 @@ export type Database = {
           is_active?: boolean | null
           player_id?: string | null
           started_at?: string | null
+          timer_duration?: number
+          timer_started_at?: string | null
           updated_at?: string | null
         }
         Relationships: [
