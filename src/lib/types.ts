@@ -69,6 +69,8 @@ export interface CurrentAuction {
   current_bidder_id: string | null;
   is_active: boolean;
   started_at: string | null;
+  timer_duration: number;
+  timer_started_at: string | null;
   created_at: string;
   updated_at: string;
   player?: Player;

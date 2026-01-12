@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -6,9 +6,10 @@ import { Header } from '@/components/Header';
 import { CategoryBadge } from '@/components/CategoryBadge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { Player, Owner, CurrentAuction, MIN_TEAM_REQUIREMENTS, ROLE_LABELS, PlayerCategory, TeamPlayer } from '@/lib/types';
-import { Gavel, Users, TrendingUp, Clock, User, AlertCircle, Square } from 'lucide-react';
+import { Gavel, Users, TrendingUp, Clock, User, AlertCircle, Square, Timer } from 'lucide-react';
 
 export default function Auction() {
   const { user, role, owner } = useAuth();
@@ -22,6 +23,8 @@ export default function Auction() {
   const [teamPlayers, setTeamPlayers] = useState<TeamPlayer[]>([]);
   const [loading, setLoading] = useState(true);
   const [bidding, setBidding] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState<number>(0);
+  const closingRef = useRef(false);
 
   useEffect(() => {
     if (!user) {
@@ -250,12 +253,13 @@ export default function Auction() {
       return;
     }
     
-    // Update current auction
+    // Update current auction with reset timer
     const { error: updateError } = await supabase
       .from('current_auction')
       .update({
         current_bid: newBid,
         current_bidder_id: owner.id,
+        timer_started_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
       .eq('id', currentAuction.id);
@@ -304,9 +308,85 @@ export default function Auction() {
       is_active: false, 
       player_id: null, 
       current_bidder_id: null, 
-      current_bid: 0 
+      current_bid: 0,
+      timer_started_at: null
     }).eq('id', currentAuction.id);
   };
+
+  // Auto-close when timer expires
+  const autoCloseBid = useCallback(async () => {
+    if (closingRef.current || !currentAuction?.is_active) return;
+    closingRef.current = true;
+
+    // Fetch fresh bidder data for accurate points
+    let bidder = currentBidder;
+    if (currentAuction.current_bidder_id) {
+      const { data } = await supabase
+        .from('owners')
+        .select('*')
+        .eq('id', currentAuction.current_bidder_id)
+        .single();
+      if (data) bidder = data as Owner;
+    }
+
+    if (bidder && currentPlayer) {
+      await supabase.from('team_players').insert({
+        owner_id: bidder.id,
+        player_id: currentPlayer.id,
+        bought_price: currentAuction.current_bid,
+      });
+      
+      await supabase.from('owners').update({
+        remaining_points: bidder.remaining_points - currentAuction.current_bid
+      }).eq('id', bidder.id);
+      
+      await supabase.from('players').update({ auction_status: 'sold' }).eq('id', currentPlayer.id);
+      toast({ title: 'Time Up - Player Sold!', description: `${currentPlayer.name} sold to ${bidder.team_name}` });
+    } else if (currentPlayer) {
+      await supabase.from('players').update({ auction_status: 'unsold' }).eq('id', currentPlayer.id);
+      toast({ title: 'Time Up - Player Unsold', description: `${currentPlayer.name} received no bids` });
+    }
+    
+    await supabase.from('current_auction').update({ 
+      is_active: false, 
+      player_id: null, 
+      current_bidder_id: null, 
+      current_bid: 0,
+      timer_started_at: null
+    }).eq('id', currentAuction.id);
+    
+    closingRef.current = false;
+  }, [currentAuction, currentBidder, currentPlayer, toast]);
+
+  // Timer countdown effect
+  useEffect(() => {
+    if (!currentAuction?.is_active || !currentAuction.timer_started_at) {
+      setTimeRemaining(0);
+      return;
+    }
+
+    const calculateRemaining = () => {
+      const startTime = new Date(currentAuction.timer_started_at!).getTime();
+      const now = Date.now();
+      const elapsed = Math.floor((now - startTime) / 1000);
+      const remaining = Math.max(0, currentAuction.timer_duration - elapsed);
+      return remaining;
+    };
+
+    setTimeRemaining(calculateRemaining());
+
+    const interval = setInterval(() => {
+      const remaining = calculateRemaining();
+      setTimeRemaining(remaining);
+      
+      if (remaining <= 0 && role === 'admin' && !closingRef.current) {
+        clearInterval(interval);
+        autoCloseBid();
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [currentAuction?.is_active, currentAuction?.timer_started_at, currentAuction?.timer_duration, role, autoCloseBid]);
 
   const getBidIncrement = () => {
     if (!currentAuction) return 50;
@@ -387,6 +467,25 @@ export default function Auction() {
                 </div>
 
                 <CardContent className="p-6">
+                  {/* Timer Display */}
+                  {currentAuction.timer_started_at && (
+                    <div className="mb-6">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Timer className={`w-5 h-5 ${timeRemaining <= 5 ? 'text-destructive animate-pulse' : 'text-muted-foreground'}`} />
+                          <span className="text-sm font-medium">Time Remaining</span>
+                        </div>
+                        <span className={`font-display text-2xl font-bold ${timeRemaining <= 5 ? 'text-destructive animate-pulse' : timeRemaining <= 10 ? 'text-amber-500' : 'text-foreground'}`}>
+                          {timeRemaining}s
+                        </span>
+                      </div>
+                      <Progress 
+                        value={(timeRemaining / currentAuction.timer_duration) * 100} 
+                        className={`h-3 ${timeRemaining <= 5 ? '[&>div]:bg-destructive' : timeRemaining <= 10 ? '[&>div]:bg-amber-500' : ''}`}
+                      />
+                    </div>
+                  )}
+
                   {/* Current Bid Display */}
                   <div className="bg-muted rounded-xl p-6 mb-6">
                     <div className="flex items-center justify-between">
