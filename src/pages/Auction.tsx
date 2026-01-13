@@ -10,7 +10,8 @@ import { Progress } from '@/components/ui/progress';
 import { BidHistory } from '@/components/BidHistory';
 import { useToast } from '@/hooks/use-toast';
 import { Player, Owner, CurrentAuction, MIN_TEAM_REQUIREMENTS, ROLE_LABELS, PlayerCategory, TeamPlayer } from '@/lib/types';
-import { Gavel, Users, TrendingUp, Clock, User, AlertCircle, Square, Timer } from 'lucide-react';
+import { Gavel, Users, TrendingUp, Clock, User, AlertCircle, Square, Timer, ListOrdered } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function Auction() {
   const { user, role, owner } = useAuth();
@@ -22,6 +23,7 @@ export default function Auction() {
   const [currentBidder, setCurrentBidder] = useState<Owner | null>(null);
   const [owners, setOwners] = useState<Owner[]>([]);
   const [teamPlayers, setTeamPlayers] = useState<TeamPlayer[]>([]);
+  const [pendingPlayers, setPendingPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [bidding, setBidding] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
@@ -40,40 +42,37 @@ export default function Auction() {
   const fetchData = async () => {
     setLoading(true);
     
-    // Fetch current auction
-    const { data: auctionData } = await supabase
-      .from('current_auction')
-      .select('*')
-      .limit(1)
-      .single();
+    // Fetch current auction, owners, and pending players in parallel
+    const [auctionRes, ownersRes, pendingRes] = await Promise.all([
+      supabase.from('current_auction').select('*').limit(1).single(),
+      supabase.from('owners').select('*'),
+      supabase.from('players').select('*').eq('auction_status', 'pending').order('category'),
+    ]);
     
-    if (auctionData) {
-      setCurrentAuction(auctionData as CurrentAuction);
+    if (ownersRes.data) setOwners(ownersRes.data as Owner[]);
+    if (pendingRes.data) setPendingPlayers(pendingRes.data as Player[]);
+    
+    if (auctionRes.data) {
+      setCurrentAuction(auctionRes.data as CurrentAuction);
       
-      if (auctionData.player_id) {
+      if (auctionRes.data.player_id) {
         const { data: playerData } = await supabase
           .from('players')
           .select('*')
-          .eq('id', auctionData.player_id)
+          .eq('id', auctionRes.data.player_id)
           .single();
         if (playerData) setCurrentPlayer(playerData as Player);
       }
       
-      if (auctionData.current_bidder_id) {
+      if (auctionRes.data.current_bidder_id) {
         const { data: bidderData } = await supabase
           .from('owners')
           .select('*')
-          .eq('id', auctionData.current_bidder_id)
+          .eq('id', auctionRes.data.current_bidder_id)
           .single();
         if (bidderData) setCurrentBidder(bidderData as Owner);
       }
     }
-    
-    // Fetch owners
-    const { data: ownersData } = await supabase
-      .from('owners')
-      .select('*');
-    if (ownersData) setOwners(ownersData as Owner[]);
     
     // Fetch team players for current owner
     if (owner) {
@@ -631,7 +630,48 @@ export default function Auction() {
               <BidHistory playerId={currentPlayer.id} owners={owners} />
             )}
 
-            {/* Other Teams */}
+            {/* Upcoming Players */}
+            <Card className="card-shadow">
+              <CardHeader className="pb-3">
+                <CardTitle className="font-display flex items-center gap-2 text-base">
+                  <ListOrdered className="w-5 h-5" />
+                  Upcoming Players ({pendingPlayers.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {pendingPlayers.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">No players in queue</p>
+                ) : (
+                  <ScrollArea className="h-[250px]">
+                    <div className="space-y-2 pr-3">
+                      {pendingPlayers.map((p) => (
+                        <div key={p.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
+                          <div className="flex items-center gap-2 min-w-0">
+                            {p.profile_picture_url ? (
+                              <img src={p.profile_picture_url} alt={p.name} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
+                                <User className="w-4 h-4 text-secondary-foreground" />
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <p className="font-medium text-sm truncate">{p.name}</p>
+                              <p className="text-xs text-muted-foreground">{ROLE_LABELS[p.player_role]}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <CategoryBadge category={p.category} />
+                            <span className="text-xs text-muted-foreground">{p.base_price}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Team Standings */}
             <Card className="card-shadow">
               <CardHeader>
                 <CardTitle className="font-display flex items-center gap-2">
