@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Player, Owner, CategorySetting, PlayerCategory, PlayerRole, BattingHand, CATEGORY_LABELS, ROLE_LABELS, CurrentAuction } from '@/lib/types';
-import { Plus, Play, Square, Users, Trash2, Edit, Gavel, Timer, User, AlertCircle } from 'lucide-react';
+import { Plus, Play, Square, Users, Trash2, Edit, Gavel, Timer, User, AlertCircle, Search, X } from 'lucide-react';
 
 const defaultPlayer = {
   name: '', age: 20, nationality: '', category: 'gold' as PlayerCategory,
@@ -44,12 +44,28 @@ export default function Admin() {
   const [newOwner, setNewOwner] = useState(defaultOwner);
   const [timerDuration, setTimerDuration] = useState(30);
 
+  // Search and filter state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<PlayerCategory | 'all'>('all');
+  const [roleFilter, setRoleFilter] = useState<PlayerRole | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'sold' | 'unsold'>('all');
+
   // Live auction state
   const [currentAuction, setCurrentAuction] = useState<CurrentAuction | null>(null);
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
   const [currentBidder, setCurrentBidder] = useState<Owner | null>(null);
   const [timeRemaining, setTimeRemaining] = useState(0);
   const closingRef = useRef(false);
+
+  // Filtered players
+  const filteredPlayers = players.filter(p => {
+    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          p.nationality.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = categoryFilter === 'all' || p.category === categoryFilter;
+    const matchesRole = roleFilter === 'all' || p.player_role === roleFilter;
+    const matchesStatus = statusFilter === 'all' || p.auction_status === statusFilter;
+    return matchesSearch && matchesCategory && matchesRole && matchesStatus;
+  });
 
   useEffect(() => {
     if (!user || role !== 'admin') {
@@ -430,7 +446,7 @@ export default function Admin() {
 
           {/* PLAYERS TAB */}
           <TabsContent value="players">
-            <div className="flex justify-between mb-4">
+            <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
               <h2 className="text-xl font-semibold">Manage Players</h2>
               <Dialog open={playerDialogOpen} onOpenChange={setPlayerDialogOpen}>
                 <DialogTrigger asChild><Button className="gradient-gold"><Plus className="w-4 h-4 mr-2" />Add Player</Button></DialogTrigger>
@@ -470,26 +486,111 @@ export default function Admin() {
                 </DialogContent>
               </Dialog>
             </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {players.map(p => (
-                <Card key={p.id} className="card-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h3 className="font-semibold">{p.name}</h3>
-                        <p className="text-sm text-muted-foreground">{p.nationality} • {p.age}y</p>
+
+            {/* Search and Filters */}
+            <Card className="card-shadow mb-6">
+              <CardContent className="p-4">
+                <div className="flex flex-col md:flex-row gap-4">
+                  {/* Search Input */}
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search by name or nationality..."
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      className="pl-9 pr-9"
+                    />
+                    {searchQuery && (
+                      <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <X className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Category Filter */}
+                  <Select value={categoryFilter} onValueChange={v => setCategoryFilter(v as PlayerCategory | 'all')}>
+                    <SelectTrigger className="w-full md:w-40">
+                      <SelectValue placeholder="Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Categories</SelectItem>
+                      {Object.entries(CATEGORY_LABELS).map(([k, v]) => (
+                        <SelectItem key={k} value={k}>{v}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  {/* Role Filter */}
+                  <Select value={roleFilter} onValueChange={v => setRoleFilter(v as PlayerRole | 'all')}>
+                    <SelectTrigger className="w-full md:w-40">
+                      <SelectValue placeholder="Role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Roles</SelectItem>
+                      {Object.entries(ROLE_LABELS).map(([k, v]) => (
+                        <SelectItem key={k} value={k}>{v}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  {/* Status Filter */}
+                  <Select value={statusFilter} onValueChange={v => setStatusFilter(v as 'all' | 'pending' | 'sold' | 'unsold')}>
+                    <SelectTrigger className="w-full md:w-36">
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="sold">Sold</SelectItem>
+                      <SelectItem value="unsold">Unsold</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Results count */}
+                <div className="mt-3 text-sm text-muted-foreground">
+                  Showing {filteredPlayers.length} of {players.length} players
+                  {(searchQuery || categoryFilter !== 'all' || roleFilter !== 'all' || statusFilter !== 'all') && (
+                    <button 
+                      onClick={() => { setSearchQuery(''); setCategoryFilter('all'); setRoleFilter('all'); setStatusFilter('all'); }}
+                      className="ml-2 text-primary hover:underline"
+                    >
+                      Clear filters
+                    </button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Players Grid */}
+            {filteredPlayers.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <Search className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p className="text-lg font-medium">No players found</p>
+                <p className="text-sm">Try adjusting your search or filters</p>
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredPlayers.map(p => (
+                  <Card key={p.id} className="card-shadow">
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h3 className="font-semibold">{p.name}</h3>
+                          <p className="text-sm text-muted-foreground">{p.nationality} • {p.age}y</p>
+                        </div>
+                        <CategoryBadge category={p.category} />
                       </div>
-                      <CategoryBadge category={p.category} />
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-3">{ROLE_LABELS[p.player_role]} • {p.auction_status}</p>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline" onClick={() => setEditingPlayer(p)}><Edit className="w-3 h-3" /></Button>
-                      <Button size="sm" variant="destructive" onClick={() => deletePlayer(p.id)}><Trash2 className="w-3 h-3" /></Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                      <p className="text-sm text-muted-foreground mb-3">{ROLE_LABELS[p.player_role]} • {p.auction_status}</p>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline" onClick={() => setEditingPlayer(p)}><Edit className="w-3 h-3" /></Button>
+                        <Button size="sm" variant="destructive" onClick={() => deletePlayer(p.id)}><Trash2 className="w-3 h-3" /></Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
 
             {/* Edit Player Dialog */}
             <Dialog open={!!editingPlayer} onOpenChange={() => setEditingPlayer(null)}>
