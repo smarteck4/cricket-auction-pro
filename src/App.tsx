@@ -9,6 +9,7 @@ import Auth from "./pages/Auth";
 import Auction from "./pages/Auction";
 import Admin from "./pages/Admin";
 import Owner from "./pages/Owner";
+import Players from "./pages/Players";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
             <Route path="/auction" element={<Auction />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/owner" element={<Owner />} />
+            <Route path="/players" element={<Players />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

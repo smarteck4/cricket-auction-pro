@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
-import { User, LogOut, Settings, Users, Gavel } from 'lucide-react';
+import { User, LogOut, Settings, Users, Gavel, UsersRound } from 'lucide-react';
 
 export function Header() {
   const { user, role, owner, signOut } = useAuth();
@@ -49,6 +49,13 @@ export function Header() {
                   </Link>
                 </Button>
               )}
+
+              <Button variant="ghost" asChild>
+                <Link to="/players">
+                  <UsersRound className="w-4 h-4 mr-2" />
+                  Players
+                </Link>
+              </Button>
 
               <Button variant="ghost" asChild>
                 <Link to="/auction">
