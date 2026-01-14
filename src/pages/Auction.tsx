@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Header } from '@/components/Header';
 import { CategoryBadge } from '@/components/CategoryBadge';
+import { AuctionPlayerDisplay } from '@/components/AuctionPlayerDisplay';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -440,141 +441,117 @@ export default function Auction() {
           {/* Main Auction Area */}
           <div className="lg:col-span-2 space-y-6">
             {currentAuction?.is_active && currentPlayer ? (
-              <Card className="card-shadow-lg overflow-hidden">
-                <div className="relative">
-                  {currentPlayer.profile_picture_url ? (
-                    <img
-                      src={currentPlayer.profile_picture_url}
-                      alt={currentPlayer.name}
-                      className="w-full h-64 object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-64 bg-muted flex items-center justify-center">
-                      <User className="w-24 h-24 text-muted-foreground" />
-                    </div>
-                  )}
-                  <div className="absolute top-4 left-4">
-                    <CategoryBadge category={currentPlayer.category} />
-                  </div>
-                  <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-6">
-                    <h2 className="font-display text-3xl font-bold text-white mb-1">
-                      {currentPlayer.name}
-                    </h2>
-                    <p className="text-white/80">
-                      {currentPlayer.nationality} • {currentPlayer.age} years • {ROLE_LABELS[currentPlayer.player_role]}
-                    </p>
-                  </div>
-                </div>
+              <div className="space-y-6">
+                {/* IPL-Style Player Display */}
+                <AuctionPlayerDisplay 
+                  player={currentPlayer}
+                  basePrice={currentPlayer.base_price || 100}
+                  currentBid={currentAuction.current_bid}
+                  isActive={currentAuction.is_active}
+                />
 
-                <CardContent className="p-6">
-                  {/* Timer Display */}
-                  {currentAuction.timer_started_at && (
-                    <div className="mb-6">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <Timer className={`w-5 h-5 ${timeRemaining <= 5 ? 'text-destructive animate-pulse' : 'text-muted-foreground'}`} />
-                          <span className="text-sm font-medium">Time Remaining</span>
-                        </div>
-                        <span className={`font-display text-2xl font-bold ${timeRemaining <= 5 ? 'text-destructive animate-pulse' : timeRemaining <= 10 ? 'text-amber-500' : 'text-foreground'}`}>
-                          {timeRemaining}s
-                        </span>
-                      </div>
-                      <Progress 
-                        value={(timeRemaining / currentAuction.timer_duration) * 100} 
-                        className={`h-3 ${timeRemaining <= 5 ? '[&>div]:bg-destructive' : timeRemaining <= 10 ? '[&>div]:bg-amber-500' : ''}`}
-                      />
-                    </div>
-                  )}
-
-                  {/* Current Bid Display */}
-                  <div className="bg-muted rounded-xl p-6 mb-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-1">Current Bid</p>
-                        <p className="font-display text-4xl font-bold text-gradient-gold animate-pulse-slow">
-                          {currentAuction.current_bid.toLocaleString()} pts
-                        </p>
-                      </div>
-                      {currentBidder && (
-                        <div className="text-right">
-                          <p className="text-sm text-muted-foreground mb-2">Leading Bidder</p>
-                          <div className="flex items-center gap-4">
-                            {currentBidder.team_logo_url ? (
-                              <img
-                                src={currentBidder.team_logo_url}
-                                alt={currentBidder.team_name}
-                                className="w-16 h-16 rounded-xl object-cover ring-4 ring-primary/30 shadow-lg animate-pulse-slow"
-                              />
-                            ) : (
-                              <div className="w-16 h-16 rounded-xl gradient-gold flex items-center justify-center ring-4 ring-primary/30 shadow-lg animate-pulse-slow">
-                                <Users className="w-8 h-8 text-primary-foreground" />
-                              </div>
-                            )}
-                            <span className="font-display font-bold text-lg">{currentBidder.team_name}</span>
+                {/* Timer and Controls Card */}
+                <Card className="card-shadow-lg">
+                  <CardContent className="p-6">
+                    {/* Timer Display */}
+                    {currentAuction.timer_started_at && (
+                      <div className="mb-6">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <Timer className={`w-5 h-5 ${timeRemaining <= 5 ? 'text-destructive animate-pulse' : 'text-muted-foreground'}`} />
+                            <span className="text-sm font-medium">Time Remaining</span>
                           </div>
+                          <span className={`font-display text-3xl font-bold ${timeRemaining <= 5 ? 'text-destructive animate-pulse' : timeRemaining <= 10 ? 'text-amber-500' : 'text-foreground'}`}>
+                            {timeRemaining}s
+                          </span>
                         </div>
-                      )}
-                    </div>
-                  </div>
+                        <Progress 
+                          value={(timeRemaining / currentAuction.timer_duration) * 100} 
+                          className={`h-4 ${timeRemaining <= 5 ? '[&>div]:bg-destructive' : timeRemaining <= 10 ? '[&>div]:bg-amber-500' : ''}`}
+                        />
+                      </div>
+                    )}
 
-                  {/* Admin Close Bid Button */}
-                  {role === 'admin' && (
-                    <div className="mb-6">
-                      <Button
-                        size="lg"
-                        variant="destructive"
-                        className="w-full h-12"
-                        onClick={closeBid}
-                      >
-                        <Square className="w-5 h-5 mr-2" />
-                        Close Bid {currentBidder ? `(Sell to ${currentBidder.team_name})` : '(Mark Unsold)'}
-                      </Button>
-                    </div>
-                  )}
-
-                  {/* Player Stats */}
-                  <div className="grid grid-cols-4 gap-4 mb-6">
-                    <div className="text-center p-3 bg-secondary/50 rounded-lg">
-                      <p className="text-xs text-muted-foreground">Matches</p>
-                      <p className="font-display text-xl font-bold">{currentPlayer.total_matches}</p>
-                    </div>
-                    <div className="text-center p-3 bg-secondary/50 rounded-lg">
-                      <p className="text-xs text-muted-foreground">Runs</p>
-                      <p className="font-display text-xl font-bold">{currentPlayer.total_runs}</p>
-                    </div>
-                    <div className="text-center p-3 bg-secondary/50 rounded-lg">
-                      <p className="text-xs text-muted-foreground">Strike Rate</p>
-                      <p className="font-display text-xl font-bold">{currentPlayer.strike_rate}</p>
-                    </div>
-                    <div className="text-center p-3 bg-secondary/50 rounded-lg">
-                      <p className="text-xs text-muted-foreground">Wickets</p>
-                      <p className="font-display text-xl font-bold">{currentPlayer.wickets}</p>
-                    </div>
-                  </div>
-
-                  {/* Bid Button */}
-                  {role === 'owner' && owner && (
-                    <div className="space-y-4">
-                      {!canBid(currentAuction.current_bid + getBidIncrement()) && (
-                        <div className="flex items-center gap-2 p-3 bg-destructive/10 text-destructive rounded-lg">
-                          <AlertCircle className="w-5 h-5" />
-                          <span className="text-sm">Insufficient points for bid (reserve for required players)</span>
+                    {/* Leading Bidder Display */}
+                    {currentBidder && (
+                      <div className="bg-muted rounded-xl p-4 mb-6">
+                        <p className="text-sm text-muted-foreground mb-2">Leading Bidder</p>
+                        <div className="flex items-center gap-4">
+                          {currentBidder.team_logo_url ? (
+                            <img
+                              src={currentBidder.team_logo_url}
+                              alt={currentBidder.team_name}
+                              className="w-14 h-14 rounded-xl object-cover ring-4 ring-primary/30 shadow-lg animate-pulse-slow"
+                            />
+                          ) : (
+                            <div className="w-14 h-14 rounded-xl gradient-gold flex items-center justify-center ring-4 ring-primary/30 shadow-lg animate-pulse-slow">
+                              <Users className="w-7 h-7 text-primary-foreground" />
+                            </div>
+                          )}
+                          <span className="font-display font-bold text-xl">{currentBidder.team_name}</span>
                         </div>
-                      )}
-                      <Button
-                        size="lg"
-                        className="w-full gradient-gold glow-gold text-lg h-14"
-                        onClick={placeBid}
-                        disabled={bidding || !canBid(currentAuction.current_bid + getBidIncrement())}
-                      >
-                        <Gavel className="w-5 h-5 mr-2" />
-                        Bid {(currentAuction.current_bid + getBidIncrement()).toLocaleString()} pts
-                        <span className="ml-2 text-sm opacity-80">(+{getBidIncrement()})</span>
-                      </Button>
+                      </div>
+                    )}
+
+                    {/* Player Stats */}
+                    <div className="grid grid-cols-4 gap-3 mb-6">
+                      <div className="text-center p-3 bg-secondary/50 rounded-lg">
+                        <p className="text-xs text-muted-foreground">Matches</p>
+                        <p className="font-display text-xl font-bold">{currentPlayer.total_matches}</p>
+                      </div>
+                      <div className="text-center p-3 bg-secondary/50 rounded-lg">
+                        <p className="text-xs text-muted-foreground">Runs</p>
+                        <p className="font-display text-xl font-bold">{currentPlayer.total_runs}</p>
+                      </div>
+                      <div className="text-center p-3 bg-secondary/50 rounded-lg">
+                        <p className="text-xs text-muted-foreground">Strike Rate</p>
+                        <p className="font-display text-xl font-bold">{currentPlayer.strike_rate}</p>
+                      </div>
+                      <div className="text-center p-3 bg-secondary/50 rounded-lg">
+                        <p className="text-xs text-muted-foreground">Wickets</p>
+                        <p className="font-display text-xl font-bold">{currentPlayer.wickets}</p>
+                      </div>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
+
+                    {/* Admin Close Bid Button */}
+                    {role === 'admin' && (
+                      <div className="mb-4">
+                        <Button
+                          size="lg"
+                          variant="destructive"
+                          className="w-full h-12"
+                          onClick={closeBid}
+                        >
+                          <Square className="w-5 h-5 mr-2" />
+                          Close Bid {currentBidder ? `(Sell to ${currentBidder.team_name})` : '(Mark Unsold)'}
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* Bid Button */}
+                    {role === 'owner' && owner && (
+                      <div className="space-y-4">
+                        {!canBid(currentAuction.current_bid + getBidIncrement()) && (
+                          <div className="flex items-center gap-2 p-3 bg-destructive/10 text-destructive rounded-lg">
+                            <AlertCircle className="w-5 h-5" />
+                            <span className="text-sm">Insufficient points for bid (reserve for required players)</span>
+                          </div>
+                        )}
+                        <Button
+                          size="lg"
+                          className="w-full gradient-gold glow-gold text-lg h-14"
+                          onClick={placeBid}
+                          disabled={bidding || !canBid(currentAuction.current_bid + getBidIncrement())}
+                        >
+                          <Gavel className="w-5 h-5 mr-2" />
+                          Bid {(currentAuction.current_bid + getBidIncrement()).toLocaleString()} pts
+                          <span className="ml-2 text-sm opacity-80">(+{getBidIncrement()})</span>
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
             ) : (
               <Card className="card-shadow">
                 <CardContent className="py-20 text-center">
