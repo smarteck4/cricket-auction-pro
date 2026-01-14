@@ -11,8 +11,9 @@ import { Progress } from '@/components/ui/progress';
 import { BidHistory } from '@/components/BidHistory';
 import { useToast } from '@/hooks/use-toast';
 import { Player, Owner, CurrentAuction, MIN_TEAM_REQUIREMENTS, ROLE_LABELS, PlayerCategory, TeamPlayer } from '@/lib/types';
-import { Gavel, Users, TrendingUp, Clock, User, AlertCircle, Square, Timer, ListOrdered } from 'lucide-react';
+import { Gavel, Users, TrendingUp, Clock, User, AlertCircle, Square, Timer, ListOrdered, Maximize2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { FullscreenAuction } from '@/components/FullscreenAuction';
 
 export default function Auction() {
   const { user, role, owner } = useAuth();
@@ -28,6 +29,7 @@ export default function Auction() {
   const [loading, setLoading] = useState(true);
   const [bidding, setBidding] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const closingRef = useRef(false);
 
   useEffect(() => {
@@ -406,6 +408,19 @@ export default function Auction() {
     );
   }
 
+  // Fullscreen Mode
+  if (isFullscreen && currentAuction?.is_active && currentPlayer) {
+    return (
+      <FullscreenAuction
+        player={currentPlayer}
+        auction={currentAuction}
+        currentBidder={currentBidder}
+        timeRemaining={timeRemaining}
+        onExit={() => setIsFullscreen(false)}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -418,23 +433,37 @@ export default function Auction() {
               {currentAuction?.is_active ? 'Bidding is active' : 'Waiting for auction to start'}
             </p>
           </div>
-          {owner && (
-            <Card className="card-shadow">
-              <CardContent className="p-4 flex items-center gap-4">
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground">Your Balance</p>
-                  <p className="font-display text-2xl font-bold text-gradient-gold">
-                    {owner.remaining_points.toLocaleString()}
-                  </p>
-                </div>
-                <div className="h-12 w-px bg-border" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Team</p>
-                  <p className="font-medium">{owner.team_name}</p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          <div className="flex items-center gap-4">
+            {/* Fullscreen Button */}
+            {currentAuction?.is_active && currentPlayer && (
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => setIsFullscreen(true)}
+                className="gap-2"
+              >
+                <Maximize2 className="w-5 h-5" />
+                Fullscreen
+              </Button>
+            )}
+            {owner && (
+              <Card className="card-shadow">
+                <CardContent className="p-4 flex items-center gap-4">
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">Your Balance</p>
+                    <p className="font-display text-2xl font-bold text-gradient-gold">
+                      {owner.remaining_points.toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="h-12 w-px bg-border" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Team</p>
+                    <p className="font-medium">{owner.team_name}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
