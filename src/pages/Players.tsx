@@ -107,7 +107,7 @@ export default function Players() {
                 />
                 {searchQuery && (
                   <Button
-                    variant="ghost"
+                    variant="destructive"
                     size="icon"
                     className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
                     onClick={() => setSearchQuery('')}
