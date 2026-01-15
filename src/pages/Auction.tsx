@@ -11,7 +11,8 @@ import { Progress } from '@/components/ui/progress';
 import { BidHistory } from '@/components/BidHistory';
 import { useToast } from '@/hooks/use-toast';
 import { Player, Owner, CurrentAuction, MIN_TEAM_REQUIREMENTS, ROLE_LABELS, PlayerCategory, TeamPlayer } from '@/lib/types';
-import { Gavel, Users, TrendingUp, Clock, User, AlertCircle, Square, Timer, ListOrdered, Maximize2 } from 'lucide-react';
+import { Gavel, Users, TrendingUp, Clock, User, AlertCircle, Square, Timer, ListOrdered, Maximize2, Plus } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { FullscreenAuction } from '@/components/FullscreenAuction';
 
@@ -30,6 +31,7 @@ export default function Auction() {
   const [bidding, setBidding] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [customBidAmount, setCustomBidAmount] = useState<string>('');
   const closingRef = useRef(false);
 
   useEffect(() => {
@@ -566,6 +568,8 @@ export default function Auction() {
                             <span className="text-sm">Insufficient points for bid (reserve for required players)</span>
                           </div>
                         )}
+                        
+                        {/* Quick Bid Button */}
                         <Button
                           size="lg"
                           className="w-full gradient-gold glow-gold text-lg h-14"
@@ -576,6 +580,97 @@ export default function Auction() {
                           Bid {(currentAuction.current_bid + getBidIncrement()).toLocaleString()} pts
                           <span className="ml-2 text-sm opacity-80">(+{getBidIncrement()})</span>
                         </Button>
+
+                        {/* Custom Bid Amount */}
+                        <div className="flex gap-2">
+                          <div className="relative flex-1">
+                            <Input
+                              type="number"
+                              placeholder="Custom amount (e.g. 50, 100, 200)"
+                              value={customBidAmount}
+                              onChange={(e) => setCustomBidAmount(e.target.value)}
+                              className="h-12 pr-12"
+                              min={1}
+                            />
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">pts</span>
+                          </div>
+                          <Button
+                            size="lg"
+                            variant="secondary"
+                            className="h-12 px-6"
+                            onClick={() => {
+                              const amount = parseInt(customBidAmount);
+                              if (amount > 0) {
+                                const newBid = currentAuction.current_bid + amount;
+                                if (canBid(newBid)) {
+                                  setBidding(true);
+                                  supabase
+                                    .from('bids')
+                                    .insert({
+                                      player_id: currentPlayer.id,
+                                      owner_id: owner.id,
+                                      bid_amount: newBid,
+                                    })
+                                    .then(({ error: bidError }) => {
+                                      if (bidError) {
+                                        toast({
+                                          title: 'Error placing bid',
+                                          description: bidError.message,
+                                          variant: 'destructive',
+                                        });
+                                        setBidding(false);
+                                        return;
+                                      }
+                                      supabase
+                                        .from('current_auction')
+                                        .update({
+                                          current_bid: newBid,
+                                          current_bidder_id: owner.id,
+                                          timer_started_at: new Date().toISOString(),
+                                          updated_at: new Date().toISOString(),
+                                        })
+                                        .eq('id', currentAuction.id)
+                                        .then(({ error: updateError }) => {
+                                          if (updateError) {
+                                            toast({
+                                              title: 'Error updating auction',
+                                              description: updateError.message,
+                                              variant: 'destructive',
+                                            });
+                                          } else {
+                                            toast({
+                                              title: 'Bid placed!',
+                                              description: `You bid ${newBid} points (+${amount})`,
+                                            });
+                                            setCustomBidAmount('');
+                                          }
+                                          setBidding(false);
+                                        });
+                                    });
+                                } else {
+                                  toast({
+                                    title: 'Cannot place bid',
+                                    description: 'You need to reserve points for remaining required players.',
+                                    variant: 'destructive',
+                                  });
+                                }
+                              } else {
+                                toast({
+                                  title: 'Invalid amount',
+                                  description: 'Please enter a valid bid amount.',
+                                  variant: 'destructive',
+                                });
+                              }
+                            }}
+                            disabled={bidding || !customBidAmount || parseInt(customBidAmount) <= 0 || !canBid(currentAuction.current_bid + parseInt(customBidAmount || '0'))}
+                          >
+                            <Plus className="w-5 h-5 mr-1" />
+                            Bid
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground text-center">
+                          Enter a custom increment to add on top of the current bid
+                        </p>
                       </div>
                     )}
                   </CardContent>
