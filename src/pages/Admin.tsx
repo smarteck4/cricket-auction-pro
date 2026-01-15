@@ -16,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Player, Owner, CategorySetting, PlayerCategory, PlayerRole, BattingHand, CATEGORY_LABELS, ROLE_LABELS, CurrentAuction } from '@/lib/types';
 import { Plus, Play, Square, Users, Trash2, Edit, Gavel, Timer, User, AlertCircle, Search, X, Upload, Link } from 'lucide-react';
+import { BulkPlayerImport } from '@/components/BulkPlayerImport';
 import { Tabs as RadioTabs, TabsList as RadioTabsList, TabsTrigger as RadioTabsTrigger } from '@/components/ui/tabs';
 
 const defaultPlayer = {
@@ -494,8 +495,10 @@ export default function Admin() {
           <TabsContent value="players">
             <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
               <h2 className="text-xl font-semibold">Manage Players</h2>
-              <Dialog open={playerDialogOpen} onOpenChange={setPlayerDialogOpen}>
-                <DialogTrigger asChild><Button className="gradient-gold"><Plus className="w-4 h-4 mr-2" />Add Player</Button></DialogTrigger>
+              <div className="flex gap-2 flex-wrap">
+                <BulkPlayerImport categorySettings={categorySettings} onImportComplete={fetchData} />
+                <Dialog open={playerDialogOpen} onOpenChange={setPlayerDialogOpen}>
+                  <DialogTrigger asChild><Button className="gradient-gold"><Plus className="w-4 h-4 mr-2" />Add Player</Button></DialogTrigger>
                 <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                   <DialogHeader><DialogTitle>Add New Player</DialogTitle></DialogHeader>
                   <div className="grid grid-cols-2 gap-4">
@@ -590,6 +593,7 @@ export default function Admin() {
                   </Button>
                 </DialogContent>
               </Dialog>
+              </div>
             </div>
 
             {/* Search and Filters */}
