@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TeamPlayer, Player, MIN_TEAM_REQUIREMENTS, ROLE_LABELS } from '@/lib/types';
 import { Users, Download, Trophy } from 'lucide-react';
+import { PlayerListExport } from '@/components/PlayerListExport';
 import * as XLSX from 'xlsx';
 
 export default function Owner() {
@@ -77,6 +78,11 @@ export default function Owner() {
               <Download className="w-4 h-4 mr-2" />Export to Excel
             </Button>
           </div>
+        </div>
+
+        {/* Player List Export */}
+        <div className="mb-8">
+          <PlayerListExport teamName={owner?.team_name} />
         </div>
 
         {/* Requirements */}
