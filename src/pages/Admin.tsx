@@ -15,7 +15,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Player, Owner, CategorySetting, PlayerCategory, PlayerRole, BattingHand, CATEGORY_LABELS, ROLE_LABELS, CurrentAuction } from '@/lib/types';
-import { Plus, Play, Square, Users, Trash2, Edit, Gavel, Timer, User, AlertCircle, Search, X } from 'lucide-react';
+import { Plus, Play, Square, Users, Trash2, Edit, Gavel, Timer, User, AlertCircle, Search, X, Upload, Link } from 'lucide-react';
+import { Tabs as RadioTabs, TabsList as RadioTabsList, TabsTrigger as RadioTabsTrigger } from '@/components/ui/tabs';
 
 const defaultPlayer = {
   name: '', age: 20, nationality: '', category: 'gold' as PlayerCategory,
@@ -43,6 +44,9 @@ export default function Admin() {
   const [newPlayer, setNewPlayer] = useState(defaultPlayer);
   const [newOwner, setNewOwner] = useState(defaultOwner);
   const [timerDuration, setTimerDuration] = useState(30);
+  const [imageUploadType, setImageUploadType] = useState<'url' | 'file'>('url');
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
 
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -185,18 +189,60 @@ export default function Admin() {
     return () => clearInterval(interval);
   }, [currentAuction?.is_active, currentAuction?.timer_started_at, currentAuction?.timer_duration, autoCloseBid]);
 
+  // Upload image to storage
+  const uploadPlayerImage = async (file: File): Promise<string | null> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+    const filePath = `profiles/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('player-images')
+      .upload(filePath, file);
+
+    if (uploadError) {
+      toast({ title: 'Upload failed', description: uploadError.message, variant: 'destructive' });
+      return null;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('player-images')
+      .getPublicUrl(filePath);
+
+    return publicUrl;
+  };
+
   // Player CRUD
   const addPlayer = async () => {
+    setUploadingImage(true);
+    
+    let profileUrl = newPlayer.profile_picture_url;
+    
+    // If file upload is selected and a file exists, upload it
+    if (imageUploadType === 'file' && selectedImageFile) {
+      const uploadedUrl = await uploadPlayerImage(selectedImageFile);
+      if (uploadedUrl) {
+        profileUrl = uploadedUrl;
+      }
+    }
+
     const basePrice = categorySettings.find(c => c.category === newPlayer.category)?.base_price || 100;
-    const { error } = await supabase.from('players').insert({ ...newPlayer, base_price: basePrice });
+    const { error } = await supabase.from('players').insert({ 
+      ...newPlayer, 
+      profile_picture_url: profileUrl,
+      base_price: basePrice 
+    });
+    
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
       toast({ title: 'Player added!' });
       setPlayerDialogOpen(false);
       setNewPlayer(defaultPlayer);
+      setSelectedImageFile(null);
+      setImageUploadType('url');
       fetchData();
     }
+    setUploadingImage(false);
   };
 
   const updatePlayer = async () => {
@@ -478,11 +524,70 @@ export default function Admin() {
                     <div><Label>Runs</Label><Input type="number" value={newPlayer.total_runs} onChange={e => setNewPlayer({...newPlayer, total_runs: +e.target.value})} /></div>
                     <div><Label>Highest Score</Label><Input type="number" value={newPlayer.highest_score} onChange={e => setNewPlayer({...newPlayer, highest_score: +e.target.value})} /></div>
                     <div><Label>Strike Rate</Label><Input type="number" step="0.01" value={newPlayer.strike_rate} onChange={e => setNewPlayer({...newPlayer, strike_rate: +e.target.value})} /></div>
+                    
+                    {/* Bowling Stats Section */}
+                    <div className="col-span-2 pt-4 border-t">
+                      <h4 className="font-medium text-sm text-muted-foreground mb-3">Bowling Statistics</h4>
+                    </div>
                     <div><Label>Wickets</Label><Input type="number" value={newPlayer.wickets} onChange={e => setNewPlayer({...newPlayer, wickets: +e.target.value})} /></div>
-                    <div><Label>Economy</Label><Input type="number" step="0.01" value={newPlayer.economy_rate} onChange={e => setNewPlayer({...newPlayer, economy_rate: +e.target.value})} /></div>
-                    <div className="col-span-2"><Label>Profile Picture URL</Label><Input value={newPlayer.profile_picture_url} onChange={e => setNewPlayer({...newPlayer, profile_picture_url: e.target.value})} /></div>
+                    <div><Label>Best Bowling (e.g. 5/23)</Label><Input placeholder="e.g. 5/23" value={newPlayer.best_bowling} onChange={e => setNewPlayer({...newPlayer, best_bowling: e.target.value})} /></div>
+                    <div><Label>Bowling Average</Label><Input type="number" step="0.01" value={newPlayer.bowling_average} onChange={e => setNewPlayer({...newPlayer, bowling_average: +e.target.value})} /></div>
+                    <div><Label>Economy Rate</Label><Input type="number" step="0.01" value={newPlayer.economy_rate} onChange={e => setNewPlayer({...newPlayer, economy_rate: +e.target.value})} /></div>
+                    
+                    {/* Profile Image Section */}
+                    <div className="col-span-2 pt-4 border-t">
+                      <h4 className="font-medium text-sm text-muted-foreground mb-3">Profile Image</h4>
+                      <div className="flex gap-2 mb-3">
+                        <Button
+                          type="button"
+                          variant={imageUploadType === 'url' ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setImageUploadType('url')}
+                          className="flex-1"
+                        >
+                          <Link className="w-4 h-4 mr-2" />
+                          URL
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={imageUploadType === 'file' ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setImageUploadType('file')}
+                          className="flex-1"
+                        >
+                          <Upload className="w-4 h-4 mr-2" />
+                          Upload
+                        </Button>
+                      </div>
+                      
+                      {imageUploadType === 'url' ? (
+                        <Input 
+                          placeholder="Enter image URL" 
+                          value={newPlayer.profile_picture_url} 
+                          onChange={e => setNewPlayer({...newPlayer, profile_picture_url: e.target.value})} 
+                        />
+                      ) : (
+                        <div className="space-y-2">
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={e => {
+                              const file = e.target.files?.[0];
+                              if (file) setSelectedImageFile(file);
+                            }}
+                          />
+                          {selectedImageFile && (
+                            <p className="text-sm text-muted-foreground">
+                              Selected: {selectedImageFile.name}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <Button onClick={addPlayer} className="w-full mt-4 gradient-gold">Add Player</Button>
+                  <Button onClick={addPlayer} className="w-full mt-4 gradient-gold" disabled={uploadingImage}>
+                    {uploadingImage ? 'Uploading...' : 'Add Player'}
+                  </Button>
                 </DialogContent>
               </Dialog>
             </div>
