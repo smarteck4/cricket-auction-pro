@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Player, Owner, CategorySetting, PlayerCategory, PlayerRole, BattingHand, CATEGORY_LABELS, ROLE_LABELS, CurrentAuction } from '@/lib/types';
-import { Plus, Play, Square, Users, Trash2, Edit, Gavel, Timer, User, AlertCircle, Search, X, Upload, Link } from 'lucide-react';
+import { Plus, Play, Square, Users, Trash2, Edit, Gavel, Timer, User, AlertCircle, Search, X, Upload, Link, RotateCcw } from 'lucide-react';
 import { BulkPlayerImport } from '@/components/BulkPlayerImport';
 import { Tabs as RadioTabs, TabsList as RadioTabsList, TabsTrigger as RadioTabsTrigger } from '@/components/ui/tabs';
 
@@ -356,9 +356,40 @@ export default function Admin() {
     fetchData();
   };
 
+  // Re-enter unsold player with demoted category
+  const reenterPlayer = async (player: Player) => {
+    const categoryOrder: PlayerCategory[] = ['platinum', 'gold', 'silver', 'emerging'];
+    const currentIndex = categoryOrder.indexOf(player.category);
+    
+    if (currentIndex === categoryOrder.length - 1) {
+      toast({ title: 'Cannot demote further', description: `${player.name} is already in the Emerging category`, variant: 'destructive' });
+      return;
+    }
+    
+    const newCategory = categoryOrder[currentIndex + 1];
+    const newBasePrice = categorySettings.find(c => c.category === newCategory)?.base_price || 100;
+    
+    const { error } = await supabase.from('players').update({
+      category: newCategory,
+      base_price: newBasePrice,
+      auction_status: 'pending',
+    }).eq('id', player.id);
+    
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ 
+        title: 'Player re-entered!', 
+        description: `${player.name} moved from ${CATEGORY_LABELS[player.category]} to ${CATEGORY_LABELS[newCategory]}` 
+      });
+      fetchData();
+    }
+  };
+
   if (loading) return <div className="min-h-screen bg-background"><Header /><div className="container py-20 text-center">Loading...</div></div>;
 
   const pendingPlayers = players.filter(p => p.auction_status === 'pending');
+  const unsoldPlayers = players.filter(p => p.auction_status === 'unsold');
 
   return (
     <div className="min-h-screen bg-background">
@@ -484,6 +515,49 @@ export default function Admin() {
                           </div>
                         </div>
                       ))
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Unsold Players */}
+                <Card className="card-shadow mt-6">
+                  <CardHeader><CardTitle className="text-destructive">Unsold Players ({unsoldPlayers.length})</CardTitle></CardHeader>
+                  <CardContent className="max-h-[400px] overflow-y-auto space-y-3">
+                    {unsoldPlayers.length === 0 ? (
+                      <p className="text-muted-foreground text-center py-4">No unsold players</p>
+                    ) : (
+                      unsoldPlayers.map(p => {
+                        const categoryOrder: PlayerCategory[] = ['platinum', 'gold', 'silver', 'emerging'];
+                        const currentIndex = categoryOrder.indexOf(p.category);
+                        const canDemote = currentIndex < categoryOrder.length - 1;
+                        const nextCategory = canDemote ? categoryOrder[currentIndex + 1] : null;
+                        
+                        return (
+                          <div key={p.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                            <div className="flex-1">
+                              <p className="font-medium">{p.name}</p>
+                              <p className="text-xs text-muted-foreground">{ROLE_LABELS[p.player_role]} • Base: {p.base_price}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <CategoryBadge category={p.category} />
+                              {canDemote ? (
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => reenterPlayer(p)} 
+                                  disabled={currentAuction?.is_active}
+                                  title={`Re-enter as ${nextCategory ? CATEGORY_LABELS[nextCategory] : ''}`}
+                                >
+                                  <RotateCcw className="w-3 h-3 mr-1" />
+                                  → {nextCategory ? CATEGORY_LABELS[nextCategory] : ''}
+                                </Button>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">Cannot demote</span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })
                     )}
                   </CardContent>
                 </Card>
