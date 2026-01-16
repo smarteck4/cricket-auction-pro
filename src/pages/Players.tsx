@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { Player, PlayerCategory, PlayerRole, ROLE_LABELS, CATEGORY_LABELS } from '@/lib/types';
 import { Search, X, User, Target, TrendingUp, Zap, Award, CircleDot } from 'lucide-react';
+import { PlayerListExport } from '@/components/PlayerListExport';
 
 export default function Players() {
   const [players, setPlayers] = useState<Player[]>([]);
@@ -70,9 +71,12 @@ export default function Players() {
       <Header />
       
       <main className="container py-8">
-        <div className="mb-8">
-          <h1 className="font-display text-3xl font-bold mb-2">Players</h1>
-          <p className="text-muted-foreground">Browse all players in the auction pool</p>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="font-display text-3xl font-bold mb-2">Players</h1>
+            <p className="text-muted-foreground">Browse all players in the auction pool</p>
+          </div>
+          <PlayerListExport />
         </div>
 
         {/* Status Tabs */}
