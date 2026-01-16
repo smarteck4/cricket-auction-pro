@@ -496,9 +496,27 @@ export default function Auction() {
                             <Timer className={`w-5 h-5 ${timeRemaining <= 5 ? 'text-destructive animate-pulse' : 'text-muted-foreground'}`} />
                             <span className="text-sm font-medium">Time Remaining</span>
                           </div>
-                          <span className={`font-display text-3xl font-bold ${timeRemaining <= 5 ? 'text-destructive animate-pulse' : timeRemaining <= 10 ? 'text-amber-500' : 'text-foreground'}`}>
-                            {timeRemaining}s
-                          </span>
+                          <div className="relative">
+                            {/* Pulsing ring effect for last 5 seconds */}
+                            {timeRemaining > 0 && timeRemaining <= 5 && (
+                              <span 
+                                key={timeRemaining}
+                                className="absolute inset-0 rounded-full bg-destructive animate-ring-pulse"
+                              />
+                            )}
+                            <span 
+                              key={`timer-${timeRemaining}`}
+                              className={`relative font-display text-3xl font-bold px-3 py-1 rounded-lg ${
+                                timeRemaining <= 5 
+                                  ? 'text-destructive bg-destructive/10 animate-timer-pulse' 
+                                  : timeRemaining <= 10 
+                                    ? 'text-amber-500' 
+                                    : 'text-foreground'
+                              }`}
+                            >
+                              {timeRemaining}s
+                            </span>
+                          </div>
                         </div>
                         <Progress 
                           value={(timeRemaining / currentAuction.timer_duration) * 100} 
