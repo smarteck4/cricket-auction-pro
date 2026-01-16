@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { useCountdownBeep } from '@/hooks/useCountdownBeep';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -33,6 +34,9 @@ export default function Auction() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [customBidAmount, setCustomBidAmount] = useState<string>('');
   const closingRef = useRef(false);
+
+  // Countdown beep audio for last 5 seconds
+  useCountdownBeep(timeRemaining, currentAuction?.is_active ?? false);
 
   useEffect(() => {
     if (!user) {
