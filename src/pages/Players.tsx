@@ -14,10 +14,12 @@ import { Player, PlayerCategory, PlayerRole, ROLE_LABELS, CATEGORY_LABELS } from
 import { Search, X, User, Target, TrendingUp, Zap, Award, CircleDot } from 'lucide-react';
 import { PlayerListExport } from '@/components/PlayerListExport';
 
+type PlayerWithBuyer = Player & { buyer_team?: string };
+
 export default function Players() {
-  const [players, setPlayers] = useState<Player[]>([]);
+  const [players, setPlayers] = useState<PlayerWithBuyer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [selectedPlayer, setSelectedPlayer] = useState<PlayerWithBuyer | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'sold' | 'unsold'>('all');
   const [categoryFilter, setCategoryFilter] = useState<PlayerCategory | 'all'>('all');
@@ -28,14 +30,39 @@ export default function Players() {
   }, []);
 
   const fetchPlayers = async () => {
-    const { data, error } = await supabase
+    // Fetch players
+    const { data: playersData, error: playersError } = await supabase
       .from('players')
       .select('*')
       .order('name');
 
-    if (!error && data) {
-      setPlayers(data as Player[]);
+    if (playersError || !playersData) {
+      setLoading(false);
+      return;
     }
+
+    // Fetch team_players with owner info for sold players
+    const { data: teamPlayersData } = await supabase
+      .from('team_players')
+      .select('player_id, owner:owners(team_name)');
+
+    // Create a map of player_id to team_name
+    const buyerMap: Record<string, string> = {};
+    if (teamPlayersData) {
+      teamPlayersData.forEach((tp: any) => {
+        if (tp.owner?.team_name) {
+          buyerMap[tp.player_id] = tp.owner.team_name;
+        }
+      });
+    }
+
+    // Merge buyer info into players
+    const playersWithBuyers: PlayerWithBuyer[] = playersData.map((player: Player) => ({
+      ...player,
+      buyer_team: buyerMap[player.id],
+    }));
+
+    setPlayers(playersWithBuyers);
     setLoading(false);
   };
 
@@ -187,7 +214,14 @@ export default function Players() {
               <div key={player.id} className="relative">
                 <PlayerCard player={player} onClick={() => setSelectedPlayer(player)} />
                 {player.auction_status === 'sold' && (
-                  <Badge className="absolute top-3 right-3 bg-green-500">Sold</Badge>
+                  <div className="absolute top-3 right-3 flex flex-col gap-1 items-end">
+                    <Badge className="bg-green-500">Sold</Badge>
+                    {player.buyer_team && (
+                      <Badge variant="outline" className="bg-background/80 text-xs">
+                        {player.buyer_team}
+                      </Badge>
+                    )}
+                  </div>
                 )}
                 {player.auction_status === 'unsold' && (
                   <Badge className="absolute top-3 right-3 bg-destructive">Unsold</Badge>
