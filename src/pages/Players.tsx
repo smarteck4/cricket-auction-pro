@@ -13,9 +13,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { Player, PlayerCategory, PlayerRole, ROLE_LABELS, CATEGORY_LABELS } from '@/lib/types';
 import { Search, X, User, Target, TrendingUp, Zap, Award, CircleDot } from 'lucide-react';
 import { PlayerListExport } from '@/components/PlayerListExport';
-
-type PlayerWithBuyer = Player & { buyer_team?: string };
-
+type PlayerWithBuyer = Player & {
+  buyer_team?: string;
+};
 export default function Players() {
   const [players, setPlayers] = useState<PlayerWithBuyer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,27 +24,24 @@ export default function Players() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'sold' | 'unsold'>('all');
   const [categoryFilter, setCategoryFilter] = useState<PlayerCategory | 'all'>('all');
   const [roleFilter, setRoleFilter] = useState<PlayerRole | 'all'>('all');
-
   useEffect(() => {
     fetchPlayers();
   }, []);
-
   const fetchPlayers = async () => {
     // Fetch players
-    const { data: playersData, error: playersError } = await supabase
-      .from('players')
-      .select('*')
-      .order('name');
-
+    const {
+      data: playersData,
+      error: playersError
+    } = await supabase.from('players').select('*').order('name');
     if (playersError || !playersData) {
       setLoading(false);
       return;
     }
 
     // Fetch team_players with owner info for sold players
-    const { data: teamPlayersData } = await supabase
-      .from('team_players')
-      .select('player_id, owner:owners(team_name)');
+    const {
+      data: teamPlayersData
+    } = await supabase.from('team_players').select('player_id, owner:owners(team_name)');
 
     // Create a map of player_id to team_name
     const buyerMap: Record<string, string> = {};
@@ -59,55 +56,46 @@ export default function Players() {
     // Merge buyer info into players
     const playersWithBuyers: PlayerWithBuyer[] = playersData.map((player: Player) => ({
       ...player,
-      buyer_team: buyerMap[player.id],
+      buyer_team: buyerMap[player.id]
     }));
-
     setPlayers(playersWithBuyers);
     setLoading(false);
   };
-
   const filteredPlayers = useMemo(() => {
-    return players.filter((player) => {
-      const matchesSearch = 
-        player.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        player.nationality.toLowerCase().includes(searchQuery.toLowerCase());
+    return players.filter(player => {
+      const matchesSearch = player.name.toLowerCase().includes(searchQuery.toLowerCase()) || player.nationality.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStatus = statusFilter === 'all' || player.auction_status === statusFilter;
       const matchesCategory = categoryFilter === 'all' || player.category === categoryFilter;
       const matchesRole = roleFilter === 'all' || player.player_role === roleFilter;
       return matchesSearch && matchesStatus && matchesCategory && matchesRole;
     });
   }, [players, searchQuery, statusFilter, categoryFilter, roleFilter]);
-
   const statusCounts = useMemo(() => ({
     all: players.length,
     pending: players.filter(p => p.auction_status === 'pending').length,
     sold: players.filter(p => p.auction_status === 'sold').length,
-    unsold: players.filter(p => p.auction_status === 'unsold').length,
+    unsold: players.filter(p => p.auction_status === 'unsold').length
   }), [players]);
-
   const clearFilters = () => {
     setSearchQuery('');
     setCategoryFilter('all');
     setRoleFilter('all');
   };
-
   const hasActiveFilters = searchQuery || categoryFilter !== 'all' || roleFilter !== 'all';
-
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       <Header />
       
       <main className="container py-8">
-        <div className="flex items-center justify-between mb-8">
+        <div className="mb-[12px] flex-row flex items-start justify-between shadow-none">
           <div>
-            <h1 className="font-display text-3xl font-bold mb-2">Players</h1>
+            <h1 className="font-display font-bold mb-2 text-left text-2xl">Players List </h1>
             <p className="text-muted-foreground">Browse all players in the auction pool</p>
           </div>
           <PlayerListExport />
         </div>
 
         {/* Status Tabs */}
-        <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)} className="mb-6">
+        <Tabs value={statusFilter} onValueChange={v => setStatusFilter(v as typeof statusFilter)} className="mb-6">
           <TabsList className="grid w-full max-w-md grid-cols-4">
             <TabsTrigger value="all" className="gap-2">
               All <Badge variant="secondary" className="ml-1">{statusCounts.all}</Badge>
@@ -130,25 +118,13 @@ export default function Players() {
             <div className="flex flex-col md:flex-row gap-4">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by name or nationality..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-                {searchQuery && (
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
-                    onClick={() => setSearchQuery('')}
-                  >
+                <Input placeholder="Search by name or nationality..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10" />
+                {searchQuery && <Button variant="destructive" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setSearchQuery('')}>
                     <X className="w-4 h-4" />
-                  </Button>
-                )}
+                  </Button>}
               </div>
               
-              <Select value={categoryFilter} onValueChange={(v) => setCategoryFilter(v as PlayerCategory | 'all')}>
+              <Select value={categoryFilter} onValueChange={v => setCategoryFilter(v as PlayerCategory | 'all')}>
                 <SelectTrigger className="w-full md:w-40">
                   <SelectValue placeholder="Category" />
                 </SelectTrigger>
@@ -161,7 +137,7 @@ export default function Players() {
                 </SelectContent>
               </Select>
 
-              <Select value={roleFilter} onValueChange={(v) => setRoleFilter(v as PlayerRole | 'all')}>
+              <Select value={roleFilter} onValueChange={v => setRoleFilter(v as PlayerRole | 'all')}>
                 <SelectTrigger className="w-full md:w-40">
                   <SelectValue placeholder="Role" />
                 </SelectTrigger>
@@ -174,12 +150,10 @@ export default function Players() {
                 </SelectContent>
               </Select>
 
-              {hasActiveFilters && (
-                <Button variant="outline" onClick={clearFilters}>
+              {hasActiveFilters && <Button variant="outline" onClick={clearFilters}>
                   <X className="w-4 h-4 mr-2" />
                   Clear
-                </Button>
-              )}
+                </Button>}
             </div>
 
             <div className="mt-4 text-sm text-muted-foreground">
@@ -189,54 +163,35 @@ export default function Players() {
         </Card>
 
         {/* Player Grid */}
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {[...Array(8)].map((_, i) => (
-              <Card key={i} className="h-80 animate-pulse bg-muted" />
-            ))}
-          </div>
-        ) : filteredPlayers.length === 0 ? (
-          <Card className="py-16">
+        {loading ? <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[...Array(8)].map((_, i) => <Card key={i} className="h-80 animate-pulse bg-muted" />)}
+          </div> : filteredPlayers.length === 0 ? <Card className="py-16">
             <CardContent className="text-center">
               <User className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold mb-2">No players found</h3>
               <p className="text-muted-foreground mb-4">Try adjusting your search or filters</p>
-              {hasActiveFilters && (
-                <Button variant="outline" onClick={clearFilters}>
+              {hasActiveFilters && <Button variant="outline" onClick={clearFilters}>
                   Clear all filters
-                </Button>
-              )}
+                </Button>}
             </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredPlayers.map((player) => (
-              <div key={player.id} className="relative">
+          </Card> : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredPlayers.map(player => <div key={player.id} className="relative">
                 <PlayerCard player={player} onClick={() => setSelectedPlayer(player)} />
-                {player.auction_status === 'sold' && (
-                  <div className="absolute top-3 right-3 flex flex-col gap-1 items-end">
+                {player.auction_status === 'sold' && <div className="absolute top-3 right-3 flex flex-col gap-1 items-end">
                     <Badge className="bg-green-500">Sold</Badge>
-                    {player.buyer_team && (
-                      <Badge variant="outline" className="bg-background/80 text-xs">
+                    {player.buyer_team && <Badge variant="outline" className="bg-background/80 text-xs">
                         {player.buyer_team}
-                      </Badge>
-                    )}
-                  </div>
-                )}
-                {player.auction_status === 'unsold' && (
-                  <Badge className="absolute top-3 right-3 bg-destructive">Unsold</Badge>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+                      </Badge>}
+                  </div>}
+                {player.auction_status === 'unsold' && <Badge className="absolute top-3 right-3 bg-destructive">Unsold</Badge>}
+              </div>)}
+          </div>}
       </main>
 
       {/* Player Detail Modal */}
-      <Dialog open={!!selectedPlayer} onOpenChange={(open) => !open && setSelectedPlayer(null)}>
+      <Dialog open={!!selectedPlayer} onOpenChange={open => !open && setSelectedPlayer(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          {selectedPlayer && (
-            <>
+          {selectedPlayer && <>
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-3">
                   <span className="font-display text-2xl">{selectedPlayer.name}</span>
@@ -248,17 +203,9 @@ export default function Players() {
                 {/* Player Image & Basic Info */}
                 <div className="flex flex-col sm:flex-row gap-6">
                   <div className="sm:w-48 shrink-0">
-                    {selectedPlayer.profile_picture_url ? (
-                      <img
-                        src={selectedPlayer.profile_picture_url}
-                        alt={selectedPlayer.name}
-                        className="w-full h-48 sm:h-56 object-cover rounded-lg"
-                      />
-                    ) : (
-                      <div className="w-full h-48 sm:h-56 bg-muted rounded-lg flex items-center justify-center">
+                    {selectedPlayer.profile_picture_url ? <img src={selectedPlayer.profile_picture_url} alt={selectedPlayer.name} className="w-full h-48 sm:h-56 object-cover rounded-lg" /> : <div className="w-full h-48 sm:h-56 bg-muted rounded-lg flex items-center justify-center">
                         <User className="w-16 h-16 text-muted-foreground" />
-                      </div>
-                    )}
+                      </div>}
                   </div>
 
                   <div className="flex-1 space-y-4">
@@ -288,16 +235,7 @@ export default function Players() {
                           {selectedPlayer.base_price} pts
                         </p>
                       </div>
-                      <Badge
-                        variant={
-                          selectedPlayer.auction_status === 'sold'
-                            ? 'default'
-                            : selectedPlayer.auction_status === 'unsold'
-                            ? 'destructive'
-                            : 'secondary'
-                        }
-                        className={selectedPlayer.auction_status === 'sold' ? 'bg-green-500' : ''}
-                      >
+                      <Badge variant={selectedPlayer.auction_status === 'sold' ? 'default' : selectedPlayer.auction_status === 'unsold' ? 'destructive' : 'secondary'} className={selectedPlayer.auction_status === 'sold' ? 'bg-green-500' : ''}>
                         {selectedPlayer.auction_status?.toUpperCase()}
                       </Badge>
                     </div>
@@ -364,10 +302,8 @@ export default function Players() {
                   </CardContent>
                 </Card>
               </div>
-            </>
-          )}
+            </>}
         </DialogContent>
       </Dialog>
-    </div>
-  );
+    </div>;
 }
