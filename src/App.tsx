@@ -10,6 +10,7 @@ import Auction from "./pages/Auction";
 import Admin from "./pages/Admin";
 import Owner from "./pages/Owner";
 import Players from "./pages/Players";
+import Tournaments from "./pages/Tournaments";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/admin" element={<Admin />} />
             <Route path="/owner" element={<Owner />} />
             <Route path="/players" element={<Players />} />
+            <Route path="/tournaments" element={<Tournaments />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
