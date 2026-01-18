@@ -88,7 +88,7 @@ export default function Tournaments() {
       if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); return; }
       toast({ title: 'Tournament Updated' });
     } else {
-      const { error } = await supabase.from('tournaments').insert(data);
+      const { error } = await supabase.from('tournaments').insert([data as any]);
       if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); return; }
       toast({ title: 'Tournament Created' });
     }
@@ -111,7 +111,7 @@ export default function Tournaments() {
       if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); return; }
       toast({ title: 'Match Updated' });
     } else {
-      const { error } = await supabase.from('matches').insert(data);
+      const { error } = await supabase.from('matches').insert([data as any]);
       if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); return; }
       toast({ title: 'Match Scheduled' });
     }
@@ -121,7 +121,7 @@ export default function Tournaments() {
   };
 
   const saveVenue = async (data: Partial<Venue>) => {
-    const { error } = await supabase.from('venues').insert(data);
+    const { error } = await supabase.from('venues').insert([data as any]);
     if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); return; }
     toast({ title: 'Venue Added' });
     setVenueDialogOpen(false);
