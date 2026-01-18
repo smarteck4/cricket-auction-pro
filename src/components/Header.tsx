@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
-import { User, LogOut, Settings, Users, Gavel, UsersRound } from 'lucide-react';
+import { User, LogOut, Settings, Users, Gavel, UsersRound, Trophy } from 'lucide-react';
 
 export function Header() {
   const { user, role, owner, signOut } = useAuth();
@@ -61,6 +61,13 @@ export function Header() {
                 <Link to="/auction">
                   <Gavel className="w-4 h-4 mr-2" />
                   Auction
+                </Link>
+              </Button>
+
+              <Button variant="ghost" asChild>
+                <Link to="/tournaments">
+                  <Trophy className="w-4 h-4 mr-2" />
+                  Tournaments
                 </Link>
               </Button>
 
