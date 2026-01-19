@@ -778,7 +778,7 @@ export type Database = {
       app_role: "spectator" | "admin" | "owner"
       auction_status: "pending" | "active" | "sold" | "unsold"
       batting_hand: "left" | "right"
-      match_format: "T10" | "T20" | "ODI" | "Test"
+      match_format: "T10" | "T20" | "ODI" | "Test" | "T5" | "Custom"
       match_status: "scheduled" | "live" | "completed" | "cancelled"
       player_category: "platinum" | "gold" | "silver" | "emerging"
       player_role: "batsman" | "bowler" | "all_rounder" | "wicket_keeper"
@@ -913,7 +913,7 @@ export const Constants = {
       app_role: ["spectator", "admin", "owner"],
       auction_status: ["pending", "active", "sold", "unsold"],
       batting_hand: ["left", "right"],
-      match_format: ["T10", "T20", "ODI", "Test"],
+      match_format: ["T10", "T20", "ODI", "Test", "T5", "Custom"],
       match_status: ["scheduled", "live", "completed", "cancelled"],
       player_category: ["platinum", "gold", "silver", "emerging"],
       player_role: ["batsman", "bowler", "all_rounder", "wicket_keeper"],

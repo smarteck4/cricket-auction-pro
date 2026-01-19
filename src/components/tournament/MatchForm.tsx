@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Match, MatchFormat, MatchStatus, Tournament, Venue, FORMAT_OVERS } from '@/lib/tournament-types';
+import { Match, MatchFormat, MatchStatus, Tournament, Venue, FORMAT_OVERS, FORMAT_LABELS } from '@/lib/tournament-types';
 import { Owner } from '@/lib/types';
+import { supabase } from '@/integrations/supabase/client';
+import { AlertCircle } from 'lucide-react';
 
 interface MatchFormProps {
   match?: Match | null;
@@ -15,6 +17,9 @@ interface MatchFormProps {
   onCancel: () => void;
 }
 
+const MIN_TEAM_PLAYERS = 5;
+const MAX_TEAM_PLAYERS = 11;
+
 export function MatchForm({ match, tournaments, teams, venues, onSubmit, onCancel }: MatchFormProps) {
   const [tournamentId, setTournamentId] = useState(match?.tournament_id || '');
   const [team1Id, setTeam1Id] = useState(match?.team1_id || '');
@@ -24,6 +29,30 @@ export function MatchForm({ match, tournaments, teams, venues, onSubmit, onCance
   const [format, setFormat] = useState<MatchFormat>(match?.format || 'T20');
   const [oversPerInnings, setOversPerInnings] = useState(match?.overs_per_innings || FORMAT_OVERS['T20']);
   const [status, setStatus] = useState<MatchStatus>(match?.status || 'scheduled');
+  
+  const [team1PlayerCount, setTeam1PlayerCount] = useState<number | null>(null);
+  const [team2PlayerCount, setTeam2PlayerCount] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const isCustomFormat = format === 'Custom';
+
+  useEffect(() => {
+    if (team1Id) fetchTeamPlayerCount(team1Id, setTeam1PlayerCount);
+    else setTeam1PlayerCount(null);
+  }, [team1Id]);
+
+  useEffect(() => {
+    if (team2Id) fetchTeamPlayerCount(team2Id, setTeam2PlayerCount);
+    else setTeam2PlayerCount(null);
+  }, [team2Id]);
+
+  const fetchTeamPlayerCount = async (teamId: string, setter: (count: number) => void) => {
+    const { count } = await supabase
+      .from('team_players')
+      .select('*', { count: 'exact', head: true })
+      .eq('owner_id', teamId);
+    setter(count || 0);
+  };
 
   const handleTournamentChange = (value: string) => {
     setTournamentId(value);
@@ -36,11 +65,25 @@ export function MatchForm({ match, tournaments, teams, venues, onSubmit, onCance
 
   const handleFormatChange = (value: MatchFormat) => {
     setFormat(value);
-    setOversPerInnings(FORMAT_OVERS[value]);
+    if (value !== 'Custom') {
+      setOversPerInnings(FORMAT_OVERS[value]);
+    }
   };
+
+  const getTeamValidation = (count: number | null) => {
+    if (count === null) return null;
+    if (count < MIN_TEAM_PLAYERS) return { valid: false, message: `Needs ${MIN_TEAM_PLAYERS - count} more player(s)` };
+    if (count > MAX_TEAM_PLAYERS) return { valid: false, message: `Has ${count - MAX_TEAM_PLAYERS} extra player(s)` };
+    return { valid: true, message: `${count} players` };
+  };
+
+  const team1Validation = getTeamValidation(team1PlayerCount);
+  const team2Validation = getTeamValidation(team2PlayerCount);
+  const canSubmit = (!team1Id || team1Validation?.valid !== false) && (!team2Id || team2Validation?.valid !== false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canSubmit) return;
     onSubmit({
       tournament_id: tournamentId,
       team1_id: team1Id || null,
@@ -86,6 +129,12 @@ export function MatchForm({ match, tournaments, teams, venues, onSubmit, onCance
               ))}
             </SelectContent>
           </Select>
+          {team1Validation && (
+            <p className={`text-xs flex items-center gap-1 ${team1Validation.valid ? 'text-green-600' : 'text-destructive'}`}>
+              {!team1Validation.valid && <AlertCircle className="h-3 w-3" />}
+              {team1Validation.message}
+            </p>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -102,6 +151,12 @@ export function MatchForm({ match, tournaments, teams, venues, onSubmit, onCance
               ))}
             </SelectContent>
           </Select>
+          {team2Validation && (
+            <p className={`text-xs flex items-center gap-1 ${team2Validation.valid ? 'text-green-600' : 'text-destructive'}`}>
+              {!team2Validation.valid && <AlertCircle className="h-3 w-3" />}
+              {team2Validation.message}
+            </p>
+          )}
         </div>
       </div>
 
@@ -140,10 +195,11 @@ export function MatchForm({ match, tournaments, teams, venues, onSubmit, onCance
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="T10">T10</SelectItem>
-              <SelectItem value="T20">T20</SelectItem>
-              <SelectItem value="ODI">One Day</SelectItem>
-              <SelectItem value="Test">Test</SelectItem>
+              <SelectItem value="T5">{FORMAT_LABELS.T5}</SelectItem>
+              <SelectItem value="T10">{FORMAT_LABELS.T10}</SelectItem>
+              <SelectItem value="T20">{FORMAT_LABELS.T20}</SelectItem>
+              <SelectItem value="ODI">{FORMAT_LABELS.ODI}</SelectItem>
+              <SelectItem value="Custom">{FORMAT_LABELS.Custom}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -154,10 +210,15 @@ export function MatchForm({ match, tournaments, teams, venues, onSubmit, onCance
             id="overs"
             type="number"
             min={1}
-            max={90}
+            max={50}
             value={oversPerInnings}
             onChange={(e) => setOversPerInnings(parseInt(e.target.value) || 20)}
+            disabled={!isCustomFormat}
+            className={!isCustomFormat ? 'bg-muted cursor-not-allowed' : ''}
           />
+          {!isCustomFormat && (
+            <p className="text-xs text-muted-foreground">Auto-set based on format</p>
+          )}
         </div>
       </div>
 
@@ -180,7 +241,7 @@ export function MatchForm({ match, tournaments, teams, venues, onSubmit, onCance
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
-        <Button type="submit">
+        <Button type="submit" disabled={!canSubmit}>
           {match ? 'Update Match' : 'Schedule Match'}
         </Button>
       </div>
