@@ -83,12 +83,13 @@ export default function Tournaments() {
   };
 
   const saveTournament = async (data: Partial<Tournament>) => {
+    const dbData = { ...data } as any;
     if (editingTournament) {
-      const { error } = await supabase.from('tournaments').update(data).eq('id', editingTournament.id);
+      const { error } = await supabase.from('tournaments').update(dbData).eq('id', editingTournament.id);
       if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); return; }
       toast({ title: 'Tournament Updated' });
     } else {
-      const { error } = await supabase.from('tournaments').insert([data as any]);
+      const { error } = await supabase.from('tournaments').insert([dbData]);
       if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); return; }
       toast({ title: 'Tournament Created' });
     }
@@ -106,12 +107,13 @@ export default function Tournaments() {
   };
 
   const saveMatch = async (data: Partial<Match>) => {
+    const dbData = { ...data } as any;
     if (editingMatch) {
-      const { error } = await supabase.from('matches').update(data).eq('id', editingMatch.id);
+      const { error } = await supabase.from('matches').update(dbData).eq('id', editingMatch.id);
       if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); return; }
       toast({ title: 'Match Updated' });
     } else {
-      const { error } = await supabase.from('matches').insert([data as any]);
+      const { error } = await supabase.from('matches').insert([dbData]);
       if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); return; }
       toast({ title: 'Match Scheduled' });
     }

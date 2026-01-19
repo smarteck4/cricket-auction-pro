@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tournament, MatchFormat, TournamentStatus, FORMAT_OVERS } from '@/lib/tournament-types';
+import { Tournament, MatchFormat, TournamentStatus, FORMAT_OVERS, FORMAT_LABELS } from '@/lib/tournament-types';
 
 interface TournamentFormProps {
   tournament?: Tournament | null;
@@ -20,9 +20,13 @@ export function TournamentForm({ tournament, onSubmit, onCancel }: TournamentFor
   const [venue, setVenue] = useState(tournament?.venue || '');
   const [status, setStatus] = useState<TournamentStatus>(tournament?.status || 'upcoming');
 
+  const isCustomFormat = format === 'Custom';
+
   const handleFormatChange = (value: MatchFormat) => {
     setFormat(value);
-    setOversPerInnings(FORMAT_OVERS[value]);
+    if (value !== 'Custom') {
+      setOversPerInnings(FORMAT_OVERS[value]);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -59,10 +63,11 @@ export function TournamentForm({ tournament, onSubmit, onCancel }: TournamentFor
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="T10">T10</SelectItem>
-              <SelectItem value="T20">T20</SelectItem>
-              <SelectItem value="ODI">One Day</SelectItem>
-              <SelectItem value="Test">Test</SelectItem>
+              <SelectItem value="T5">{FORMAT_LABELS.T5}</SelectItem>
+              <SelectItem value="T10">{FORMAT_LABELS.T10}</SelectItem>
+              <SelectItem value="T20">{FORMAT_LABELS.T20}</SelectItem>
+              <SelectItem value="ODI">{FORMAT_LABELS.ODI}</SelectItem>
+              <SelectItem value="Custom">{FORMAT_LABELS.Custom}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -73,10 +78,15 @@ export function TournamentForm({ tournament, onSubmit, onCancel }: TournamentFor
             id="overs"
             type="number"
             min={1}
-            max={90}
+            max={50}
             value={oversPerInnings}
             onChange={(e) => setOversPerInnings(parseInt(e.target.value) || 20)}
+            disabled={!isCustomFormat}
+            className={!isCustomFormat ? 'bg-muted cursor-not-allowed' : ''}
           />
+          {!isCustomFormat && (
+            <p className="text-xs text-muted-foreground">Auto-set based on format</p>
+          )}
         </div>
       </div>
 
