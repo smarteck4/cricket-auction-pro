@@ -1,4 +1,4 @@
-export type MatchFormat = 'T10' | 'T20' | 'ODI' | 'Test';
+export type MatchFormat = 'T5' | 'T10' | 'T20' | 'ODI' | 'Custom';
 export type MatchStatus = 'scheduled' | 'live' | 'completed' | 'cancelled';
 export type TournamentStatus = 'upcoming' | 'ongoing' | 'completed';
 
@@ -111,17 +111,19 @@ export interface TournamentPoints {
 }
 
 export const FORMAT_OVERS: Record<MatchFormat, number> = {
+  T5: 5,
   T10: 10,
   T20: 20,
   ODI: 50,
-  Test: 90,
+  Custom: 20,
 };
 
 export const FORMAT_LABELS: Record<MatchFormat, string> = {
-  T10: 'T10',
-  T20: 'T20',
-  ODI: 'One Day International',
-  Test: 'Test Match',
+  T5: 'T5 (5 Overs)',
+  T10: 'T10 (10 Overs)',
+  T20: 'T20 (20 Overs)',
+  ODI: 'One Day (50 Overs)',
+  Custom: 'Custom Format',
 };
 
 export const STATUS_COLORS: Record<MatchStatus, { bg: string; text: string }> = {
