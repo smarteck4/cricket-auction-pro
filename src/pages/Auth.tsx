@@ -193,7 +193,7 @@ export default function Auth() {
                   </div>
                   <Button type="submit" className="w-full gradient-gold" disabled={loading}>
                     {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                    Sign In
+                  Login
                   </Button>
                 </form>
               </TabsContent>
