@@ -33,6 +33,7 @@ export default function Tournaments() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [points, setPoints] = useState<TournamentPoints[]>([]);
   const [stats, setStats] = useState<PlayerMatchStats[]>([]);
+  const [teamPlayers, setTeamPlayers] = useState<{ owner_id: string; player_id: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null);
@@ -62,7 +63,7 @@ export default function Tournaments() {
   };
 
   const fetchData = async () => {
-    const [tournamentsRes, matchesRes, venuesRes, teamsRes, playersRes, pointsRes, statsRes] = await Promise.all([
+    const [tournamentsRes, matchesRes, venuesRes, teamsRes, playersRes, pointsRes, statsRes, teamPlayersRes] = await Promise.all([
       supabase.from('tournaments').select('*').order('start_date', { ascending: false }),
       supabase.from('matches').select('*, venue:venues(*)').order('match_date'),
       supabase.from('venues').select('*'),
@@ -70,6 +71,7 @@ export default function Tournaments() {
       supabase.from('players').select('*'),
       supabase.from('tournament_points').select('*, team:owners(id, team_name, team_logo_url)'),
       supabase.from('player_match_stats').select('*'),
+      supabase.from('team_players').select('owner_id, player_id'),
     ]);
 
     if (tournamentsRes.data) setTournaments(tournamentsRes.data as Tournament[]);
@@ -79,6 +81,7 @@ export default function Tournaments() {
     if (playersRes.data) setPlayers(playersRes.data as Player[]);
     if (pointsRes.data) setPoints(pointsRes.data as TournamentPoints[]);
     if (statsRes.data) setStats(statsRes.data as PlayerMatchStats[]);
+    if (teamPlayersRes.data) setTeamPlayers(teamPlayersRes.data);
     setLoading(false);
   };
 
@@ -232,8 +235,12 @@ export default function Tournaments() {
               match={scoringMatch}
               team1={teams.find((t) => t.id === scoringMatch.team1_id)!}
               team2={teams.find((t) => t.id === scoringMatch.team2_id)!}
-              team1Players={players.filter((p) => p.auction_status === 'sold')}
-              team2Players={players.filter((p) => p.auction_status === 'sold')}
+              team1Players={players.filter((p) => 
+                teamPlayers.some(tp => tp.owner_id === scoringMatch.team1_id && tp.player_id === p.id)
+              )}
+              team2Players={players.filter((p) => 
+                teamPlayers.some(tp => tp.owner_id === scoringMatch.team2_id && tp.player_id === p.id)
+              )}
               onClose={() => setScoringMatch(null)}
               onMatchUpdate={fetchData}
             />
