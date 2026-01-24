@@ -96,6 +96,92 @@ export function LiveScoring({
     return overBalls.slice(-6);
   }, [balls, currentOver, currentBall]);
 
+  // Calculate batsman stats from balls
+  interface BatsmanStats {
+    runs: number;
+    balls: number;
+    fours: number;
+    sixes: number;
+    strikeRate: number;
+  }
+
+  const getBatsmanStats = useMemo(() => {
+    const statsMap = new Map<string, BatsmanStats>();
+    
+    balls.forEach(ball => {
+      if (ball.batsman_id) {
+        const existing = statsMap.get(ball.batsman_id) || { runs: 0, balls: 0, fours: 0, sixes: 0, strikeRate: 0 };
+        // Count ball only if it's not a wide (batsman doesn't face wides)
+        const isBallFaced = ball.extra_type !== 'wide';
+        const runs = ball.runs_scored;
+        
+        existing.runs += runs;
+        existing.balls += isBallFaced ? 1 : 0;
+        if (runs === 4) existing.fours++;
+        if (runs === 6) existing.sixes++;
+        existing.strikeRate = existing.balls > 0 ? (existing.runs / existing.balls) * 100 : 0;
+        
+        statsMap.set(ball.batsman_id, existing);
+      }
+    });
+    
+    return (playerId: string): BatsmanStats => statsMap.get(playerId) || { runs: 0, balls: 0, fours: 0, sixes: 0, strikeRate: 0 };
+  }, [balls]);
+
+  // Calculate bowler stats from balls
+  interface BowlerStats {
+    overs: number;
+    maidens: number;
+    runs: number;
+    wickets: number;
+    economy: number;
+    legalBalls: number;
+  }
+
+  const getBowlerStats = useMemo(() => {
+    const statsMap = new Map<string, BowlerStats>();
+    const bowlerOversRuns = new Map<string, Map<number, number>>(); // bowler -> over -> runs
+    
+    balls.forEach(ball => {
+      if (ball.bowler_id) {
+        const existing = statsMap.get(ball.bowler_id) || { overs: 0, maidens: 0, runs: 0, wickets: 0, economy: 0, legalBalls: 0 };
+        const isLegal = !ball.extra_type || !['wide', 'no_ball'].includes(ball.extra_type);
+        
+        // Runs conceded (includes extras for wide/no ball)
+        const runsConceded = ball.runs_scored + ball.extras;
+        existing.runs += runsConceded;
+        
+        if (isLegal) {
+          existing.legalBalls++;
+        }
+        
+        // Calculate overs (e.g., 1.4 means 1 over and 4 balls)
+        const completedOvers = Math.floor(existing.legalBalls / 6);
+        const remainingBalls = existing.legalBalls % 6;
+        existing.overs = completedOvers + (remainingBalls / 10);
+        
+        if (ball.is_wicket && ['bowled', 'caught', 'lbw', 'stumped', 'hit_wicket'].includes(ball.wicket_type || '')) {
+          existing.wickets++;
+        }
+        
+        // Track runs per over for maiden calculation
+        if (!bowlerOversRuns.has(ball.bowler_id)) {
+          bowlerOversRuns.set(ball.bowler_id, new Map());
+        }
+        const overMap = bowlerOversRuns.get(ball.bowler_id)!;
+        overMap.set(ball.over_number, (overMap.get(ball.over_number) || 0) + runsConceded);
+        
+        existing.economy = existing.legalBalls > 0 ? (existing.runs / (existing.legalBalls / 6)) : 0;
+        statsMap.set(ball.bowler_id, existing);
+      }
+    });
+    
+    // Calculate maidens - only if we track complete overs per bowler
+    // For now we skip maiden calculation as it requires tracking over boundaries per bowler
+    
+    return (playerId: string): BowlerStats => statsMap.get(playerId) || { overs: 0, maidens: 0, runs: 0, wickets: 0, economy: 0, legalBalls: 0 };
+  }, [balls]);
+
   // Calculate required run rate and current run rate
   const { target, reqRR, currentRR } = useMemo(() => {
     if (!currentInnings || innings.length < 2) return { target: 0, reqRR: 0, currentRR: 0 };
@@ -421,43 +507,69 @@ export function LiveScoring({
                 
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <Select value={strikerBatsman} onValueChange={setStrikerBatsman}>
-                      <SelectTrigger className="w-40 h-8 text-sm">
-                        <SelectValue placeholder="Striker *" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {battingTeamPlayers.filter(p => p.id !== nonStrikerBatsman).map((p) => (
-                          <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <div className="flex gap-4 text-sm text-center">
-                      <span className="w-8">-</span>
-                      <span className="w-8">-</span>
-                      <span className="w-8">-</span>
-                      <span className="w-8">-</span>
-                      <span className="w-12">-</span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs text-emerald-600">●</span>
+                      <Select value={strikerBatsman} onValueChange={setStrikerBatsman}>
+                        <SelectTrigger className="w-36 h-8 text-sm border-emerald-300 bg-emerald-50">
+                          <SelectValue placeholder="Striker *" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {battingTeamPlayers.filter(p => p.id !== nonStrikerBatsman).map((p) => (
+                            <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
+                    {strikerBatsman ? (
+                      <div className="flex gap-4 text-sm text-center font-medium">
+                        <span className="w-8 text-emerald-600">{getBatsmanStats(strikerBatsman).runs}</span>
+                        <span className="w-8">{getBatsmanStats(strikerBatsman).balls}</span>
+                        <span className="w-8 text-blue-600">{getBatsmanStats(strikerBatsman).fours}</span>
+                        <span className="w-8 text-purple-600">{getBatsmanStats(strikerBatsman).sixes}</span>
+                        <span className="w-12 text-orange-600">{getBatsmanStats(strikerBatsman).strikeRate.toFixed(1)}</span>
+                      </div>
+                    ) : (
+                      <div className="flex gap-4 text-sm text-center text-muted-foreground">
+                        <span className="w-8">-</span>
+                        <span className="w-8">-</span>
+                        <span className="w-8">-</span>
+                        <span className="w-8">-</span>
+                        <span className="w-12">-</span>
+                      </div>
+                    )}
                   </div>
                   
                   <div className="flex justify-between items-center">
-                    <Select value={nonStrikerBatsman} onValueChange={setNonStrikerBatsman}>
-                      <SelectTrigger className="w-40 h-8 text-sm bg-emerald-50">
-                        <SelectValue placeholder="Non-Striker" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {battingTeamPlayers.filter(p => p.id !== strikerBatsman).map((p) => (
-                          <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <div className="flex gap-4 text-sm text-center">
-                      <span className="w-8">-</span>
-                      <span className="w-8">-</span>
-                      <span className="w-8">-</span>
-                      <span className="w-8">-</span>
-                      <span className="w-12">-</span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs text-gray-400">○</span>
+                      <Select value={nonStrikerBatsman} onValueChange={setNonStrikerBatsman}>
+                        <SelectTrigger className="w-36 h-8 text-sm">
+                          <SelectValue placeholder="Non-Striker" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {battingTeamPlayers.filter(p => p.id !== strikerBatsman).map((p) => (
+                            <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
+                    {nonStrikerBatsman ? (
+                      <div className="flex gap-4 text-sm text-center">
+                        <span className="w-8">{getBatsmanStats(nonStrikerBatsman).runs}</span>
+                        <span className="w-8">{getBatsmanStats(nonStrikerBatsman).balls}</span>
+                        <span className="w-8">{getBatsmanStats(nonStrikerBatsman).fours}</span>
+                        <span className="w-8">{getBatsmanStats(nonStrikerBatsman).sixes}</span>
+                        <span className="w-12">{getBatsmanStats(nonStrikerBatsman).strikeRate.toFixed(1)}</span>
+                      </div>
+                    ) : (
+                      <div className="flex gap-4 text-sm text-center text-muted-foreground">
+                        <span className="w-8">-</span>
+                        <span className="w-8">-</span>
+                        <span className="w-8">-</span>
+                        <span className="w-8">-</span>
+                        <span className="w-12">-</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -483,13 +595,23 @@ export function LiveScoring({
                         ))}
                       </SelectContent>
                     </Select>
-                    <div className="flex gap-4 text-sm text-center">
-                      <span className="w-8">-</span>
-                      <span className="w-8">-</span>
-                      <span className="w-8">-</span>
-                      <span className="w-8">-</span>
-                      <span className="w-12">-</span>
-                    </div>
+                    {currentBowler ? (
+                      <div className="flex gap-4 text-sm text-center font-medium">
+                        <span className="w-8">{getBowlerStats(currentBowler).overs.toFixed(1)}</span>
+                        <span className="w-8">{getBowlerStats(currentBowler).maidens}</span>
+                        <span className="w-8 text-red-600">{getBowlerStats(currentBowler).runs}</span>
+                        <span className="w-8 text-emerald-600">{getBowlerStats(currentBowler).wickets}</span>
+                        <span className="w-12 text-orange-600">{getBowlerStats(currentBowler).economy.toFixed(2)}</span>
+                      </div>
+                    ) : (
+                      <div className="flex gap-4 text-sm text-center text-muted-foreground">
+                        <span className="w-8">-</span>
+                        <span className="w-8">-</span>
+                        <span className="w-8">-</span>
+                        <span className="w-8">-</span>
+                        <span className="w-12">-</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
