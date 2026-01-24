@@ -10,6 +10,7 @@ import { Match, MatchInnings, MatchBall } from '@/lib/tournament-types';
 import { Player, Owner } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, RotateCcw, AlertCircle } from 'lucide-react';
+import { MatchSummary } from './MatchSummary';
 
 interface LiveScoringProps {
   match: Match;
@@ -34,10 +35,11 @@ export function LiveScoring({
 }: LiveScoringProps) {
   const { toast } = useToast();
   const [innings, setInnings] = useState<MatchInnings[]>([]);
+  const [allInningsBalls, setAllInningsBalls] = useState<MatchBall[][]>([]);
   const [currentInnings, setCurrentInnings] = useState<MatchInnings | null>(null);
   const [balls, setBalls] = useState<MatchBall[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('scoring');
+  const [activeTab, setActiveTab] = useState('summary');
 
   // Scoring state
   const [strikerBatsman, setStrikerBatsman] = useState('');
@@ -239,12 +241,26 @@ export function LiveScoring({
         fetchBalls(active.id);
       }
 
+      // Fetch balls for all innings for summary
+      const ballsPromises = data.map((inn) => fetchBallsForInnings(inn.id));
+      const allBalls = await Promise.all(ballsPromises);
+      setAllInningsBalls(allBalls);
+
       const inn1 = data.find((i) => i.innings_number === 1);
       const inn2 = data.find((i) => i.innings_number === 2);
       if (inn1) setTeam1Score({ runs: inn1.total_runs, wickets: inn1.total_wickets, overs: inn1.total_overs });
       if (inn2) setTeam2Score({ runs: inn2.total_runs, wickets: inn2.total_wickets, overs: inn2.total_overs });
     }
     setLoading(false);
+  };
+
+  const fetchBallsForInnings = async (inningsId: string): Promise<MatchBall[]> => {
+    const { data } = await supabase
+      .from('match_balls')
+      .select('*')
+      .eq('innings_id', inningsId)
+      .order('created_at');
+    return (data as MatchBall[]) || [];
   };
 
   const fetchBalls = async (inningsId: string) => {
@@ -500,12 +516,25 @@ export function LiveScoring({
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-        <TabsList className="grid grid-cols-4 bg-primary rounded-none">
-          <TabsTrigger value="scoring" className="text-primary-foreground data-[state=active]:bg-primary/80">Scoring</TabsTrigger>
-          <TabsTrigger value="scorecard" className="text-primary-foreground data-[state=active]:bg-primary/80">Scorecard</TabsTrigger>
-          <TabsTrigger value="balls" className="text-primary-foreground data-[state=active]:bg-primary/80">Balls</TabsTrigger>
-          <TabsTrigger value="info" className="text-primary-foreground data-[state=active]:bg-primary/80">Info</TabsTrigger>
+        <TabsList className="grid grid-cols-5 bg-primary rounded-none">
+          <TabsTrigger value="summary" className="text-primary-foreground data-[state=active]:bg-primary/80 text-xs sm:text-sm">Summary</TabsTrigger>
+          <TabsTrigger value="scoring" className="text-primary-foreground data-[state=active]:bg-primary/80 text-xs sm:text-sm">Scoring</TabsTrigger>
+          <TabsTrigger value="scorecard" className="text-primary-foreground data-[state=active]:bg-primary/80 text-xs sm:text-sm">Scorecard</TabsTrigger>
+          <TabsTrigger value="balls" className="text-primary-foreground data-[state=active]:bg-primary/80 text-xs sm:text-sm">Balls</TabsTrigger>
+          <TabsTrigger value="info" className="text-primary-foreground data-[state=active]:bg-primary/80 text-xs sm:text-sm">Info</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="summary" className="flex-1 overflow-auto p-0 m-0">
+          <MatchSummary
+            match={match}
+            team1={team1}
+            team2={team2}
+            team1Players={team1Players}
+            team2Players={team2Players}
+            innings={innings}
+            allBalls={allInningsBalls}
+          />
+        </TabsContent>
 
         <TabsContent value="scoring" className="flex-1 flex flex-col overflow-auto p-0 m-0">
           {currentInnings ? (
