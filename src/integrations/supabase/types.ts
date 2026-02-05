@@ -490,8 +490,10 @@ export type Database = {
           best_bowling: string | null
           bowling_average: number | null
           category: Database["public"]["Enums"]["player_category"]
+          centuries: number
           created_at: string | null
           economy_rate: number | null
+          fifties: number
           highest_score: number | null
           id: string
           name: string
@@ -512,8 +514,10 @@ export type Database = {
           best_bowling?: string | null
           bowling_average?: number | null
           category: Database["public"]["Enums"]["player_category"]
+          centuries?: number
           created_at?: string | null
           economy_rate?: number | null
+          fifties?: number
           highest_score?: number | null
           id?: string
           name: string
@@ -534,8 +538,10 @@ export type Database = {
           best_bowling?: string | null
           bowling_average?: number | null
           category?: Database["public"]["Enums"]["player_category"]
+          centuries?: number
           created_at?: string | null
           economy_rate?: number | null
+          fifties?: number
           highest_score?: number | null
           id?: string
           name?: string

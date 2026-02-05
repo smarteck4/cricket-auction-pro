@@ -251,7 +251,7 @@ export default function Players() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                       <div className="text-center p-3 bg-muted rounded-lg">
                         <p className="text-2xl font-bold">{selectedPlayer.total_matches}</p>
                         <p className="text-xs text-muted-foreground">Matches</p>
@@ -267,6 +267,14 @@ export default function Players() {
                       <div className="text-center p-3 bg-muted rounded-lg">
                         <p className="text-2xl font-bold">{Number(selectedPlayer.strike_rate).toFixed(1)}</p>
                         <p className="text-xs text-muted-foreground">Strike Rate</p>
+                      </div>
+                      <div className="text-center p-3 bg-muted rounded-lg">
+                        <p className="text-2xl font-bold text-amber-500">{selectedPlayer.fifties || 0}</p>
+                        <p className="text-xs text-muted-foreground">Fifties</p>
+                      </div>
+                      <div className="text-center p-3 bg-muted rounded-lg">
+                        <p className="text-2xl font-bold text-green-500">{selectedPlayer.centuries || 0}</p>
+                        <p className="text-xs text-muted-foreground">Centuries</p>
                       </div>
                     </div>
                   </CardContent>
