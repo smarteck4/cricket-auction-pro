@@ -56,6 +56,8 @@ export interface Player {
   bowling_average: number;
   economy_rate: number;
   best_bowling: string | null;
+  fifties: number;
+  centuries: number;
   auction_status: AuctionStatus;
   base_price: number | null;
   created_at: string;

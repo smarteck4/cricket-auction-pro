@@ -56,6 +56,7 @@ export function LiveScoring({
   const [dismissedBatsmen, setDismissedBatsmen] = useState<string[]>([]);
   const [retiredHurtBatsmen, setRetiredHurtBatsmen] = useState<string[]>([]);
   const [previousOverBowler, setPreviousOverBowler] = useState<string>('');
+  const [milestoneShown, setMilestoneShown] = useState<{ [key: string]: { fifty: boolean; century: boolean } }>({});
 
   // Simple scoring state
   const [simpleMode, setSimpleMode] = useState(true);
@@ -376,6 +377,26 @@ export function LiveScoring({
       setIsWicket(false);
       setWicketType('');
       setSelectedFielder('');
+    }
+
+    // Check for milestone notifications (50 or 100 runs)
+    const updatedStats = getBatsmanStats(strikerBatsman);
+    const newRuns = updatedStats.runs + runs;
+    const playerName = battingTeamPlayers.find(p => p.id === strikerBatsman)?.name || 'Batsman';
+    const playerMilestones = milestoneShown[strikerBatsman] || { fifty: false, century: false };
+    
+    if (newRuns >= 100 && !playerMilestones.century) {
+      toast({ 
+        title: '🎉 CENTURY! 💯', 
+        description: `${playerName} reaches a magnificent century!`,
+      });
+      setMilestoneShown(prev => ({ ...prev, [strikerBatsman]: { ...playerMilestones, century: true, fifty: true } }));
+    } else if (newRuns >= 50 && newRuns < 100 && !playerMilestones.fifty) {
+      toast({ 
+        title: '🎉 FIFTY! 5️⃣0️⃣', 
+        description: `${playerName} reaches a well-deserved half-century!`,
+      });
+      setMilestoneShown(prev => ({ ...prev, [strikerBatsman]: { ...playerMilestones, fifty: true } }));
     }
 
     fetchInnings();
