@@ -58,6 +58,16 @@ export function LiveScoring({
   const [previousOverBowler, setPreviousOverBowler] = useState<string>('');
   const [milestoneShown, setMilestoneShown] = useState<{ [key: string]: { fifty: boolean; century: boolean } }>({});
 
+  // Partnership tracking
+  interface Partnership {
+    batsman1Id: string;
+    batsman2Id: string;
+    runs: number;
+    balls: number;
+    isActive: boolean;
+    wicketFellAt?: number;
+  }
+
   // Simple scoring state
   const [simpleMode, setSimpleMode] = useState(true);
   const [team1Score, setTeam1Score] = useState({ runs: 0, wickets: 0, overs: 0 });
@@ -203,6 +213,71 @@ export function LiveScoring({
     
     return (playerId: string): BowlerStats => statsMap.get(playerId) || { overs: 0, maidens: 0, runs: 0, wickets: 0, economy: 0, legalBalls: 0 };
   }, [balls]);
+
+  // Calculate partnerships from balls
+  const partnerships = useMemo(() => {
+    const partnershipList: Partnership[] = [];
+    let currentPartnership: Partnership | null = null;
+    let runningTotal = 0;
+    
+    balls.forEach((ball, index) => {
+      const isLegal = !ball.extra_type || !['wide', 'no_ball'].includes(ball.extra_type);
+      const runsThisBall = ball.runs_scored + ball.extras;
+      
+      // If no current partnership, start one
+      if (!currentPartnership && ball.batsman_id) {
+        // Find the non-striker from the next ball or previous context
+        const nextBall = balls[index + 1];
+        const prevBall = balls[index - 1];
+        let partnerId = '';
+        
+        // Look through balls to find the partner
+        for (const b of balls.slice(index)) {
+          if (b.batsman_id && b.batsman_id !== ball.batsman_id) {
+            partnerId = b.batsman_id;
+            break;
+          }
+        }
+        
+        if (partnerId) {
+          currentPartnership = {
+            batsman1Id: ball.batsman_id,
+            batsman2Id: partnerId,
+            runs: 0,
+            balls: 0,
+            isActive: true
+          };
+        }
+      }
+      
+      // Add runs to current partnership
+      if (currentPartnership) {
+        currentPartnership.runs += runsThisBall;
+        if (isLegal) currentPartnership.balls++;
+        
+        // If wicket, close this partnership
+        if (ball.is_wicket) {
+          runningTotal += currentPartnership.runs;
+          currentPartnership.isActive = false;
+          currentPartnership.wicketFellAt = runningTotal;
+          partnershipList.push({ ...currentPartnership });
+          currentPartnership = null;
+        }
+      }
+    });
+    
+    // Add current active partnership
+    if (currentPartnership) {
+      partnershipList.push(currentPartnership);
+    }
+    
+    return partnershipList;
+  }, [balls]);
+
+  // Get current partnership (last active one)
+  const currentPartnership = useMemo(() => {
+    return partnerships.find(p => p.isActive) || (partnerships.length > 0 ? partnerships[partnerships.length - 1] : null);
+  }, [partnerships]);
 
   // Calculate required run rate and current run rate
   const { target, reqRR, currentRR } = useMemo(() => {
@@ -731,6 +806,27 @@ export function LiveScoring({
                     )}
                   </div>
                 </div>
+
+                {/* Current Partnership Display */}
+                {currentPartnership && (strikerBatsman || nonStrikerBatsman) && (
+                  <div className="mt-3 pt-3 border-t">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">🤝 Partnership:</span>
+                        <span className="text-sm font-semibold text-primary">{currentPartnership.runs}</span>
+                        <span className="text-xs text-muted-foreground">({currentPartnership.balls} balls)</span>
+                      </div>
+                      {currentPartnership.balls > 0 && (
+                        <span className="text-xs text-muted-foreground">
+                          RR: {((currentPartnership.runs / currentPartnership.balls) * 6).toFixed(2)}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex gap-2 mt-1 text-xs text-muted-foreground">
+                      <span>{getPlayerName(strikerBatsman)} & {getPlayerName(nonStrikerBatsman)}</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* This Over Display */}
@@ -886,6 +982,41 @@ export function LiveScoring({
                   <p className="text-sm text-muted-foreground">({inn.total_overs} overs)</p>
                 </div>
               ))}
+
+              {/* Partnerships Section */}
+              {partnerships.length > 0 && (
+                <div className="border rounded-lg p-4">
+                  <h4 className="font-semibold mb-3 flex items-center gap-2">
+                    🤝 Partnerships
+                  </h4>
+                  <div className="space-y-2">
+                    {partnerships.map((p, idx) => (
+                      <div 
+                        key={idx} 
+                        className={`flex justify-between items-center p-2 rounded ${p.isActive ? 'bg-primary/10 border border-primary/30' : 'bg-muted/50'}`}
+                      >
+                        <div className="flex-1">
+                          <div className="text-sm font-medium">
+                            {getPlayerName(p.batsman1Id)} & {getPlayerName(p.batsman2Id)}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {p.balls} balls • RR: {p.balls > 0 ? ((p.runs / p.balls) * 6).toFixed(2) : '0.00'}
+                            {p.wicketFellAt && ` • FOW: ${p.wicketFellAt}`}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className={`text-lg font-bold ${p.isActive ? 'text-primary' : ''}`}>
+                            {p.runs}
+                          </span>
+                          {p.isActive && (
+                            <Badge variant="outline" className="ml-2 text-xs">Active</Badge>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <p className="text-center text-muted-foreground">No innings data</p>
