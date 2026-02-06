@@ -870,7 +870,7 @@ export function LiveScoring({
                   {/* Non-Striker */}
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground">🏏</span>
+                      <span className="w-5"></span>
                       <span className="text-sm w-36 truncate">
                         {nonStrikerBatsman ? getPlayerName(nonStrikerBatsman) : <span className="text-muted-foreground italic">Non-Striker</span>}
                       </span>
