@@ -58,6 +58,13 @@ export function LiveScoring({
   const [previousOverBowler, setPreviousOverBowler] = useState<string>('');
   const [milestoneShown, setMilestoneShown] = useState<{ [key: string]: { fifty: boolean; century: boolean } }>({});
 
+  // Player selection modal state
+  type SelectionMode = 'opening' | 'new_batsman' | 'new_bowler' | null;
+  const [selectionMode, setSelectionMode] = useState<SelectionMode>(null);
+  const [pendingStriker, setPendingStriker] = useState('');
+  const [pendingNonStriker, setPendingNonStriker] = useState('');
+  const [pendingBowler, setPendingBowler] = useState('');
+
   // Partnership tracking
   interface Partnership {
     batsman1Id: string;
@@ -297,6 +304,26 @@ export function LiveScoring({
     return { target: targetRuns, reqRR: reqRate, currentRR: currRate };
   }, [currentInnings, innings, match.overs_per_innings, legalDeliveries]);
 
+  // Determine if we need player selection
+  const needsPlayerSelection = useMemo(() => {
+    if (!currentInnings) return false;
+    // Opening selection - no players selected yet
+    if (!strikerBatsman || !nonStrikerBatsman || !currentBowler) {
+      return true;
+    }
+    return false;
+  }, [currentInnings, strikerBatsman, nonStrikerBatsman, currentBowler]);
+
+  // Auto-trigger opening selection when innings starts
+  useEffect(() => {
+    if (currentInnings && !strikerBatsman && !nonStrikerBatsman && !currentBowler && !selectionMode) {
+      setSelectionMode('opening');
+      setPendingStriker('');
+      setPendingNonStriker('');
+      setPendingBowler('');
+    }
+  }, [currentInnings, strikerBatsman, nonStrikerBatsman, currentBowler, selectionMode]);
+
   useEffect(() => {
     fetchInnings();
   }, [match.id]);
@@ -442,6 +469,10 @@ export function LiveScoring({
       setPreviousOverBowler(currentBowler);
       setCurrentBowler(''); // Force bowler selection for next over
       
+      // Trigger bowler selection modal
+      setSelectionMode('new_bowler');
+      setPendingBowler('');
+      
       toast({ title: 'Over Complete', description: `Over ${currentOver + 1} completed. Please select a new bowler.` });
     }
 
@@ -452,6 +483,10 @@ export function LiveScoring({
       setIsWicket(false);
       setWicketType('');
       setSelectedFielder('');
+      
+      // Trigger new batsman selection modal
+      setSelectionMode('new_batsman');
+      setPendingStriker('');
     }
 
     // Check for milestone notifications (50 or 100 runs)
@@ -481,7 +516,38 @@ export function LiveScoring({
     if (!strikerBatsman) return;
     setRetiredHurtBatsmen(prev => [...prev, strikerBatsman]);
     setStrikerBatsman('');
-    toast({ title: 'Retired Hurt', description: 'Batsman marked as retired hurt and can return later.' });
+    
+    // Trigger new batsman selection modal
+    setSelectionMode('new_batsman');
+    setPendingStriker('');
+    
+    toast({ title: 'Retired Hurt', description: 'Batsman marked as retired hurt. Select new batsman.' });
+  };
+
+  // Confirm player selection from modal
+  const confirmPlayerSelection = () => {
+    if (selectionMode === 'opening') {
+      if (!pendingStriker || !pendingNonStriker || !pendingBowler) {
+        toast({ title: 'Select All Players', description: 'Please select both openers and the bowler.', variant: 'destructive' });
+        return;
+      }
+      setStrikerBatsman(pendingStriker);
+      setNonStrikerBatsman(pendingNonStriker);
+      setCurrentBowler(pendingBowler);
+    } else if (selectionMode === 'new_batsman') {
+      if (!pendingStriker) {
+        toast({ title: 'Select Batsman', description: 'Please select the new batsman.', variant: 'destructive' });
+        return;
+      }
+      setStrikerBatsman(pendingStriker);
+    } else if (selectionMode === 'new_bowler') {
+      if (!pendingBowler) {
+        toast({ title: 'Select Bowler', description: 'Please select the new bowler.', variant: 'destructive' });
+        return;
+      }
+      setCurrentBowler(pendingBowler);
+    }
+    setSelectionMode(null);
   };
 
   const bringBackRetiredHurt = (playerId: string) => {
@@ -634,7 +700,7 @@ export function LiveScoring({
 
         <TabsContent value="scoring" className="flex-1 flex flex-col overflow-auto p-0 m-0">
           {currentInnings ? (
-            <div className="flex flex-col flex-1">
+            <div className="flex flex-col flex-1 relative">
               {/* Score Display */}
               <div className="bg-gradient-to-b from-card to-muted text-card-foreground p-4 text-center border-b">
                 <p className="text-sm text-muted-foreground">{battingTeam.team_name}</p>
@@ -659,7 +725,108 @@ export function LiveScoring({
                 )}
               </div>
 
-              {/* Batsmen & Bowler Stats */}
+              {/* Player Selection Modal Overlay */}
+              {selectionMode && (
+                <div className="absolute inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col">
+                  <div className="p-4 border-b bg-primary text-primary-foreground">
+                    <h3 className="text-lg font-semibold text-center">
+                      {selectionMode === 'opening' && '🏏 Select Opening Players'}
+                      {selectionMode === 'new_batsman' && '🏏 Select New Batsman'}
+                      {selectionMode === 'new_bowler' && '🏐 Select New Bowler'}
+                    </h3>
+                  </div>
+                  
+                  <div className="flex-1 overflow-auto p-4 space-y-4">
+                    {/* Opening selection or new batsman */}
+                    {(selectionMode === 'opening' || selectionMode === 'new_batsman') && (
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium">
+                          {selectionMode === 'opening' ? 'Striker (Opening Batsman)' : 'New Batsman'}
+                        </Label>
+                        <Select value={pendingStriker} onValueChange={setPendingStriker}>
+                          <SelectTrigger className="w-full h-12 text-base">
+                            <SelectValue placeholder="Select batsman..." />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background border shadow-lg z-[60]">
+                            {availableBatsmen.filter(p => p.id !== pendingNonStriker && p.id !== nonStrikerBatsman).map((p) => (
+                              <SelectItem key={p.id} value={p.id} className="py-3">
+                                {p.name}
+                                {retiredHurtBatsmen.includes(p.id) && <span className="ml-2 text-warning">(Retired Hurt)</span>}
+                              </SelectItem>
+                            ))}
+                            {retiredHurtBatsmen.length > 0 && selectionMode === 'new_batsman' && (
+                              <>
+                                <div className="px-2 py-2 text-xs font-semibold text-muted-foreground border-t mt-1 bg-muted">Retired Hurt Players</div>
+                                {retiredHurtBatsmen.map((id) => {
+                                  const player = battingTeamPlayers.find(p => p.id === id);
+                                  if (!player || id === nonStrikerBatsman) return null;
+                                  return (
+                                    <SelectItem key={id} value={id} className="py-3 text-warning">
+                                      {player.name} (Retired Hurt - can return)
+                                    </SelectItem>
+                                  );
+                                })}
+                              </>
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                    
+                    {selectionMode === 'opening' && (
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium">Non-Striker (Opening Batsman)</Label>
+                        <Select value={pendingNonStriker} onValueChange={setPendingNonStriker}>
+                          <SelectTrigger className="w-full h-12 text-base">
+                            <SelectValue placeholder="Select batsman..." />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background border shadow-lg z-[60]">
+                            {availableBatsmen.filter(p => p.id !== pendingStriker).map((p) => (
+                              <SelectItem key={p.id} value={p.id} className="py-3">
+                                {p.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                    
+                    {/* Opening selection or new bowler */}
+                    {(selectionMode === 'opening' || selectionMode === 'new_bowler') && (
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium">
+                          {selectionMode === 'opening' ? 'Opening Bowler' : 'New Bowler'}
+                        </Label>
+                        {selectionMode === 'new_bowler' && previousOverBowler && (
+                          <p className="text-xs text-muted-foreground">
+                            {bowlingTeamPlayers.find(p => p.id === previousOverBowler)?.name} bowled the previous over
+                          </p>
+                        )}
+                        <Select value={pendingBowler} onValueChange={setPendingBowler}>
+                          <SelectTrigger className="w-full h-12 text-base">
+                            <SelectValue placeholder="Select bowler..." />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background border shadow-lg z-[60]">
+                            {availableBowlers.map((p) => (
+                              <SelectItem key={p.id} value={p.id} className="py-3">
+                                {p.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="p-4 border-t bg-muted">
+                    <Button onClick={confirmPlayerSelection} className="w-full h-12 text-base font-semibold">
+                      Confirm Selection
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Batsmen & Bowler Stats - Clean Display (no dropdowns) */}
               <div className="bg-background p-3 border-b">
                 <div className="text-xs text-muted-foreground mb-2 flex justify-between">
                   <span>🏏 Batsman</span>
@@ -673,44 +840,21 @@ export function LiveScoring({
                 </div>
                 
                 <div className="space-y-2">
+                  {/* Striker */}
                   <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-2">
                       <span className="text-primary font-bold">🏏</span>
-                      <Select value={strikerBatsman} onValueChange={setStrikerBatsman}>
-                        <SelectTrigger className="w-36 h-8 text-sm border-primary/50 bg-primary/10">
-                          <SelectValue placeholder="Striker *" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-background border shadow-lg z-50">
-                          {availableBatsmen.filter(p => p.id !== nonStrikerBatsman).map((p) => (
-                            <SelectItem key={p.id} value={p.id}>
-                              {p.name}
-                              {retiredHurtBatsmen.includes(p.id) && <span className="ml-1 text-orange-500">(RH)</span>}
-                            </SelectItem>
-                          ))}
-                          {retiredHurtBatsmen.length > 0 && (
-                            <>
-                              <div className="px-2 py-1 text-xs text-muted-foreground border-t mt-1">Retired Hurt</div>
-                              {retiredHurtBatsmen.map((id) => {
-                                const player = battingTeamPlayers.find(p => p.id === id);
-                                if (!player || id === nonStrikerBatsman) return null;
-                                return (
-                                  <SelectItem key={id} value={id} className="text-orange-600">
-                                    {player.name} (RH)
-                                  </SelectItem>
-                                );
-                              })}
-                            </>
-                          )}
-                        </SelectContent>
-                      </Select>
+                      <span className="text-sm font-medium w-36 truncate">
+                        {strikerBatsman ? getPlayerName(strikerBatsman) : <span className="text-muted-foreground italic">Striker *</span>}
+                      </span>
                     </div>
                     {strikerBatsman ? (
                       <div className="flex gap-4 text-sm text-center font-medium">
                         <span className="w-8 text-primary">{getBatsmanStats(strikerBatsman).runs}</span>
                         <span className="w-8">{getBatsmanStats(strikerBatsman).balls}</span>
-                        <span className="w-8 text-blue-600">{getBatsmanStats(strikerBatsman).fours}</span>
-                        <span className="w-8 text-purple-600">{getBatsmanStats(strikerBatsman).sixes}</span>
-                        <span className="w-12 text-orange-600">{getBatsmanStats(strikerBatsman).strikeRate.toFixed(1)}</span>
+                        <span className="w-8 text-accent-foreground">{getBatsmanStats(strikerBatsman).fours}</span>
+                        <span className="w-8 text-secondary-foreground">{getBatsmanStats(strikerBatsman).sixes}</span>
+                        <span className="w-12 text-muted-foreground">{getBatsmanStats(strikerBatsman).strikeRate.toFixed(1)}</span>
                       </div>
                     ) : (
                       <div className="flex gap-4 text-sm text-center text-muted-foreground">
@@ -723,22 +867,13 @@ export function LiveScoring({
                     )}
                   </div>
                   
+                  {/* Non-Striker */}
                   <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-2">
                       <span className="text-muted-foreground">🏏</span>
-                      <Select value={nonStrikerBatsman} onValueChange={setNonStrikerBatsman}>
-                        <SelectTrigger className="w-36 h-8 text-sm">
-                          <SelectValue placeholder="Non-Striker" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-background border shadow-lg z-50">
-                          {availableBatsmen.filter(p => p.id !== strikerBatsman).map((p) => (
-                            <SelectItem key={p.id} value={p.id}>
-                              {p.name}
-                              {retiredHurtBatsmen.includes(p.id) && <span className="ml-1 text-orange-500">(RH)</span>}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <span className="text-sm w-36 truncate">
+                        {nonStrikerBatsman ? getPlayerName(nonStrikerBatsman) : <span className="text-muted-foreground italic">Non-Striker</span>}
+                      </span>
                     </div>
                     {nonStrikerBatsman ? (
                       <div className="flex gap-4 text-sm text-center">
@@ -760,6 +895,7 @@ export function LiveScoring({
                   </div>
                 </div>
 
+                {/* Bowler Stats */}
                 <div className="mt-3 pt-3 border-t">
                   <div className="text-xs text-muted-foreground mb-2 flex justify-between">
                     <span>🏐 Bowler</span>
@@ -772,28 +908,16 @@ export function LiveScoring({
                     </div>
                   </div>
                   <div className="flex justify-between items-center">
-                    <Select value={currentBowler} onValueChange={setCurrentBowler}>
-                      <SelectTrigger className={`w-40 h-8 text-sm ${!currentBowler && previousOverBowler ? 'border-destructive bg-destructive/10' : ''}`}>
-                        <SelectValue placeholder={previousOverBowler ? "New Bowler *" : "Select Bowler *"} />
-                      </SelectTrigger>
-                      <SelectContent className="bg-background border shadow-lg z-50">
-                        {availableBowlers.map((p) => (
-                          <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                        ))}
-                        {previousOverBowler && (
-                          <div className="px-2 py-1 text-xs text-muted-foreground border-t mt-1">
-                            {bowlingTeamPlayers.find(p => p.id === previousOverBowler)?.name} bowled previous over
-                          </div>
-                        )}
-                      </SelectContent>
-                    </Select>
+                    <span className="text-sm font-medium w-40 truncate">
+                      {currentBowler ? getPlayerName(currentBowler) : <span className="text-muted-foreground italic">Bowler *</span>}
+                    </span>
                     {currentBowler ? (
                       <div className="flex gap-4 text-sm text-center font-medium">
                         <span className="w-8">{getBowlerStats(currentBowler).overs.toFixed(1)}</span>
                         <span className="w-8">{getBowlerStats(currentBowler).maidens}</span>
                         <span className="w-8 text-destructive">{getBowlerStats(currentBowler).runs}</span>
                         <span className="w-8 text-primary">{getBowlerStats(currentBowler).wickets}</span>
-                        <span className="w-12 text-orange-600">{getBowlerStats(currentBowler).economy.toFixed(2)}</span>
+                        <span className="w-12 text-muted-foreground">{getBowlerStats(currentBowler).economy.toFixed(2)}</span>
                       </div>
                     ) : (
                       <div className="flex gap-4 text-sm text-center text-muted-foreground">
@@ -876,7 +1000,7 @@ export function LiveScoring({
                   <Button 
                     variant="outline" 
                     onClick={handleRetiredHurt}
-                    className="text-xs text-orange-600 border-orange-300"
+                    className="text-xs text-warning border-warning/50"
                     disabled={!strikerBatsman}
                   >
                     R.Hurt
