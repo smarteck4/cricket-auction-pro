@@ -15,7 +15,6 @@ import { MatchForm } from '@/components/tournament/MatchForm';
 import { VenueForm } from '@/components/tournament/VenueForm';
 import { PointsTable } from '@/components/tournament/PointsTable';
 import { StatisticsPanel } from '@/components/tournament/StatisticsPanel';
-import { LiveScoring } from '@/components/tournament/LiveScoring';
 import { MatchCard } from '@/components/tournament/MatchCard';
 import { Plus, Trophy, Calendar, MapPin, BarChart3, Edit, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -33,14 +32,12 @@ export default function Tournaments() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [points, setPoints] = useState<TournamentPoints[]>([]);
   const [stats, setStats] = useState<PlayerMatchStats[]>([]);
-  const [teamPlayers, setTeamPlayers] = useState<{ owner_id: string; player_id: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null);
   const [tournamentDialogOpen, setTournamentDialogOpen] = useState(false);
   const [matchDialogOpen, setMatchDialogOpen] = useState(false);
   const [venueDialogOpen, setVenueDialogOpen] = useState(false);
-  const [scoringMatch, setScoringMatch] = useState<Match | null>(null);
   const [editingTournament, setEditingTournament] = useState<Tournament | null>(null);
   const [editingMatch, setEditingMatch] = useState<Match | null>(null);
 
@@ -63,7 +60,7 @@ export default function Tournaments() {
   };
 
   const fetchData = async () => {
-    const [tournamentsRes, matchesRes, venuesRes, teamsRes, playersRes, pointsRes, statsRes, teamPlayersRes] = await Promise.all([
+    const [tournamentsRes, matchesRes, venuesRes, teamsRes, playersRes, pointsRes, statsRes] = await Promise.all([
       supabase.from('tournaments').select('*').order('start_date', { ascending: false }),
       supabase.from('matches').select('*, venue:venues(*)').order('match_date'),
       supabase.from('venues').select('*'),
@@ -71,7 +68,6 @@ export default function Tournaments() {
       supabase.from('players').select('*'),
       supabase.from('tournament_points').select('*, team:owners(id, team_name, team_logo_url)'),
       supabase.from('player_match_stats').select('*'),
-      supabase.from('team_players').select('owner_id, player_id'),
     ]);
 
     if (tournamentsRes.data) setTournaments(tournamentsRes.data as Tournament[]);
@@ -81,7 +77,6 @@ export default function Tournaments() {
     if (playersRes.data) setPlayers(playersRes.data as Player[]);
     if (pointsRes.data) setPoints(pointsRes.data as TournamentPoints[]);
     if (statsRes.data) setStats(statsRes.data as PlayerMatchStats[]);
-    if (teamPlayersRes.data) setTeamPlayers(teamPlayersRes.data);
     setLoading(false);
   };
 
@@ -192,7 +187,7 @@ export default function Tournaments() {
                   </div>
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {tournamentMatches.map((m) => (
-                      <MatchCard key={m.id} match={m} team1={teams.find((t) => t.id === m.team1_id)} team2={teams.find((t) => t.id === m.team2_id)} onClick={() => setScoringMatch(m)} />
+                      <MatchCard key={m.id} match={m} team1={teams.find((t) => t.id === m.team1_id)} team2={teams.find((t) => t.id === m.team2_id)} onClick={() => navigate(`/tournaments/match/${m.id}/scoring`)} />
                     ))}
                     {tournamentMatches.length === 0 && <p className="text-muted-foreground col-span-full text-center py-8">No matches scheduled yet</p>}
                   </div>
@@ -224,27 +219,6 @@ export default function Tournaments() {
       <Dialog open={venueDialogOpen} onOpenChange={setVenueDialogOpen}>
         <DialogContent><DialogHeader><DialogTitle>Add Venue</DialogTitle></DialogHeader>
           <VenueForm onSubmit={saveVenue} onCancel={() => setVenueDialogOpen(false)} />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={!!scoringMatch} onOpenChange={() => setScoringMatch(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Live Scoring</DialogTitle></DialogHeader>
-          {scoringMatch && (
-            <LiveScoring
-              match={scoringMatch}
-              team1={teams.find((t) => t.id === scoringMatch.team1_id)!}
-              team2={teams.find((t) => t.id === scoringMatch.team2_id)!}
-              team1Players={players.filter((p) => 
-                teamPlayers.some(tp => tp.owner_id === scoringMatch.team1_id && tp.player_id === p.id)
-              )}
-              team2Players={players.filter((p) => 
-                teamPlayers.some(tp => tp.owner_id === scoringMatch.team2_id && tp.player_id === p.id)
-              )}
-              onClose={() => setScoringMatch(null)}
-              onMatchUpdate={fetchData}
-            />
-          )}
         </DialogContent>
       </Dialog>
     </div>
