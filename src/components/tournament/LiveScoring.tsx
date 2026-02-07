@@ -452,6 +452,85 @@ export function LiveScoring({
       })
       .eq('id', currentInnings.id);
 
+    // Check for automatic innings end conditions
+    const maxOvers = match.overs_per_innings;
+    const maxWickets = 10;
+    const allOversCompleted = isLegalDelivery && newLegalDeliveries >= maxOvers * 6;
+    const allOut = newTotalWickets >= maxWickets;
+
+    // For second innings: check if target is chased
+    const firstInnings = innings.find(i => i.innings_number === 1);
+    const isSecondInnings = currentInnings.innings_number === 2;
+    const targetRuns = firstInnings ? firstInnings.total_runs + 1 : 0;
+    const targetChased = isSecondInnings && newTotalRuns >= targetRuns;
+
+    // Auto-complete match if target chased
+    if (targetChased) {
+      // Mark innings as completed
+      await supabase.from('match_innings').update({ is_completed: true }).eq('id', currentInnings.id);
+      // Chasing team wins
+      await supabase.from('matches').update({ 
+        status: 'completed', 
+        winner_id: currentInnings.batting_team_id 
+      }).eq('id', match.id);
+      
+      const winningTeam = currentInnings.batting_team_id === team1.id ? team1 : team2;
+      const wicketsRemaining = maxWickets - newTotalWickets;
+      toast({ 
+        title: '🏆 Match Over!', 
+        description: `${winningTeam.team_name} wins by ${wicketsRemaining} wickets!` 
+      });
+      onMatchUpdate();
+      fetchInnings();
+      return;
+    }
+
+    // Auto-end innings if all overs completed or all out
+    if (allOversCompleted || allOut) {
+      // Mark current innings as completed
+      await supabase.from('match_innings').update({ is_completed: true }).eq('id', currentInnings.id);
+
+      if (isSecondInnings) {
+        // Second innings ended without chasing target - first batting team wins
+        const firstBattingTeamId = firstInnings?.batting_team_id;
+        const firstBattingTeam = firstBattingTeamId === team1.id ? team1 : team2;
+        const margin = targetRuns - 1 - newTotalRuns;
+        
+        await supabase.from('matches').update({ 
+          status: 'completed', 
+          winner_id: firstBattingTeamId 
+        }).eq('id', match.id);
+        
+        toast({ 
+          title: '🏆 Match Over!', 
+          description: `${firstBattingTeam.team_name} wins by ${margin} runs!` 
+        });
+        onMatchUpdate();
+        fetchInnings();
+        return;
+      } else {
+        // First innings ended - auto-start second innings
+        const reason = allOut ? 'All out' : 'Overs completed';
+        toast({ 
+          title: `1st Innings Completed`, 
+          description: `${reason}. Starting 2nd innings...` 
+        });
+        
+        // Reset player states for new innings
+        setStrikerBatsman('');
+        setNonStrikerBatsman('');
+        setCurrentBowler('');
+        setDismissedBatsmen([]);
+        setRetiredHurtBatsmen([]);
+        setPreviousOverBowler('');
+        setMilestoneShown({});
+        
+        // Auto-start second innings (swap batting/bowling teams)
+        await startInnings(currentInnings.bowling_team_id, currentInnings.batting_team_id);
+        return;
+      }
+    }
+
     // Rotate strike on odd runs (1, 3, 5)
     if (runs % 2 === 1) {
       const temp = strikerBatsman;
@@ -476,8 +555,8 @@ export function LiveScoring({
       toast({ title: 'Over Complete', description: `Over ${currentOver + 1} completed. Please select a new bowler.` });
     }
 
-    // Handle wicket - add batsman to dismissed list
-    if (isWicket) {
+    // Handle wicket - add batsman to dismissed list (only if innings not ended)
+    if (isWicket && newTotalWickets < maxWickets) {
       setDismissedBatsmen(prev => [...prev, strikerBatsman]);
       setStrikerBatsman('');
       setIsWicket(false);
@@ -487,21 +566,26 @@ export function LiveScoring({
       // Trigger new batsman selection modal
       setSelectionMode('new_batsman');
       setPendingStriker('');
+    } else if (isWicket) {
+      // Reset wicket state even if innings ended
+      setIsWicket(false);
+      setWicketType('');
+      setSelectedFielder('');
     }
 
     // Check for milestone notifications (50 or 100 runs)
     const updatedStats = getBatsmanStats(strikerBatsman);
-    const newRuns = updatedStats.runs + runs;
+    const newBatsmanRuns = updatedStats.runs + runs;
     const playerName = battingTeamPlayers.find(p => p.id === strikerBatsman)?.name || 'Batsman';
     const playerMilestones = milestoneShown[strikerBatsman] || { fifty: false, century: false };
     
-    if (newRuns >= 100 && !playerMilestones.century) {
+    if (newBatsmanRuns >= 100 && !playerMilestones.century) {
       toast({ 
         title: '🎉 CENTURY! 💯', 
         description: `${playerName} reaches a magnificent century!`,
       });
       setMilestoneShown(prev => ({ ...prev, [strikerBatsman]: { ...playerMilestones, century: true, fifty: true } }));
-    } else if (newRuns >= 50 && newRuns < 100 && !playerMilestones.fifty) {
+    } else if (newBatsmanRuns >= 50 && newBatsmanRuns < 100 && !playerMilestones.fifty) {
       toast({ 
         title: '🎉 FIFTY! 5️⃣0️⃣', 
         description: `${playerName} reaches a well-deserved half-century!`,
