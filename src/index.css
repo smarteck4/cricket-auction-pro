@@ -1,71 +1,53 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Source+Serif+Pro:wght@400;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600;700&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Cricket Auction Design System - Dark Professional with Golden Accents */
+/* Neumorphism + Glassmorphism Cricket Design System */
 
 @layer base {
   :root {
-    --background: 0 0% 96%;
-    --foreground: 0 0% 9%;
+    --background: 220 20% 93%;
+    --foreground: 220 25% 12%;
 
-    --card: 0 0% 98%;
-    --card-foreground: 0 0% 9%;
+    --card: 220 20% 96%;
+    --card-foreground: 220 25% 12%;
 
-    --popover: 0 0% 89%;
-    --popover-foreground: 0 0% 9%;
+    --popover: 220 20% 95%;
+    --popover-foreground: 220 25% 12%;
 
-    --primary: 161 93% 30%;
-    --primary-foreground: 151 80% 95%;
+    --primary: 158 64% 42%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 32%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 220 15% 85%;
+    --secondary-foreground: 220 25% 20%;
 
-    --muted: 0 0% 63%;
-    --muted-foreground: 0 0% 9%;
+    --muted: 220 15% 88%;
+    --muted-foreground: 220 10% 45%;
 
-    --accent: 166 76% 96%;
-    --accent-foreground: 173 80% 40%;
+    --accent: 45 93% 52%;
+    --accent-foreground: 220 25% 12%;
 
     --destructive: 0 72% 50%;
     --destructive-foreground: 0 85% 97%;
 
     --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 9%;
+    --warning-foreground: 220 25% 12%;
 
-    --border: 0 0% 83%;
-    --input: 0 0% 83%;
-    --ring: 161 93% 30%;
+    --border: 220 15% 87%;
+    --input: 220 15% 87%;
+    --ring: 158 64% 42%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
-    /* Custom Cricket Theme Colors */
+    /* Neumorphism shadows */
+    --neu-light: 220 20% 98%;
+    --neu-dark: 220 20% 80%;
+    --neu-shadow-light: hsl(var(--neu-light));
+    --neu-shadow-dark: hsl(var(--neu-dark));
+
+    /* Cricket Theme Colors */
     --gold: 45 93% 47%;
     --gold-light: 45 93% 60%;
     --gold-dark: 45 93% 35%;
@@ -77,74 +59,81 @@
 
     /* Category Colors */
     --platinum: 270 50% 60%;
-    --platinum-bg: 270 50% 95%;
+    --platinum-bg: 270 50% 92%;
     --gold-cat: 45 93% 47%;
-    --gold-cat-bg: 45 93% 95%;
+    --gold-cat-bg: 45 93% 92%;
     --silver-cat: 220 10% 60%;
-    --silver-cat-bg: 220 10% 95%;
+    --silver-cat-bg: 220 10% 92%;
     --emerging: 145 60% 45%;
-    --emerging-bg: 145 60% 95%;
+    --emerging-bg: 145 60% 92%;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 0 0% 9%;
-    --sidebar-primary: 161 93% 30%;
-    --sidebar-primary-foreground: 151 80% 95%;
-    --sidebar-accent: 0 0% 32%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 0 0% 83%;
-    --sidebar-ring: 161 93% 30%;
+    --sidebar-background: 220 20% 96%;
+    --sidebar-foreground: 220 25% 12%;
+    --sidebar-primary: 158 64% 42%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 15% 85%;
+    --sidebar-accent-foreground: 220 25% 20%;
+    --sidebar-border: 220 15% 87%;
+    --sidebar-ring: 158 64% 42%;
+    --sidebar: 220 20% 96%;
+
     --chart-1: 158 64% 51%;
     --chart-2: 141 69% 58%;
     --chart-3: 172 66% 50%;
     --chart-4: 82 77% 55%;
     --chart-5: 0 0% 45%;
-    --sidebar: 0 0% 98%;
-    --font-sans: 'Work Sans', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
-    --font-serif: 'Lora', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
-    --font-mono: 'Inconsolata', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+
+    --font-sans: 'Space Grotesk', 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-serif: ui-serif, Georgia, serif;
+    --font-mono: ui-monospace, SFMono-Regular, monospace;
+
     --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
     --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
     --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
     --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
-    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
-    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
-    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+    --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.1), 0 2px 4px -2px hsl(0 0% 0% / 0.1);
+    --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.1), 0 4px 6px -4px hsl(0 0% 0% / 0.1);
+    --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.1), 0 8px 10px -6px hsl(0 0% 0% / 0.1);
+    --shadow-2xl: 0 25px 50px -12px hsl(0 0% 0% / 0.25);
     --tracking-normal: 0em;
     --spacing: 0.25rem;
   }
 
   .dark {
-    --background: 0 0% 9%;
-    --foreground: 0 0% 98%;
+    --background: 220 25% 10%;
+    --foreground: 220 10% 93%;
 
-    --card: 0 0% 14%;
-    --card-foreground: 0 0% 98%;
+    --card: 220 25% 14%;
+    --card-foreground: 220 10% 93%;
 
-    --popover: 0 0% 25%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 220 25% 16%;
+    --popover-foreground: 220 10% 93%;
 
     --primary: 158 64% 51%;
-    --primary-foreground: 165 91% 9%;
+    --primary-foreground: 220 25% 8%;
 
-    --secondary: 0 0% 45%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 220 20% 22%;
+    --secondary-foreground: 220 10% 85%;
 
-    --muted: 0 0% 45%;
-    --muted-foreground: 0 0% 98%;
+    --muted: 220 20% 20%;
+    --muted-foreground: 220 10% 60%;
 
-    --accent: 178 84% 10%;
-    --accent-foreground: 172 66% 50%;
+    --accent: 45 93% 52%;
+    --accent-foreground: 220 25% 8%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 85% 97%;
 
     --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 98%;
+    --warning-foreground: 220 10% 93%;
 
-    --border: 0 0% 32%;
-    --input: 0 0% 32%;
+    --border: 220 20% 20%;
+    --input: 220 20% 20%;
     --ring: 158 64% 51%;
+
+    /* Neumorphism shadows - dark mode */
+    --neu-light: 220 25% 18%;
+    --neu-dark: 220 25% 6%;
 
     /* Dark mode category colors */
     --platinum-bg: 270 50% 15%;
@@ -152,29 +141,23 @@
     --silver-cat-bg: 220 10% 20%;
     --emerging-bg: 145 50% 15%;
 
-    --sidebar-background: 220 25% 10%;
-    --sidebar-foreground: 0 0% 98%;
+    --sidebar-background: 220 25% 12%;
+    --sidebar-foreground: 220 10% 93%;
     --sidebar-primary: 158 64% 51%;
-    --sidebar-primary-foreground: 165 91% 9%;
-    --sidebar-accent: 172 66% 50%;
-    --sidebar-accent-foreground: 178 84% 10%;
-    --sidebar-border: 0 0% 32%;
+    --sidebar-primary-foreground: 220 25% 8%;
+    --sidebar-accent: 220 20% 22%;
+    --sidebar-accent-foreground: 220 10% 85%;
+    --sidebar-border: 220 20% 20%;
     --sidebar-ring: 158 64% 51%;
+    --sidebar: 220 25% 14%;
+
     --chart-1: 156 71% 66%;
     --chart-2: 141 76% 73%;
     --chart-3: 170 76% 64%;
     --chart-4: 81 84% 67%;
     --chart-5: 0 0% 45%;
-    --sidebar: 0 0% 14%;
-    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
-    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
-    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
-    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
-    --radius: 0rem;
+
+    --radius: 1rem;
   }
 }
 
@@ -184,13 +167,64 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Inter', sans-serif;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Outfit', sans-serif;
     @apply font-semibold tracking-tight;
+  }
+}
+
+@layer components {
+  /* Neumorphism utilities */
+  .neu-flat {
+    box-shadow:
+      6px 6px 12px hsl(var(--neu-dark)),
+      -6px -6px 12px hsl(var(--neu-light));
+  }
+
+  .neu-pressed {
+    box-shadow:
+      inset 4px 4px 8px hsl(var(--neu-dark)),
+      inset -4px -4px 8px hsl(var(--neu-light));
+  }
+
+  .neu-convex {
+    background: linear-gradient(145deg, hsl(var(--neu-light)), hsl(var(--background)));
+    box-shadow:
+      6px 6px 12px hsl(var(--neu-dark)),
+      -6px -6px 12px hsl(var(--neu-light));
+  }
+
+  .neu-concave {
+    background: linear-gradient(145deg, hsl(var(--background)), hsl(var(--neu-light)));
+    box-shadow:
+      inset 4px 4px 8px hsl(var(--neu-dark)),
+      inset -4px -4px 8px hsl(var(--neu-light));
+  }
+
+  /* Glass utilities */
+  .glass {
+    background: hsl(var(--card) / 0.6);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid hsl(var(--border) / 0.3);
+  }
+
+  .glass-strong {
+    background: hsl(var(--card) / 0.8);
+    backdrop-filter: blur(24px) saturate(200%);
+    -webkit-backdrop-filter: blur(24px) saturate(200%);
+    border: 1px solid hsl(var(--border) / 0.4);
+  }
+
+  .glass-subtle {
+    background: hsl(var(--card) / 0.3);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid hsl(var(--border) / 0.2);
   }
 }
 
@@ -207,8 +241,19 @@
     background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(220 20% 98%) 100%);
   }
 
+  .gradient-primary {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(158 64% 60%) 100%);
+  }
+
   .text-gradient-gold {
     background: linear-gradient(135deg, hsl(45 93% 47%) 0%, hsl(35 90% 55%) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-primary {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(158 64% 60%) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -220,6 +265,10 @@
 
   .glow-green {
     box-shadow: 0 0 30px -5px hsl(145 60% 45% / 0.4);
+  }
+
+  .glow-primary {
+    box-shadow: 0 0 30px -5px hsl(var(--primary) / 0.5);
   }
 
   .card-shadow {
@@ -238,9 +287,27 @@
     animation: bidFlash 0.5s ease-out;
   }
 
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-glow-pulse {
+    animation: glowPulse 3s ease-in-out infinite;
+  }
+
   @keyframes bidFlash {
     0% { transform: scale(1); }
     50% { transform: scale(1.05); box-shadow: 0 0 40px hsl(45 93% 47% / 0.6); }
     100% { transform: scale(1); }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+  }
+
+  @keyframes glowPulse {
+    0%, 100% { box-shadow: 0 0 20px hsl(var(--primary) / 0.2); }
+    50% { box-shadow: 0 0 40px hsl(var(--primary) / 0.5); }
   }
 }
