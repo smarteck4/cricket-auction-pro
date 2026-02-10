@@ -113,7 +113,7 @@ export default function Players() {
         </Tabs>
 
         {/* Search and Filters */}
-        <Card className="mb-6">
+        <Card className="mb-6 neu-convex border-0">
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="relative flex-1">
@@ -190,7 +190,7 @@ export default function Players() {
 
       {/* Player Detail Modal */}
       <Dialog open={!!selectedPlayer} onOpenChange={open => !open && setSelectedPlayer(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto glass-strong border-0">
           {selectedPlayer && <>
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-3">

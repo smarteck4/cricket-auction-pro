@@ -152,7 +152,7 @@ export default function Tournaments() {
           <div className="lg:col-span-1 space-y-4">
             <h2 className="font-semibold text-lg">Tournaments</h2>
             {tournaments.map((t) => (
-              <Card key={t.id} className={`cursor-pointer transition-all ${selectedTournament?.id === t.id ? 'ring-2 ring-primary' : ''}`} onClick={() => setSelectedTournament(t)}>
+              <Card key={t.id} className={`cursor-pointer transition-all hover:scale-[1.02] neu-convex border-0 ${selectedTournament?.id === t.id ? 'ring-2 ring-primary neu-pressed' : ''}`} onClick={() => setSelectedTournament(t)}>
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                     <div>
@@ -197,7 +197,7 @@ export default function Tournaments() {
                 <TabsContent value="stats"><StatisticsPanel stats={stats} players={players} /></TabsContent>
               </Tabs>
             ) : (
-              <Card><CardContent className="p-8 text-center text-muted-foreground">Select a tournament to view details</CardContent></Card>
+              <Card className="neu-convex border-0"><CardContent className="p-8 text-center text-muted-foreground">Select a tournament to view details</CardContent></Card>
             )}
           </div>
         </div>

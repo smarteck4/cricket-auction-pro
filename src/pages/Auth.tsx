@@ -140,16 +140,16 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-md animate-fade-in-up">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl gradient-gold flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 rounded-2xl gradient-gold flex items-center justify-center mx-auto mb-4 neu-flat animate-float">
             <Gavel className="w-8 h-8 text-primary-foreground" />
           </div>
           <h1 className="font-display text-3xl font-bold">CricBid</h1>
           <p className="text-muted-foreground mt-2">Cricket Player Auction Platform</p>
         </div>
 
-        <Card className="card-shadow">
+        <Card className="neu-convex border-0">
           <CardHeader>
             <CardTitle className="font-display">Welcome</CardTitle>
             <CardDescription>
