@@ -314,15 +314,15 @@ export function LiveScoring({
     return false;
   }, [currentInnings, strikerBatsman, nonStrikerBatsman, currentBowler]);
 
-  // Auto-trigger opening selection when innings starts
+  // Auto-trigger opening selection only when innings has no balls yet
   useEffect(() => {
-    if (currentInnings && !strikerBatsman && !nonStrikerBatsman && !currentBowler && !selectionMode) {
+    if (currentInnings && !strikerBatsman && !nonStrikerBatsman && !currentBowler && !selectionMode && balls.length === 0) {
       setSelectionMode('opening');
       setPendingStriker('');
       setPendingNonStriker('');
       setPendingBowler('');
     }
-  }, [currentInnings, strikerBatsman, nonStrikerBatsman, currentBowler, selectionMode]);
+  }, [currentInnings, strikerBatsman, nonStrikerBatsman, currentBowler, selectionMode, balls.length]);
 
   useEffect(() => {
     fetchInnings();
@@ -366,6 +366,134 @@ export function LiveScoring({
     return (data as MatchBall[]) || [];
   };
 
+  const reconstructStateFromBalls = (ballsData: MatchBall[]) => {
+    if (!ballsData.length) return;
+
+    // Build dismissed batsmen list
+    const dismissed: string[] = [];
+    ballsData.forEach(ball => {
+      if (ball.is_wicket && ball.batsman_id) {
+        dismissed.push(ball.batsman_id);
+      }
+    });
+    setDismissedBatsmen(dismissed);
+
+    // Determine current striker & non-striker by replaying strike rotation
+    let striker = '';
+    let nonStriker = '';
+
+    // Find the opening pair from the first two distinct batsmen
+    const seenBatsmen: string[] = [];
+    for (const ball of ballsData) {
+      if (ball.batsman_id && !seenBatsmen.includes(ball.batsman_id)) {
+        seenBatsmen.push(ball.batsman_id);
+        if (seenBatsmen.length === 2) break;
+      }
+    }
+
+    if (seenBatsmen.length >= 2) {
+      striker = seenBatsmen[0];
+      nonStriker = seenBatsmen[1];
+    } else if (seenBatsmen.length === 1) {
+      striker = seenBatsmen[0];
+    }
+
+    // Replay all balls to track strike rotation and new batsmen
+    for (const ball of ballsData) {
+      const isLegal = !ball.extra_type || !['wide', 'no_ball'].includes(ball.extra_type);
+
+      // If a wicket happened, the dismissed batsman is replaced by the next new batsman
+      if (ball.is_wicket && ball.batsman_id) {
+        // Find who replaced this batsman – look ahead for a new batsman_id
+        const nextNewBatsman = ballsData
+          .slice(ballsData.indexOf(ball) + 1)
+          .find(b => b.batsman_id && b.batsman_id !== striker && b.batsman_id !== nonStriker && !dismissed.includes(b.batsman_id));
+        
+        if (ball.batsman_id === striker) {
+          striker = nextNewBatsman?.batsman_id || '';
+        } else if (ball.batsman_id === nonStriker) {
+          nonStriker = nextNewBatsman?.batsman_id || '';
+        }
+      }
+
+      // Rotate strike on odd runs
+      if (ball.runs_scored % 2 === 1) {
+        const temp = striker;
+        striker = nonStriker;
+        nonStriker = temp;
+      }
+    }
+
+    // Count legal deliveries to check if we're at end of over (strike rotates)
+    let legalCount = 0;
+    let lastOverBoundary = 0;
+    for (const ball of ballsData) {
+      const isLegal = !ball.extra_type || !['wide', 'no_ball'].includes(ball.extra_type);
+      if (isLegal) legalCount++;
+      if (isLegal && legalCount % 6 === 0) {
+        // Over boundary - swap strike
+        const temp = striker;
+        striker = nonStriker;
+        nonStriker = temp;
+        lastOverBoundary = legalCount;
+      }
+    }
+
+    // Determine current bowler and previous over bowler
+    const lastBall = ballsData[ballsData.length - 1];
+    const currentBowlerId = lastBall?.bowler_id || '';
+    
+    // Find previous over's bowler
+    let prevOverBowler = '';
+    if (legalCount > 0) {
+      const currentOverNum = Math.floor((legalCount - 1) / 6);
+      // Find a ball from the previous over
+      let prevLegal = 0;
+      for (const ball of ballsData) {
+        const isLegal = !ball.extra_type || !['wide', 'no_ball'].includes(ball.extra_type);
+        if (isLegal) prevLegal++;
+        const overOfBall = Math.floor((prevLegal - 1) / 6);
+        if (overOfBall === currentOverNum - 1 && ball.bowler_id) {
+          prevOverBowler = ball.bowler_id;
+        }
+      }
+    }
+
+    // Check if we're exactly at end of over (need new bowler)
+    const atOverEnd = legalCount > 0 && legalCount % 6 === 0;
+    // Check if last ball was a wicket (need new batsman)
+    const lastWasWicket = lastBall?.is_wicket && !dismissed.includes(striker) ? false : (lastBall?.is_wicket && striker === '');
+
+    // Set state
+    if (striker && !dismissed.includes(striker)) {
+      setStrikerBatsman(striker);
+    }
+    if (nonStriker && !dismissed.includes(nonStriker)) {
+      setNonStrikerBatsman(nonStriker);
+    }
+
+    setPreviousOverBowler(prevOverBowler);
+
+    if (atOverEnd) {
+      // Need new bowler selection
+      setPreviousOverBowler(currentBowlerId);
+      setCurrentBowler('');
+      setSelectionMode('new_bowler');
+      setPendingBowler('');
+    } else {
+      setCurrentBowler(currentBowlerId);
+    }
+
+    // If striker is empty (wicket on last ball), need new batsman
+    if (!striker || dismissed.includes(striker)) {
+      setStrikerBatsman('');
+      if (!atOverEnd) {
+        setSelectionMode('new_batsman');
+        setPendingStriker('');
+      }
+    }
+  };
+
   const fetchBalls = async (inningsId: string) => {
     const { data } = await supabase
       .from('match_balls')
@@ -373,7 +501,11 @@ export function LiveScoring({
       .eq('innings_id', inningsId)
       .order('created_at');
 
-    if (data) setBalls(data as MatchBall[]);
+    if (data) {
+      const ballsData = data as MatchBall[];
+      setBalls(ballsData);
+      reconstructStateFromBalls(ballsData);
+    }
   };
 
   const startInnings = async (battingTeamId: string, bowlingTeamId: string) => {
