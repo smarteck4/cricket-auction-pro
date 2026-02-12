@@ -59,7 +59,7 @@ export function LiveScoring({
   const [milestoneShown, setMilestoneShown] = useState<{ [key: string]: { fifty: boolean; century: boolean } }>({});
 
   // Player selection modal state
-  type SelectionMode = 'opening' | 'new_batsman' | 'new_bowler' | null;
+  type SelectionMode = 'opening' | 'new_batsman' | 'new_bowler' | 'new_batsman_and_bowler' | null;
   const [selectionMode, setSelectionMode] = useState<SelectionMode>(null);
   const [pendingStriker, setPendingStriker] = useState('');
   const [pendingNonStriker, setPendingNonStriker] = useState('');
@@ -150,9 +150,11 @@ export function LiveScoring({
     balls.forEach(ball => {
       if (ball.batsman_id) {
         const existing = statsMap.get(ball.batsman_id) || { runs: 0, balls: 0, fours: 0, sixes: 0, strikeRate: 0 };
-        // Count ball only if it's not a wide (batsman doesn't face wides)
+        // Batsman doesn't face wides
         const isBallFaced = ball.extra_type !== 'wide';
-        const runs = ball.runs_scored;
+        // Only credit runs to batsman for normal deliveries and no-balls (not byes/leg byes/wides)
+        const isBatsmanRun = !ball.extra_type || ball.extra_type === 'no_ball';
+        const runs = isBatsmanRun ? ball.runs_scored : 0;
         
         existing.runs += runs;
         existing.balls += isBallFaced ? 1 : 0;
@@ -186,8 +188,9 @@ export function LiveScoring({
         const existing = statsMap.get(ball.bowler_id) || { overs: 0, maidens: 0, runs: 0, wickets: 0, economy: 0, legalBalls: 0 };
         const isLegal = !ball.extra_type || !['wide', 'no_ball'].includes(ball.extra_type);
         
-        // Runs conceded (includes extras for wide/no ball)
-        const runsConceded = ball.runs_scored + ball.extras;
+        // Only charge bowler for runs off bat + wide/NB extras (not byes/leg byes)
+        const isBowlerCharged = !ball.extra_type || ball.extra_type === 'wide' || ball.extra_type === 'no_ball';
+        const runsConceded = isBowlerCharged ? (ball.runs_scored + ball.extras) : 0;
         existing.runs += runsConceded;
         
         if (isLegal) {
@@ -369,128 +372,116 @@ export function LiveScoring({
   const reconstructStateFromBalls = (ballsData: MatchBall[]) => {
     if (!ballsData.length) return;
 
-    // Build dismissed batsmen list
+    // Collect all unique batsmen in appearance order and dismissed list
+    const allBatsmen: string[] = [];
     const dismissed: string[] = [];
-    ballsData.forEach(ball => {
+    for (const ball of ballsData) {
+      if (ball.batsman_id && !allBatsmen.includes(ball.batsman_id)) {
+        allBatsmen.push(ball.batsman_id);
+      }
       if (ball.is_wicket && ball.batsman_id) {
         dismissed.push(ball.batsman_id);
       }
-    });
+    }
     setDismissedBatsmen(dismissed);
 
-    // Determine current striker & non-striker by replaying strike rotation
-    let striker = '';
-    let nonStriker = '';
+    // Single-pass replay to determine current striker/non-striker
+    let striker = allBatsmen[0] || '';
+    let nonStriker = allBatsmen[1] || '';
+    let legalCount = 0;
+    let nextBatsmanIdx = 2;
 
-    // Find the opening pair from the first two distinct batsmen
-    const seenBatsmen: string[] = [];
     for (const ball of ballsData) {
-      if (ball.batsman_id && !seenBatsmen.includes(ball.batsman_id)) {
-        seenBatsmen.push(ball.batsman_id);
-        if (seenBatsmen.length === 2) break;
+      const isWide = ball.extra_type === 'wide';
+      const isNoBall = ball.extra_type === 'no_ball';
+      const isBye = ball.extra_type === 'bye' || ball.extra_type === 'leg_bye';
+      const isLegal = !isWide && !isNoBall;
+
+      // Strike rotation based on delivery type
+      let rotationRuns = 0;
+      if (isWide) {
+        rotationRuns = 0; // no strike change on wide
+      } else if (isBye) {
+        rotationRuns = ball.extras; // byes: batsmen physically run
+      } else {
+        rotationRuns = ball.runs_scored; // bat runs or NB bat runs
       }
-    }
 
-    if (seenBatsmen.length >= 2) {
-      striker = seenBatsmen[0];
-      nonStriker = seenBatsmen[1];
-    } else if (seenBatsmen.length === 1) {
-      striker = seenBatsmen[0];
-    }
+      if (rotationRuns % 2 === 1) {
+        [striker, nonStriker] = [nonStriker, striker];
+      }
 
-    // Replay all balls to track strike rotation and new batsmen
-    for (const ball of ballsData) {
-      const isLegal = !ball.extra_type || !['wide', 'no_ball'].includes(ball.extra_type);
-
-      // If a wicket happened, the dismissed batsman is replaced by the next new batsman
+      // Wicket: dismiss and replace batsman
       if (ball.is_wicket && ball.batsman_id) {
-        // Find who replaced this batsman – look ahead for a new batsman_id
-        const nextNewBatsman = ballsData
-          .slice(ballsData.indexOf(ball) + 1)
-          .find(b => b.batsman_id && b.batsman_id !== striker && b.batsman_id !== nonStriker && !dismissed.includes(b.batsman_id));
-        
-        if (ball.batsman_id === striker) {
-          striker = nextNewBatsman?.batsman_id || '';
-        } else if (ball.batsman_id === nonStriker) {
-          nonStriker = nextNewBatsman?.batsman_id || '';
+        const dismissedId = ball.batsman_id;
+        const replacement = nextBatsmanIdx < allBatsmen.length ? allBatsmen[nextBatsmanIdx] : '';
+        nextBatsmanIdx++;
+
+        if (dismissedId === striker) {
+          striker = replacement;
+        } else if (dismissedId === nonStriker) {
+          nonStriker = replacement;
         }
       }
 
-      // Rotate strike on odd runs
-      if (ball.runs_scored % 2 === 1) {
-        const temp = striker;
-        striker = nonStriker;
-        nonStriker = temp;
+      // Over end: swap strike
+      if (isLegal) {
+        legalCount++;
+        if (legalCount % 6 === 0) {
+          [striker, nonStriker] = [nonStriker, striker];
+        }
       }
     }
 
-    // Count legal deliveries to check if we're at end of over (strike rotates)
-    let legalCount = 0;
-    let lastOverBoundary = 0;
-    for (const ball of ballsData) {
-      const isLegal = !ball.extra_type || !['wide', 'no_ball'].includes(ball.extra_type);
-      if (isLegal) legalCount++;
-      if (isLegal && legalCount % 6 === 0) {
-        // Over boundary - swap strike
-        const temp = striker;
-        striker = nonStriker;
-        nonStriker = temp;
-        lastOverBoundary = legalCount;
-      }
-    }
+    // Set reconstructed batting state
+    setStrikerBatsman(striker);
+    setNonStrikerBatsman(nonStriker);
 
-    // Determine current bowler and previous over bowler
+    // Determine bowler state
     const lastBall = ballsData[ballsData.length - 1];
     const currentBowlerId = lastBall?.bowler_id || '';
-    
+
     // Find previous over's bowler
     let prevOverBowler = '';
     if (legalCount > 0) {
       const currentOverNum = Math.floor((legalCount - 1) / 6);
-      // Find a ball from the previous over
-      let prevLegal = 0;
+      let tmpLegal = 0;
       for (const ball of ballsData) {
         const isLegal = !ball.extra_type || !['wide', 'no_ball'].includes(ball.extra_type);
-        if (isLegal) prevLegal++;
-        const overOfBall = Math.floor((prevLegal - 1) / 6);
+        if (isLegal) tmpLegal++;
+        const overOfBall = Math.floor((tmpLegal - 1) / 6);
         if (overOfBall === currentOverNum - 1 && ball.bowler_id) {
           prevOverBowler = ball.bowler_id;
         }
       }
     }
 
-    // Check if we're exactly at end of over (need new bowler)
     const atOverEnd = legalCount > 0 && legalCount % 6 === 0;
-    // Check if last ball was a wicket (need new batsman)
-    const lastWasWicket = lastBall?.is_wicket && !dismissed.includes(striker) ? false : (lastBall?.is_wicket && striker === '');
 
-    // Set state
-    if (striker && !dismissed.includes(striker)) {
-      setStrikerBatsman(striker);
-    }
-    if (nonStriker && !dismissed.includes(nonStriker)) {
-      setNonStrikerBatsman(nonStriker);
-    }
-
-    setPreviousOverBowler(prevOverBowler);
-
-    if (atOverEnd) {
-      // Need new bowler selection
+    // Determine what selections are needed
+    if (atOverEnd && !striker) {
+      // Wicket on last ball of over: need both new batsman and bowler
+      setPreviousOverBowler(currentBowlerId);
+      setCurrentBowler('');
+      setSelectionMode('new_batsman_and_bowler');
+      setPendingStriker('');
+      setPendingBowler('');
+    } else if (atOverEnd) {
+      // Over just ended: need new bowler
       setPreviousOverBowler(currentBowlerId);
       setCurrentBowler('');
       setSelectionMode('new_bowler');
       setPendingBowler('');
-    } else {
+    } else if (!striker) {
+      // Last ball was a wicket: need new batsman
+      setPreviousOverBowler(prevOverBowler);
       setCurrentBowler(currentBowlerId);
-    }
-
-    // If striker is empty (wicket on last ball), need new batsman
-    if (!striker || dismissed.includes(striker)) {
-      setStrikerBatsman('');
-      if (!atOverEnd) {
-        setSelectionMode('new_batsman');
-        setPendingStriker('');
-      }
+      setSelectionMode('new_batsman');
+      setPendingStriker('');
+    } else {
+      // Normal state: all players set
+      setPreviousOverBowler(prevOverBowler);
+      setCurrentBowler(currentBowlerId);
     }
   };
 
@@ -575,18 +566,21 @@ export function LiveScoring({
     const newTotalWickets = currentInnings.total_wickets + (isWicket ? 1 : 0);
     const newTotalOvers = isLegalDelivery ? (overNum + (ballNum === 6 ? 0 : ballNum / 10)) : currentInnings.total_overs;
 
+    const newExtras = currentInnings.extras + extraRuns;
+
     await supabase
       .from('match_innings')
       .update({
         total_runs: newTotalRuns,
         total_wickets: newTotalWickets,
         total_overs: newTotalOvers,
+        extras: newExtras,
       })
       .eq('id', currentInnings.id);
 
     // Check for automatic innings end conditions
     const maxOvers = match.overs_per_innings;
-    const maxWickets = 10;
+    const maxWickets = Math.min(10, battingTeamPlayers.length - 1);
     const allOversCompleted = isLegalDelivery && newLegalDeliveries >= maxOvers * 6;
     const allOut = newTotalWickets >= maxWickets;
 
@@ -663,39 +657,56 @@ export function LiveScoring({
       }
     }
 
-    // Rotate strike on odd runs (1, 3, 5)
-    if (runs % 2 === 1) {
+    // Determine strike rotation based on delivery type
+    let rotationRuns = runs;
+    if (extraTypeVal === 'wide') {
+      rotationRuns = 0; // no strike change on wide (batsman didn't face)
+    } else if (extraTypeVal === 'bye' || extraTypeVal === 'leg_bye') {
+      rotationRuns = extraRuns; // batsmen physically ran the bye/LB runs
+    }
+    // For NB: rotation based on bat runs (runs param)
+
+    if (rotationRuns % 2 === 1) {
       const temp = strikerBatsman;
       setStrikerBatsman(nonStrikerBatsman);
       setNonStrikerBatsman(temp);
     }
 
-    // Auto rotate strike at end of over (after 6 legal deliveries)
-    if (isLegalDelivery && ballNum === 6) {
+    const isOverEnd = isLegalDelivery && ballNum === 6;
+    const isWicketActive = isWicket && newTotalWickets < maxWickets;
+
+    // Handle combined wicket + over end on same ball
+    if (isWicketActive && isOverEnd) {
+      setDismissedBatsmen(prev => [...prev, strikerBatsman]);
+      // Over end swap: non-striker becomes striker, new batsman goes to non-striker
+      setStrikerBatsman(nonStrikerBatsman);
+      setNonStrikerBatsman('');
+      setPreviousOverBowler(currentBowler);
+      setCurrentBowler('');
+      setIsWicket(false);
+      setWicketType('');
+      setSelectedFielder('');
+      setSelectionMode('new_batsman_and_bowler');
+      setPendingStriker('');
+      setPendingBowler('');
+      toast({ title: 'Wicket + Over Complete', description: 'Select new batsman and bowler.' });
+    } else if (isOverEnd) {
+      // Auto rotate strike at end of over
       const temp = strikerBatsman;
       setStrikerBatsman(nonStrikerBatsman);
       setNonStrikerBatsman(temp);
-      
-      // Set previous over bowler to enforce bowler change
       setPreviousOverBowler(currentBowler);
-      setCurrentBowler(''); // Force bowler selection for next over
-      
-      // Trigger bowler selection modal
+      setCurrentBowler('');
       setSelectionMode('new_bowler');
       setPendingBowler('');
-      
       toast({ title: 'Over Complete', description: `Over ${currentOver + 1} completed. Please select a new bowler.` });
-    }
-
-    // Handle wicket - add batsman to dismissed list (only if innings not ended)
-    if (isWicket && newTotalWickets < maxWickets) {
+    } else if (isWicketActive) {
+      // Handle wicket only
       setDismissedBatsmen(prev => [...prev, strikerBatsman]);
       setStrikerBatsman('');
       setIsWicket(false);
       setWicketType('');
       setSelectedFielder('');
-      
-      // Trigger new batsman selection modal
       setSelectionMode('new_batsman');
       setPendingStriker('');
     } else if (isWicket) {
@@ -761,6 +772,14 @@ export function LiveScoring({
         toast({ title: 'Select Bowler', description: 'Please select the new bowler.', variant: 'destructive' });
         return;
       }
+      setCurrentBowler(pendingBowler);
+    } else if (selectionMode === 'new_batsman_and_bowler') {
+      if (!pendingStriker || !pendingBowler) {
+        toast({ title: 'Select Players', description: 'Please select new batsman and bowler.', variant: 'destructive' });
+        return;
+      }
+      // New batsman goes to non-striker (over changed, existing batsman is now striker)
+      setNonStrikerBatsman(pendingStriker);
       setCurrentBowler(pendingBowler);
     }
     setSelectionMode(null);
@@ -949,12 +968,13 @@ export function LiveScoring({
                       {selectionMode === 'opening' && '🏏 Select Opening Players'}
                       {selectionMode === 'new_batsman' && '🏏 Select New Batsman'}
                       {selectionMode === 'new_bowler' && '🏐 Select New Bowler'}
+                      {selectionMode === 'new_batsman_and_bowler' && '🏏 Select New Batsman & Bowler'}
                     </h3>
                   </div>
                   
                   <div className="flex-1 overflow-auto p-4 space-y-4">
                     {/* Opening selection or new batsman */}
-                    {(selectionMode === 'opening' || selectionMode === 'new_batsman') && (
+                    {(selectionMode === 'opening' || selectionMode === 'new_batsman' || selectionMode === 'new_batsman_and_bowler') && (
                       <div className="space-y-3">
                         <Label className="text-sm font-medium">
                           {selectionMode === 'opening' ? 'Striker (Opening Batsman)' : 'New Batsman'}
@@ -1008,7 +1028,7 @@ export function LiveScoring({
                     )}
                     
                     {/* Opening selection or new bowler */}
-                    {(selectionMode === 'opening' || selectionMode === 'new_bowler') && (
+                    {(selectionMode === 'opening' || selectionMode === 'new_bowler' || selectionMode === 'new_batsman_and_bowler') && (
                       <div className="space-y-3">
                         <Label className="text-sm font-medium">
                           {selectionMode === 'opening' ? 'Opening Bowler' : 'New Bowler'}
@@ -1203,8 +1223,8 @@ export function LiveScoring({
                 <div className="grid grid-cols-7 gap-2 mb-3">
                   <Button variant="outline" onClick={() => recordBall(0, true, 'leg_bye')} className="text-xs">LB</Button>
                   <Button variant="outline" onClick={() => recordBall(0, true, 'bye')} className="text-xs">Bye</Button>
-                  <Button variant="outline" onClick={() => recordBall(1, true, 'wide')} className="text-xs">Wide</Button>
-                  <Button variant="outline" onClick={() => recordBall(1, true, 'no_ball')} className="text-xs">NB</Button>
+                   <Button variant="outline" onClick={() => recordBall(0, true, 'wide')} className="text-xs">Wide</Button>
+                   <Button variant="outline" onClick={() => recordBall(0, true, 'no_ball')} className="text-xs">NB</Button>
                   <Button variant="outline" onClick={undoLastBall} className="text-xs"><RotateCcw className="h-4 w-4" /></Button>
                   <Button 
                     variant={isWicket ? 'destructive' : 'outline'} 
