@@ -1019,7 +1019,7 @@ export function LiveScoring({
           </TabsList>
         </div>
 
-        <TabsContent value="summary" className="flex-1 overflow-auto p-0 m-0">
+        <TabsContent value="summary" className="flex-1 min-h-0 overflow-auto p-0 m-0">
           <MatchSummary
             match={match}
             team1={team1}
