@@ -62,8 +62,8 @@ export function AuctionPlayerDisplay({ player, basePrice, currentBid, isActive }
         </div>
 
         {/* Player Name - prominent display */}
-        <div className="absolute top-24 left-6 z-10">
-          <h2 className="font-display text-3xl md:text-4xl font-bold text-white tracking-wide drop-shadow-lg uppercase">
+        <div className="absolute top-20 sm:top-24 left-4 sm:left-6 z-10 right-4 sm:right-auto">
+          <h2 className="font-display text-xl sm:text-3xl md:text-4xl font-bold text-white tracking-wide drop-shadow-lg uppercase truncate">
             {player.name}
           </h2>
         </div>
