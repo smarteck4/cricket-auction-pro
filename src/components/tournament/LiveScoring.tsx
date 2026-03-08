@@ -341,7 +341,7 @@ export function LiveScoring({
     fetchInnings();
   }, [match.id]);
 
-  const fetchInnings = async () => {
+  const fetchInnings = async (skipReconstruct = false) => {
     setLoading(true);
     const { data } = await supabase
       .from('match_innings')
@@ -354,7 +354,17 @@ export function LiveScoring({
       const active = data.find((i) => !i.is_completed);
       if (active) {
         setCurrentInnings(active as MatchInnings);
-        fetchBalls(active.id);
+        if (skipReconstruct) {
+          // Only refresh balls data without reconstructing player state
+          const { data: ballsData } = await supabase
+            .from('match_balls')
+            .select('*')
+            .eq('innings_id', active.id)
+            .order('created_at');
+          if (ballsData) setBalls(ballsData as MatchBall[]);
+        } else {
+          fetchBalls(active.id);
+        }
       }
 
       const ballsPromises = data.map((inn) => fetchBallsForInnings(inn.id));
