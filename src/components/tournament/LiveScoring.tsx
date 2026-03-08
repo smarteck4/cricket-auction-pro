@@ -974,7 +974,7 @@ export function LiveScoring({
   }
 
   return (
-    <div className="flex flex-col h-full max-h-[85vh] rounded-xl overflow-hidden border border-border/50 shadow-2xl shadow-primary/5 bg-card">
+    <div className="flex flex-col h-full min-h-0 max-h-[85vh] rounded-xl overflow-hidden border border-border/50 shadow-2xl shadow-primary/5 bg-card">
       {/* Premium Header */}
       <div className="relative bg-gradient-to-r from-[hsl(var(--slate-dark))] via-[hsl(var(--slate))] to-[hsl(var(--slate-dark))] text-white px-4 py-3">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImciIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTTAgMGg2MHY2MEgweiIgZmlsbD0ibm9uZSIvPjxjaXJjbGUgY3g9IjMwIiBjeT0iMzAiIHI9IjEuNSIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjA1KSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3QgZmlsbD0idXJsKCNnKSIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIvPjwvc3ZnPg==')] opacity-40" />
