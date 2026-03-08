@@ -788,6 +788,7 @@ export type Database = {
         }
         Returns: Json
       }
+      re_auction_player: { Args: { p_player_id: string }; Returns: Json }
     }
     Enums: {
       app_role: "spectator" | "admin" | "owner"
