@@ -74,6 +74,13 @@ export function Header() {
                 </Link>
               </Button>
 
+              <Button variant="ghost" asChild className="hidden sm:flex">
+                <Link to="/analytics">
+                  <BarChart3 className="w-4 h-4 mr-2" />
+                  Analytics
+                </Link>
+              </Button>
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="icon" className="rounded-full neu-flat border-0">
