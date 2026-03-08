@@ -384,6 +384,7 @@ export default function AuctionAnalytics() {
         </div>
 
         {/* Summary Cards */}
+        <div ref={reportRef} className="space-y-8">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card className="card-shadow">
             <CardContent className="pt-6">
