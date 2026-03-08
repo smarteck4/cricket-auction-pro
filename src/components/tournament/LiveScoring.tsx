@@ -672,7 +672,7 @@ export function LiveScoring({
     if (extraTypeVal === 'wide') {
       rotationRuns = 0; // no strike change on wide (batsman didn't face)
     } else if (extraTypeVal === 'bye' || extraTypeVal === 'leg_bye') {
-      rotationRuns = runs; // byes/LBs: physical runs taken (runs_scored field)
+      rotationRuns = extraRuns; // byes/LBs: batsmen physically ran these runs
     }
     // For NB: rotation based on bat runs (runs param)
 
