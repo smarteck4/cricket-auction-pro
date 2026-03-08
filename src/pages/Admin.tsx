@@ -49,6 +49,7 @@ export default function Admin() {
   const [timerDuration, setTimerDuration] = useState(30);
   const [imageUploadType, setImageUploadType] = useState<'url' | 'file'>('url');
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [editImageFile, setEditImageFile] = useState<File | null>(null);
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
 
   // Search and filter state
@@ -264,14 +265,24 @@ export default function Admin() {
 
   const updatePlayer = async () => {
     if (!editingPlayer) return;
-    const { error } = await supabase.from('players').update(editingPlayer).eq('id', editingPlayer.id);
+    setUploadingImage(true);
+
+    let profileUrl = editingPlayer.profile_picture_url;
+    if (editImageFile) {
+      const uploadedUrl = await uploadPlayerImage(editImageFile);
+      if (uploadedUrl) profileUrl = uploadedUrl;
+    }
+
+    const { error } = await supabase.from('players').update({ ...editingPlayer, profile_picture_url: profileUrl }).eq('id', editingPlayer.id);
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
       toast({ title: 'Player updated!' });
       setEditingPlayer(null);
+      setEditImageFile(null);
       fetchData();
     }
+    setUploadingImage(false);
   };
 
   const deletePlayer = async (id: string) => {
@@ -712,7 +723,7 @@ export default function Admin() {
             {/* Edit Player Dialog */}
             <PlayerFormModal
               open={!!editingPlayer}
-              onOpenChange={(open) => { if (!open) setEditingPlayer(null); }}
+              onOpenChange={(open) => { if (!open) { setEditingPlayer(null); setEditImageFile(null); } }}
               player={editingPlayer ? {
                 name: editingPlayer.name,
                 age: editingPlayer.age,
@@ -737,6 +748,10 @@ export default function Admin() {
               onSubmit={updatePlayer}
               title="Edit Player"
               submitLabel="Save Changes"
+              isSubmitting={uploadingImage}
+              showImageUpload={true}
+              onImageFileSelect={setEditImageFile}
+              selectedImageFile={editImageFile}
             />
           </TabsContent>
 
