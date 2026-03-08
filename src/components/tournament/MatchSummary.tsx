@@ -251,8 +251,6 @@ export function MatchSummary({
   }
 
   const matchResult = getMatchResult();
-  const summaryRef = useRef<HTMLDivElement>(null);
-  const [exporting, setExporting] = useState(false);
 
   const exportMatchPDF = async () => {
     if (!summaryRef.current) return;
