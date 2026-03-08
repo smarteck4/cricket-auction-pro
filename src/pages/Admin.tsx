@@ -415,12 +415,10 @@ export default function Admin() {
   };
 
   // Re-auction player with updated stats (auto-category)
-  const reAuctionPlayer = async (player: Player) => {
-    const confirmMsg = player.auction_status === 'sold'
-      ? `Re-auction ${player.name}? This will remove them from their current team and refund the full purchase price.`
-      : `Re-auction ${player.name}? Their category will be auto-assigned based on updated stats.`;
-    
-    if (!window.confirm(confirmMsg)) return;
+  const confirmReAuction = async () => {
+    const player = reAuctionTarget;
+    if (!player) return;
+    setReAuctionTarget(null);
 
     const { data, error } = await supabase.rpc('re_auction_player', { p_player_id: player.id });
     
