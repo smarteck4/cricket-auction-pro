@@ -842,6 +842,64 @@ export default function Admin() {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Premium Re-auction Confirmation Dialog */}
+      <AlertDialog open={!!reAuctionTarget} onOpenChange={(open) => !open && setReAuctionTarget(null)}>
+        <AlertDialogContent className="border-primary/20 bg-gradient-to-br from-background via-background to-primary/5 shadow-2xl shadow-primary/10 max-w-md">
+          <AlertDialogHeader className="space-y-4">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-accent/20 ring-2 ring-primary/30">
+              <RotateCcw className="h-7 w-7 text-primary animate-pulse" />
+            </div>
+            <AlertDialogTitle className="text-center text-xl font-bold tracking-tight">
+              Re-auction {reAuctionTarget?.name}?
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                {reAuctionTarget && (
+                  <div className="rounded-lg border border-border/50 bg-muted/30 p-3 space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Current Status</span>
+                      <span className="font-semibold capitalize text-foreground">{reAuctionTarget.auction_status}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Category</span>
+                      <CategoryBadge category={reAuctionTarget.category} />
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Role</span>
+                      <span className="font-medium text-foreground">{ROLE_LABELS[reAuctionTarget.player_role]}</span>
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-2 text-sm">
+                  {reAuctionTarget?.auction_status === 'sold' && (
+                    <div className="flex items-start gap-2 rounded-md bg-destructive/10 p-2.5 text-destructive">
+                      <Shield className="h-4 w-4 mt-0.5 shrink-0" />
+                      <span>Full purchase price will be <strong>refunded</strong> to the previous owner and player removed from the team.</span>
+                    </div>
+                  )}
+                  <div className="flex items-start gap-2 rounded-md bg-primary/10 p-2.5 text-primary">
+                    <Sparkles className="h-4 w-4 mt-0.5 shrink-0" />
+                    <span>Category will be <strong>auto-reassigned</strong> based on current match statistics.</span>
+                  </div>
+                  <div className="flex items-start gap-2 rounded-md bg-accent/10 p-2.5 text-accent-foreground">
+                    <ArrowRight className="h-4 w-4 mt-0.5 shrink-0" />
+                    <span>Player returns to the auction pool with <strong>pending</strong> status.</span>
+                  </div>
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-2 gap-2 sm:gap-0">
+            <AlertDialogCancel className="border-border/50">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmReAuction} className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/25">
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Confirm Re-auction
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
