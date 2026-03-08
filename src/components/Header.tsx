@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
-import { User, LogOut, Settings, Users, Gavel, UsersRound, Trophy } from 'lucide-react';
+import { User, LogOut, Settings, Users, Gavel, UsersRound, Trophy, BarChart3 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
 export function Header() {
@@ -74,6 +74,13 @@ export function Header() {
                 </Link>
               </Button>
 
+              <Button variant="ghost" asChild className="hidden sm:flex">
+                <Link to="/analytics">
+                  <BarChart3 className="w-4 h-4 mr-2" />
+                  Analytics
+                </Link>
+              </Button>
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="icon" className="rounded-full neu-flat border-0">
@@ -109,6 +116,9 @@ export function Header() {
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate('/tournaments')}>
                       <Trophy className="w-4 h-4 mr-2" /> Tournaments
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/analytics')}>
+                      <BarChart3 className="w-4 h-4 mr-2" /> Analytics
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                   </div>
