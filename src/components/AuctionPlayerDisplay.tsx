@@ -31,7 +31,7 @@ export function AuctionPlayerDisplay({ player, basePrice, currentBid, isActive }
   return (
     <div className="relative w-full overflow-hidden rounded-xl bg-gradient-to-br from-blue-600 via-blue-700 to-blue-900 p-1">
       {/* Inner container with broadcast-style layout */}
-      <div className="relative rounded-lg bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 overflow-hidden min-h-[320px]">
+      <div className="relative rounded-lg bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 overflow-hidden min-h-[280px] sm:min-h-[320px]">
         
         {/* Decorative diagonal lines */}
         <div className="absolute inset-0 overflow-hidden">
