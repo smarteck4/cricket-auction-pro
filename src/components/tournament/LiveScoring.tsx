@@ -974,7 +974,7 @@ export function LiveScoring({
   }
 
   return (
-    <div className="flex flex-col h-full max-h-[85vh] rounded-xl overflow-hidden border border-border/50 shadow-2xl shadow-primary/5 bg-card">
+    <div className="flex flex-col h-full min-h-0 max-h-[85vh] rounded-xl overflow-hidden border border-border/50 shadow-2xl shadow-primary/5 bg-card">
       {/* Premium Header */}
       <div className="relative bg-gradient-to-r from-[hsl(var(--slate-dark))] via-[hsl(var(--slate))] to-[hsl(var(--slate-dark))] text-white px-4 py-3">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImciIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTTAgMGg2MHY2MEgweiIgZmlsbD0ibm9uZSIvPjxjaXJjbGUgY3g9IjMwIiBjeT0iMzAiIHI9IjEuNSIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjA1KSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3QgZmlsbD0idXJsKCNnKSIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIvPjwvc3ZnPg==')] opacity-40" />
@@ -998,7 +998,7 @@ export function LiveScoring({
       </div>
 
       {/* Premium Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 min-h-0 flex flex-col">
         <div className="bg-[hsl(var(--slate-dark))] border-b border-white/10">
           <TabsList className="grid grid-cols-5 bg-transparent rounded-none gap-0 p-0 h-auto">
             {[
@@ -1019,7 +1019,7 @@ export function LiveScoring({
           </TabsList>
         </div>
 
-        <TabsContent value="summary" className="flex-1 overflow-auto p-0 m-0">
+        <TabsContent value="summary" className="flex-1 min-h-0 overflow-auto p-0 m-0">
           <MatchSummary
             match={match}
             team1={team1}
@@ -1031,9 +1031,9 @@ export function LiveScoring({
           />
         </TabsContent>
 
-        <TabsContent value="scoring" className="flex-1 flex flex-col overflow-auto p-0 m-0">
+        <TabsContent value="scoring" className="flex-1 min-h-0 flex flex-col overflow-auto p-0 m-0">
           {currentInnings ? (
-            <div className="flex flex-col flex-1 relative">
+            <div className="flex flex-col flex-1 min-h-0 relative">
               {/* Premium Score Display */}
               <div className="relative bg-gradient-to-br from-card via-card to-primary/5 p-5 text-center border-b border-border/50">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
@@ -1542,7 +1542,7 @@ export function LiveScoring({
         </TabsContent>
 
         {/* ===== PREMIUM SCORECARD ===== */}
-        <TabsContent value="scorecard" className="flex-1 overflow-auto p-3 m-0">
+        <TabsContent value="scorecard" className="flex-1 min-h-0 overflow-auto p-3 m-0">
           {innings.length > 0 ? (
             <div className="space-y-6">
               {innings.map((inn, innIdx) => {
@@ -1789,7 +1789,7 @@ export function LiveScoring({
           )}
         </TabsContent>
 
-        <TabsContent value="balls" className="p-4 overflow-auto">
+        <TabsContent value="balls" className="flex-1 min-h-0 p-4 overflow-auto">
           <div className="space-y-1.5">
             {balls.length > 0 ? (
               balls.slice().reverse().map((ball, i) => (
@@ -1817,7 +1817,7 @@ export function LiveScoring({
           </div>
         </TabsContent>
 
-        <TabsContent value="info" className="p-5">
+        <TabsContent value="info" className="flex-1 min-h-0 p-5 overflow-auto">
           <div className="space-y-5">
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-muted/30 rounded-xl p-4 border border-border/30">
