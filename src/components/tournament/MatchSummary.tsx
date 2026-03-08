@@ -1,7 +1,10 @@
-import { useMemo } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Match, MatchInnings, MatchBall } from '@/lib/tournament-types';
 import { Player, Owner } from '@/lib/types';
-import { Trophy } from 'lucide-react';
+import { Trophy, Download, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 interface MatchSummaryProps {
   match: Match;
@@ -38,6 +41,9 @@ export function MatchSummary({
   innings,
   allBalls,
 }: MatchSummaryProps) {
+  const summaryRef = useRef<HTMLDivElement>(null);
+  const [exporting, setExporting] = useState(false);
+
   const getPlayerName = (id: string | null, players: Player[]) => {
     if (!id) return 'Unknown';
     const player = players.find(p => p.id === id);
@@ -246,27 +252,62 @@ export function MatchSummary({
 
   const matchResult = getMatchResult();
 
+  const exportMatchPDF = async () => {
+    if (!summaryRef.current) return;
+    setExporting(true);
+    try {
+      const canvas = await html2canvas(summaryRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#1e293b',
+      });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const imgWidth = pdfWidth - 20;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+      
+      const team1Name = team1.team_name.replace(/\s+/g, '_');
+      const team2Name = team2.team_name.replace(/\s+/g, '_');
+      pdf.save(`Match_${team1Name}_vs_${team2Name}.pdf`);
+    } catch (err) {
+      console.error('PDF export failed:', err);
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
-    <div className="rounded-lg overflow-hidden border bg-gradient-to-b from-slate-900 to-slate-800">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-primary to-primary/80 px-4 py-4">
-        <h2 className="text-xl font-bold text-primary-foreground tracking-tight">MATCH SUMMARY</h2>
-        <p className="text-sm text-primary-foreground/70">{match.format} • {match.overs_per_innings} overs</p>
-      </div>
-      
-      {/* Teams */}
-      <div className="p-4 space-y-2">
-        {inn1Stats && renderTeamSection(inn1Stats, 'bg-primary')}
-        {inn2Stats && renderTeamSection(inn2Stats, 'bg-secondary')}
-      </div>
-      
-      {/* Result */}
-      {matchResult && (
-        <div className="px-4 py-3 bg-muted/50 border-t flex items-center gap-2">
-          <Trophy className="h-4 w-4 text-primary" />
-          <span className="text-sm font-medium text-foreground">{matchResult}</span>
+    <div className="space-y-3">
+      <div ref={summaryRef} className="rounded-lg overflow-hidden border bg-gradient-to-b from-slate-900 to-slate-800">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-primary to-primary/80 px-4 py-4">
+          <h2 className="text-xl font-bold text-primary-foreground tracking-tight">MATCH SUMMARY</h2>
+          <p className="text-sm text-primary-foreground/70">{match.format} • {match.overs_per_innings} overs</p>
         </div>
-      )}
+        
+        {/* Teams */}
+        <div className="p-4 space-y-2">
+          {inn1Stats && renderTeamSection(inn1Stats, 'bg-primary')}
+          {inn2Stats && renderTeamSection(inn2Stats, 'bg-secondary')}
+        </div>
+        
+        {/* Result */}
+        {matchResult && (
+          <div className="px-4 py-3 bg-muted/50 border-t flex items-center gap-2">
+            <Trophy className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium text-foreground">{matchResult}</span>
+          </div>
+        )}
+      </div>
+
+      <Button onClick={exportMatchPDF} disabled={exporting} variant="outline" className="w-full gap-2">
+        {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+        {exporting ? 'Generating PDF...' : 'Download Match Summary PDF'}
+      </Button>
     </div>
   );
 }
