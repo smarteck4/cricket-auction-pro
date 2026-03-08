@@ -41,6 +41,9 @@ export function MatchSummary({
   innings,
   allBalls,
 }: MatchSummaryProps) {
+  const summaryRef = useRef<HTMLDivElement>(null);
+  const [exporting, setExporting] = useState(false);
+
   const getPlayerName = (id: string | null, players: Player[]) => {
     if (!id) return 'Unknown';
     const player = players.find(p => p.id === id);
