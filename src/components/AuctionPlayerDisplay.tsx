@@ -123,10 +123,10 @@ export function AuctionPlayerDisplay({ player, basePrice, currentBid, isActive }
 
           {/* Right side - Current Bid Display */}
           <div className="relative">
-            <div className="bg-gradient-to-br from-white/95 to-white/90 backdrop-blur px-6 py-4 rounded-lg shadow-xl transform skew-x-[-3deg]">
+            <div className="bg-gradient-to-br from-white/95 to-white/90 backdrop-blur px-4 sm:px-6 py-3 sm:py-4 rounded-lg shadow-xl transform skew-x-[-3deg]">
               <div className="transform skew-x-[3deg]">
-                <p className="text-blue-600 text-xs font-bold tracking-wider mb-1">CURRENT BID</p>
-                <p className="text-blue-800 text-4xl md:text-5xl font-bold font-display">
+                <p className="text-blue-600 text-[10px] sm:text-xs font-bold tracking-wider mb-1">CURRENT BID</p>
+                <p className="text-blue-800 text-2xl sm:text-4xl md:text-5xl font-bold font-display">
                   {currentBid}
                 </p>
               </div>

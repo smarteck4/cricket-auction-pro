@@ -147,9 +147,9 @@ export default function Tournaments() {
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-4 gap-6">
+        <div className="grid lg:grid-cols-4 gap-4 sm:gap-6">
           {/* Tournament List */}
-          <div className="lg:col-span-1 space-y-4">
+          <div className="lg:col-span-1 space-y-3 sm:space-y-4">
             <h2 className="font-semibold text-lg">Tournaments</h2>
             {tournaments.map((t) => (
               <Card key={t.id} className={`cursor-pointer transition-all hover:scale-[1.02] neu-convex border-0 ${selectedTournament?.id === t.id ? 'ring-2 ring-primary neu-pressed' : ''}`} onClick={() => setSelectedTournament(t)}>

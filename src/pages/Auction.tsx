@@ -525,22 +525,22 @@ export default function Auction() {
                     )}
 
                     {/* Player Stats */}
-                    <div className="grid grid-cols-4 gap-3 mb-6">
-                      <div className="text-center p-3 bg-secondary/50 rounded-lg">
-                        <p className="text-xs text-muted-foreground">Matches</p>
-                        <p className="font-display text-xl font-bold">{currentPlayer.total_matches}</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4 sm:mb-6">
+                      <div className="text-center p-2 sm:p-3 bg-secondary/50 rounded-lg">
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">Matches</p>
+                        <p className="font-display text-lg sm:text-xl font-bold">{currentPlayer.total_matches}</p>
                       </div>
-                      <div className="text-center p-3 bg-secondary/50 rounded-lg">
-                        <p className="text-xs text-muted-foreground">Runs</p>
-                        <p className="font-display text-xl font-bold">{currentPlayer.total_runs}</p>
+                      <div className="text-center p-2 sm:p-3 bg-secondary/50 rounded-lg">
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">Runs</p>
+                        <p className="font-display text-lg sm:text-xl font-bold">{currentPlayer.total_runs}</p>
                       </div>
-                      <div className="text-center p-3 bg-secondary/50 rounded-lg">
-                        <p className="text-xs text-muted-foreground">Strike Rate</p>
-                        <p className="font-display text-xl font-bold">{currentPlayer.strike_rate}</p>
+                      <div className="text-center p-2 sm:p-3 bg-secondary/50 rounded-lg">
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">Strike Rate</p>
+                        <p className="font-display text-lg sm:text-xl font-bold">{currentPlayer.strike_rate}</p>
                       </div>
-                      <div className="text-center p-3 bg-secondary/50 rounded-lg">
-                        <p className="text-xs text-muted-foreground">Wickets</p>
-                        <p className="font-display text-xl font-bold">{currentPlayer.wickets}</p>
+                      <div className="text-center p-2 sm:p-3 bg-secondary/50 rounded-lg">
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">Wickets</p>
+                        <p className="font-display text-lg sm:text-xl font-bold">{currentPlayer.wickets}</p>
                       </div>
                     </div>
 
