@@ -13,6 +13,7 @@ import Players from "./pages/Players";
 import Tournaments from "./pages/Tournaments";
 import MatchScoring from "./pages/MatchScoring";
 import AuctionAnalytics from "./pages/AuctionAnalytics";
+import SuperAdmin from "./pages/SuperAdmin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
