@@ -1,4 +1,4 @@
-export type AppRole = 'spectator' | 'admin' | 'owner';
+export type AppRole = 'spectator' | 'admin' | 'owner' | 'super_admin';
 export type PlayerCategory = 'platinum' | 'gold' | 'silver' | 'emerging';
 export type PlayerRole = 'batsman' | 'bowler' | 'all_rounder' | 'wicket_keeper';
 export type BattingHand = 'left' | 'right';

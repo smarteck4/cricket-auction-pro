@@ -798,9 +798,16 @@ export type Database = {
         Returns: Json
       }
       re_auction_player: { Args: { p_player_id: string }; Returns: Json }
+      update_user_role: {
+        Args: {
+          p_new_role: Database["public"]["Enums"]["app_role"]
+          p_user_id: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
-      app_role: "spectator" | "admin" | "owner"
+      app_role: "spectator" | "admin" | "owner" | "super_admin"
       auction_status: "pending" | "active" | "sold" | "unsold"
       batting_hand: "left" | "right"
       match_format: "T10" | "T20" | "ODI" | "Test" | "T5" | "Custom"
@@ -935,7 +942,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["spectator", "admin", "owner"],
+      app_role: ["spectator", "admin", "owner", "super_admin"],
       auction_status: ["pending", "active", "sold", "unsold"],
       batting_hand: ["left", "right"],
       match_format: ["T10", "T20", "ODI", "Test", "T5", "Custom"],
