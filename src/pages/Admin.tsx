@@ -49,6 +49,7 @@ export default function Admin() {
   const [timerDuration, setTimerDuration] = useState(30);
   const [imageUploadType, setImageUploadType] = useState<'url' | 'file'>('url');
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [editImageFile, setEditImageFile] = useState<File | null>(null);
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
 
   // Search and filter state
