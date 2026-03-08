@@ -114,6 +114,35 @@ export function PlayerFormModal({
     onPlayerChange({ ...player, ...fields });
   };
 
+  const handleFileSelect = useCallback((file: File | null) => {
+    if (!file || !onImageFileSelect) return;
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) return;
+    if (file.size > 5 * 1024 * 1024) return;
+    onImageFileSelect(file);
+    setImageUploadType('file');
+  }, [onImageFileSelect]);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleFileSelect(file);
+  }, [handleFileSelect]);
+
   const handleSubmit = () => {
     if (hasErrors) {
       setShowErrors(true);
