@@ -192,8 +192,22 @@ export default function Admin() {
 
   // Upload image to storage
   const uploadPlayerImage = async (file: File): Promise<string | null> => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+    // Validate file type and size
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    const maxSize = 5 * 1024 * 1024; // 5MB
+
+    if (!allowedTypes.includes(file.type)) {
+      toast({ title: 'Invalid file type', description: 'Only JPEG, PNG, WebP, and GIF images are allowed.', variant: 'destructive' });
+      return null;
+    }
+
+    if (file.size > maxSize) {
+      toast({ title: 'File too large', description: 'Image must be under 5MB.', variant: 'destructive' });
+      return null;
+    }
+
+    const ext = file.type.split('/')[1] === 'jpeg' ? 'jpg' : file.type.split('/')[1];
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
     const filePath = `profiles/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
