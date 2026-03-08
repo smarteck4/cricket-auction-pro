@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TeamPlayer, Player, MIN_TEAM_REQUIREMENTS, ROLE_LABELS } from '@/lib/types';
 import { Users, Download, Trophy } from 'lucide-react';
-import * as XLSX from 'xlsx';
+import * as XLSX from '@e965/xlsx';
 
 export default function Owner() {
   const { user, role, owner } = useAuth();

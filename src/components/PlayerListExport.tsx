@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Player, PlayerCategory, CATEGORY_LABELS, ROLE_LABELS } from '@/lib/types';
 import { Download, FileSpreadsheet, Users } from 'lucide-react';
-import * as XLSX from 'xlsx';
+import * as XLSX from '@e965/xlsx';
 interface PlayerListExportProps {
   teamName?: string;
 }
