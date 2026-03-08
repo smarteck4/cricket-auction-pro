@@ -17,13 +17,15 @@ import { useToast } from '@/hooks/use-toast';
 import { Player, Owner, CategorySetting, PlayerCategory, PlayerRole, BattingHand, CATEGORY_LABELS, ROLE_LABELS, CurrentAuction } from '@/lib/types';
 import { Plus, Play, Square, Users, Trash2, Edit, Gavel, Timer, User, AlertCircle, Search, X, Upload, Link, RotateCcw } from 'lucide-react';
 import { BulkPlayerImport } from '@/components/BulkPlayerImport';
+import { PlayerFormModal, PlayerFormData } from '@/components/PlayerFormModal';
 import { Tabs as RadioTabs, TabsList as RadioTabsList, TabsTrigger as RadioTabsTrigger } from '@/components/ui/tabs';
 
-const defaultPlayer = {
+const defaultPlayer: PlayerFormData = {
   name: '', age: 20, nationality: '', category: 'gold' as PlayerCategory,
   player_role: 'batsman' as PlayerRole, batting_hand: 'right' as BattingHand,
   total_matches: 0, total_runs: 0, highest_score: 0, strike_rate: 0,
-  wickets: 0, bowling_average: 0, economy_rate: 0, best_bowling: '', profile_picture_url: ''
+  wickets: 0, bowling_average: 0, economy_rate: 0, best_bowling: '', profile_picture_url: '',
+  fifties: 0, centuries: 0,
 };
 
 const defaultOwner = { team_name: '', total_points: 10000, team_logo_url: '' };
@@ -585,102 +587,20 @@ export default function Admin() {
               <h2 className="text-xl font-semibold">Manage Players</h2>
               <div className="flex gap-2 flex-wrap">
                 <BulkPlayerImport categorySettings={categorySettings} onImportComplete={fetchData} />
-                <Dialog open={playerDialogOpen} onOpenChange={setPlayerDialogOpen}>
-                  <DialogTrigger asChild><Button className="gradient-gold"><Plus className="w-4 h-4 mr-2" />Add Player</Button></DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                  <DialogHeader><DialogTitle>Add New Player</DialogTitle></DialogHeader>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div><Label>Name</Label><Input value={newPlayer.name} onChange={e => setNewPlayer({...newPlayer, name: e.target.value})} /></div>
-                    <div><Label>Age</Label><Input type="number" value={newPlayer.age} onChange={e => setNewPlayer({...newPlayer, age: +e.target.value})} /></div>
-                    <div><Label>Nationality</Label><Input value={newPlayer.nationality} onChange={e => setNewPlayer({...newPlayer, nationality: e.target.value})} /></div>
-                    <div><Label>Category</Label>
-                      <Select value={newPlayer.category} onValueChange={v => setNewPlayer({...newPlayer, category: v as PlayerCategory})}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>{Object.entries(CATEGORY_LABELS).map(([k,v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
-                    <div><Label>Role</Label>
-                      <Select value={newPlayer.player_role} onValueChange={v => setNewPlayer({...newPlayer, player_role: v as PlayerRole})}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>{Object.entries(ROLE_LABELS).map(([k,v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
-                    <div><Label>Batting Hand</Label>
-                      <Select value={newPlayer.batting_hand} onValueChange={v => setNewPlayer({...newPlayer, batting_hand: v as BattingHand})}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent><SelectItem value="right">Right</SelectItem><SelectItem value="left">Left</SelectItem></SelectContent>
-                      </Select>
-                    </div>
-                    <div><Label>Matches</Label><Input type="number" value={newPlayer.total_matches} onChange={e => setNewPlayer({...newPlayer, total_matches: +e.target.value})} /></div>
-                    <div><Label>Runs</Label><Input type="number" value={newPlayer.total_runs} onChange={e => setNewPlayer({...newPlayer, total_runs: +e.target.value})} /></div>
-                    <div><Label>Highest Score</Label><Input type="number" value={newPlayer.highest_score} onChange={e => setNewPlayer({...newPlayer, highest_score: +e.target.value})} /></div>
-                    <div><Label>Strike Rate</Label><Input type="number" step="0.01" value={newPlayer.strike_rate} onChange={e => setNewPlayer({...newPlayer, strike_rate: +e.target.value})} /></div>
-                    
-                    {/* Bowling Stats Section */}
-                    <div className="col-span-2 pt-4 border-t">
-                      <h4 className="font-medium text-sm text-muted-foreground mb-3">Bowling Statistics</h4>
-                    </div>
-                    <div><Label>Wickets</Label><Input type="number" value={newPlayer.wickets} onChange={e => setNewPlayer({...newPlayer, wickets: +e.target.value})} /></div>
-                    <div><Label>Best Bowling (e.g. 5/23)</Label><Input placeholder="e.g. 5/23" value={newPlayer.best_bowling} onChange={e => setNewPlayer({...newPlayer, best_bowling: e.target.value})} /></div>
-                    <div><Label>Bowling Average</Label><Input type="number" step="0.01" value={newPlayer.bowling_average} onChange={e => setNewPlayer({...newPlayer, bowling_average: +e.target.value})} /></div>
-                    <div><Label>Economy Rate</Label><Input type="number" step="0.01" value={newPlayer.economy_rate} onChange={e => setNewPlayer({...newPlayer, economy_rate: +e.target.value})} /></div>
-                    
-                    {/* Profile Image Section */}
-                    <div className="col-span-2 pt-4 border-t">
-                      <h4 className="font-medium text-sm text-muted-foreground mb-3">Profile Image</h4>
-                      <div className="flex gap-2 mb-3">
-                        <Button
-                          type="button"
-                          variant={imageUploadType === 'url' ? 'default' : 'outline'}
-                          size="sm"
-                          onClick={() => setImageUploadType('url')}
-                          className="flex-1"
-                        >
-                          <Link className="w-4 h-4 mr-2" />
-                          URL
-                        </Button>
-                        <Button
-                          type="button"
-                          variant={imageUploadType === 'file' ? 'default' : 'outline'}
-                          size="sm"
-                          onClick={() => setImageUploadType('file')}
-                          className="flex-1"
-                        >
-                          <Upload className="w-4 h-4 mr-2" />
-                          Upload
-                        </Button>
-                      </div>
-                      
-                      {imageUploadType === 'url' ? (
-                        <Input 
-                          placeholder="Enter image URL" 
-                          value={newPlayer.profile_picture_url} 
-                          onChange={e => setNewPlayer({...newPlayer, profile_picture_url: e.target.value})} 
-                        />
-                      ) : (
-                        <div className="space-y-2">
-                          <Input
-                            type="file"
-                            accept="image/*"
-                            onChange={e => {
-                              const file = e.target.files?.[0];
-                              if (file) setSelectedImageFile(file);
-                            }}
-                          />
-                          {selectedImageFile && (
-                            <p className="text-sm text-muted-foreground">
-                              Selected: {selectedImageFile.name}
-                            </p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <Button onClick={addPlayer} className="w-full mt-4 gradient-gold" disabled={uploadingImage}>
-                    {uploadingImage ? 'Uploading...' : 'Add Player'}
-                  </Button>
-                </DialogContent>
-              </Dialog>
+                <Button className="gradient-gold" onClick={() => setPlayerDialogOpen(true)}><Plus className="w-4 h-4 mr-2" />Add Player</Button>
+                <PlayerFormModal
+                  open={playerDialogOpen}
+                  onOpenChange={(open) => { setPlayerDialogOpen(open); if (!open) { setNewPlayer(defaultPlayer); setSelectedImageFile(null); } }}
+                  player={newPlayer}
+                  onPlayerChange={setNewPlayer}
+                  onSubmit={addPlayer}
+                  title="Add New Player"
+                  submitLabel="Add Player"
+                  isSubmitting={uploadingImage}
+                  showImageUpload={true}
+                  onImageFileSelect={setSelectedImageFile}
+                  selectedImageFile={selectedImageFile}
+                />
               </div>
             </div>
 
@@ -790,37 +710,34 @@ export default function Admin() {
             )}
 
             {/* Edit Player Dialog */}
-            <Dialog open={!!editingPlayer} onOpenChange={() => setEditingPlayer(null)}>
-              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                <DialogHeader><DialogTitle>Edit Player</DialogTitle></DialogHeader>
-                {editingPlayer && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div><Label>Name</Label><Input value={editingPlayer.name} onChange={e => setEditingPlayer({...editingPlayer, name: e.target.value})} /></div>
-                    <div><Label>Age</Label><Input type="number" value={editingPlayer.age} onChange={e => setEditingPlayer({...editingPlayer, age: +e.target.value})} /></div>
-                    <div><Label>Nationality</Label><Input value={editingPlayer.nationality} onChange={e => setEditingPlayer({...editingPlayer, nationality: e.target.value})} /></div>
-                    <div><Label>Category</Label>
-                      <Select value={editingPlayer.category} onValueChange={v => setEditingPlayer({...editingPlayer, category: v as PlayerCategory})}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>{Object.entries(CATEGORY_LABELS).map(([k,v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
-                    <div><Label>Role</Label>
-                      <Select value={editingPlayer.player_role} onValueChange={v => setEditingPlayer({...editingPlayer, player_role: v as PlayerRole})}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>{Object.entries(ROLE_LABELS).map(([k,v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
-                    <div><Label>Base Price</Label><Input type="number" value={editingPlayer.base_price || 0} onChange={e => setEditingPlayer({...editingPlayer, base_price: +e.target.value})} /></div>
-                    <div><Label>Matches</Label><Input type="number" value={editingPlayer.total_matches || 0} onChange={e => setEditingPlayer({...editingPlayer, total_matches: +e.target.value})} /></div>
-                    <div><Label>Runs</Label><Input type="number" value={editingPlayer.total_runs || 0} onChange={e => setEditingPlayer({...editingPlayer, total_runs: +e.target.value})} /></div>
-                    <div><Label>Wickets</Label><Input type="number" value={editingPlayer.wickets || 0} onChange={e => setEditingPlayer({...editingPlayer, wickets: +e.target.value})} /></div>
-                    <div><Label>Strike Rate</Label><Input type="number" step="0.01" value={editingPlayer.strike_rate || 0} onChange={e => setEditingPlayer({...editingPlayer, strike_rate: +e.target.value})} /></div>
-                    <div className="col-span-2"><Label>Profile Picture URL</Label><Input value={editingPlayer.profile_picture_url || ''} onChange={e => setEditingPlayer({...editingPlayer, profile_picture_url: e.target.value})} /></div>
-                  </div>
-                )}
-                <Button onClick={updatePlayer} className="w-full mt-4 gradient-gold">Save Changes</Button>
-              </DialogContent>
-            </Dialog>
+            <PlayerFormModal
+              open={!!editingPlayer}
+              onOpenChange={(open) => { if (!open) setEditingPlayer(null); }}
+              player={editingPlayer ? {
+                name: editingPlayer.name,
+                age: editingPlayer.age,
+                nationality: editingPlayer.nationality,
+                category: editingPlayer.category,
+                player_role: editingPlayer.player_role,
+                batting_hand: editingPlayer.batting_hand,
+                total_matches: editingPlayer.total_matches || 0,
+                total_runs: editingPlayer.total_runs || 0,
+                highest_score: editingPlayer.highest_score || 0,
+                strike_rate: editingPlayer.strike_rate || 0,
+                wickets: editingPlayer.wickets || 0,
+                bowling_average: editingPlayer.bowling_average || 0,
+                economy_rate: editingPlayer.economy_rate || 0,
+                best_bowling: editingPlayer.best_bowling || '',
+                fifties: editingPlayer.fifties || 0,
+                centuries: editingPlayer.centuries || 0,
+                profile_picture_url: editingPlayer.profile_picture_url || '',
+                base_price: editingPlayer.base_price,
+              } : defaultPlayer}
+              onPlayerChange={(data) => editingPlayer && setEditingPlayer({ ...editingPlayer, ...data })}
+              onSubmit={updatePlayer}
+              title="Edit Player"
+              submitLabel="Save Changes"
+            />
           </TabsContent>
 
           {/* OWNERS TAB */}
