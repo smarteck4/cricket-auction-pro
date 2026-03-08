@@ -301,7 +301,8 @@ export default function Admin() {
       total_points: newOwner.total_points,
       remaining_points: newOwner.total_points,
       team_logo_url: newOwner.team_logo_url || null,
-    });
+      created_by: user!.id,
+    } as any);
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
