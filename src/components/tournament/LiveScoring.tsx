@@ -1542,7 +1542,7 @@ export function LiveScoring({
         </TabsContent>
 
         {/* ===== PREMIUM SCORECARD ===== */}
-        <TabsContent value="scorecard" className="flex-1 overflow-auto p-3 m-0">
+        <TabsContent value="scorecard" className="flex-1 min-h-0 overflow-auto p-3 m-0">
           {innings.length > 0 ? (
             <div className="space-y-6">
               {innings.map((inn, innIdx) => {
