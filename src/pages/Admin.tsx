@@ -12,10 +12,11 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Player, Owner, CategorySetting, PlayerCategory, PlayerRole, BattingHand, CATEGORY_LABELS, ROLE_LABELS, CurrentAuction } from '@/lib/types';
-import { Plus, Play, Square, Users, Trash2, Edit, Gavel, Timer, User, AlertCircle, Search, X, Upload, Link, RotateCcw } from 'lucide-react';
+import { Plus, Play, Square, Users, Trash2, Edit, Gavel, Timer, User, AlertCircle, Search, X, Upload, Link, RotateCcw, Sparkles, ArrowRight, Shield } from 'lucide-react';
 import { BulkPlayerImport } from '@/components/BulkPlayerImport';
 import { PlayerFormModal, PlayerFormData } from '@/components/PlayerFormModal';
 import { Tabs as RadioTabs, TabsList as RadioTabsList, TabsTrigger as RadioTabsTrigger } from '@/components/ui/tabs';
@@ -51,6 +52,7 @@ export default function Admin() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [editImageFile, setEditImageFile] = useState<File | null>(null);
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [reAuctionTarget, setReAuctionTarget] = useState<Player | null>(null);
 
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -414,12 +416,10 @@ export default function Admin() {
   };
 
   // Re-auction player with updated stats (auto-category)
-  const reAuctionPlayer = async (player: Player) => {
-    const confirmMsg = player.auction_status === 'sold'
-      ? `Re-auction ${player.name}? This will remove them from their current team and refund the full purchase price.`
-      : `Re-auction ${player.name}? Their category will be auto-assigned based on updated stats.`;
-    
-    if (!window.confirm(confirmMsg)) return;
+  const confirmReAuction = async () => {
+    const player = reAuctionTarget;
+    if (!player) return;
+    setReAuctionTarget(null);
 
     const { data, error } = await supabase.rpc('re_auction_player', { p_player_id: player.id });
     
@@ -744,7 +744,7 @@ export default function Admin() {
                         <Button size="sm" variant="outline" onClick={() => setEditingPlayer(p)}><Edit className="w-3 h-3" /></Button>
                         <Button size="sm" variant="destructive" onClick={() => deletePlayer(p.id)}><Trash2 className="w-3 h-3" /></Button>
                         {(p.auction_status === 'sold' || p.auction_status === 'unsold') && (
-                          <Button size="sm" variant="outline" onClick={() => reAuctionPlayer(p)} className="text-primary border-primary/30 hover:bg-primary/10" title="Re-auction with updated stats">
+                          <Button size="sm" variant="outline" onClick={() => setReAuctionTarget(p)} className="text-primary border-primary/30 hover:bg-primary/10" title="Re-auction with updated stats">
                             <RotateCcw className="w-3 h-3 mr-1" />Re-auction
                           </Button>
                         )}
@@ -842,6 +842,64 @@ export default function Admin() {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Premium Re-auction Confirmation Dialog */}
+      <AlertDialog open={!!reAuctionTarget} onOpenChange={(open) => !open && setReAuctionTarget(null)}>
+        <AlertDialogContent className="border-primary/20 bg-gradient-to-br from-background via-background to-primary/5 shadow-2xl shadow-primary/10 max-w-md">
+          <AlertDialogHeader className="space-y-4">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-accent/20 ring-2 ring-primary/30">
+              <RotateCcw className="h-7 w-7 text-primary animate-pulse" />
+            </div>
+            <AlertDialogTitle className="text-center text-xl font-bold tracking-tight">
+              Re-auction {reAuctionTarget?.name}?
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                {reAuctionTarget && (
+                  <div className="rounded-lg border border-border/50 bg-muted/30 p-3 space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Current Status</span>
+                      <span className="font-semibold capitalize text-foreground">{reAuctionTarget.auction_status}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Category</span>
+                      <CategoryBadge category={reAuctionTarget.category} />
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Role</span>
+                      <span className="font-medium text-foreground">{ROLE_LABELS[reAuctionTarget.player_role]}</span>
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-2 text-sm">
+                  {reAuctionTarget?.auction_status === 'sold' && (
+                    <div className="flex items-start gap-2 rounded-md bg-destructive/10 p-2.5 text-destructive">
+                      <Shield className="h-4 w-4 mt-0.5 shrink-0" />
+                      <span>Full purchase price will be <strong>refunded</strong> to the previous owner and player removed from the team.</span>
+                    </div>
+                  )}
+                  <div className="flex items-start gap-2 rounded-md bg-primary/10 p-2.5 text-primary">
+                    <Sparkles className="h-4 w-4 mt-0.5 shrink-0" />
+                    <span>Category will be <strong>auto-reassigned</strong> based on current match statistics.</span>
+                  </div>
+                  <div className="flex items-start gap-2 rounded-md bg-accent/10 p-2.5 text-accent-foreground">
+                    <ArrowRight className="h-4 w-4 mt-0.5 shrink-0" />
+                    <span>Player returns to the auction pool with <strong>pending</strong> status.</span>
+                  </div>
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-2 gap-2 sm:gap-0">
+            <AlertDialogCancel className="border-border/50">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmReAuction} className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/25">
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Confirm Re-auction
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
