@@ -199,9 +199,9 @@ export function BulkPlayerImport({ categorySettings, onImportComplete, createdBy
 
     setImporting(true);
     
-    const playersToInsert = validPlayers.map(({ isValid, errors, ...player }) => player);
+    const playersToInsert = validPlayers.map(({ isValid, errors, ...player }) => ({ ...player, created_by: createdBy }));
     
-    const { error } = await supabase.from('players').insert(playersToInsert);
+    const { error } = await supabase.from('players').insert(playersToInsert as any);
     
     if (error) {
       toast({ title: 'Import failed', description: error.message, variant: 'destructive' });

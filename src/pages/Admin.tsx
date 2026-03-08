@@ -358,7 +358,8 @@ export default function Admin() {
         started_at: now,
         timer_duration: timerDuration,
         timer_started_at: now,
-      });
+        created_by: user!.id,
+      } as any);
     }
     
     await supabase.from('players').update({ auction_status: 'active' }).eq('id', player.id);
