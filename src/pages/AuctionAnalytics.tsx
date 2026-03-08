@@ -369,12 +369,18 @@ export default function AuctionAnalytics() {
       <Header />
       <div className="container py-8 space-y-8">
         {/* Page Header */}
-        <div>
-          <h1 className="font-display text-3xl font-bold flex items-center gap-3">
-            <BarChart3 className="w-8 h-8 text-primary" />
-            Auction Analytics
-          </h1>
-          <p className="text-muted-foreground mt-1">Deep insights into auction spending, bidding patterns, and player valuations</p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h1 className="font-display text-2xl sm:text-3xl font-bold flex items-center gap-3">
+              <BarChart3 className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
+              Auction Analytics
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">Deep insights into auction spending, bidding patterns, and player valuations</p>
+          </div>
+          <Button onClick={exportToPDF} disabled={exporting} className="gradient-gold neu-flat border-0 gap-2 w-fit">
+            {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            {exporting ? 'Generating...' : 'Export PDF'}
+          </Button>
         </div>
 
         {/* Summary Cards */}
