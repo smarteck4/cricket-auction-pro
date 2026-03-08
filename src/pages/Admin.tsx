@@ -413,6 +413,36 @@ export default function Admin() {
     }
   };
 
+  // Re-auction player with updated stats (auto-category)
+  const reAuctionPlayer = async (player: Player) => {
+    const confirmMsg = player.auction_status === 'sold'
+      ? `Re-auction ${player.name}? This will remove them from their current team and refund the full purchase price.`
+      : `Re-auction ${player.name}? Their category will be auto-assigned based on updated stats.`;
+    
+    if (!window.confirm(confirmMsg)) return;
+
+    const { data, error } = await supabase.rpc('re_auction_player', { p_player_id: player.id });
+    
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      return;
+    }
+
+    const result = data as { success?: boolean; error?: string; new_category?: string; new_base_price?: number; previous_status?: string };
+
+    if (result?.error) {
+      toast({ title: 'Cannot re-auction', description: result.error, variant: 'destructive' });
+      return;
+    }
+
+    const newCat = result?.new_category as PlayerCategory;
+    toast({
+      title: 'Player re-listed for auction!',
+      description: `${player.name} → ${CATEGORY_LABELS[newCat] || newCat} (Base: ${result?.new_base_price})${result?.previous_status === 'sold' ? ' • Points refunded to previous owner' : ''}`,
+    });
+    fetchData();
+  };
+
   if (loading) return <div className="min-h-screen bg-background"><Header /><div className="container py-20 text-center">Loading...</div></div>;
 
   const pendingPlayers = players.filter(p => p.auction_status === 'pending');
