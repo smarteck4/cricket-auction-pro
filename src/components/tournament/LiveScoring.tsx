@@ -120,19 +120,26 @@ export function LiveScoring({
   // Current over deliveries for display
   const currentOverBalls = useMemo(() => {
     if (!balls.length) return [];
+    
+    // Determine which over number we're currently in
+    const displayOver = currentBall === 0 && currentOver > 0 ? currentOver - 1 : currentOver;
+    
     let legal = 0;
     const overBalls: MatchBall[] = [];
     
     for (const ball of balls) {
-      if (!ball.extra_type || !['wide', 'no_ball'].includes(ball.extra_type)) {
-        legal++;
-      }
-      const ballOver = Math.floor((legal - 1) / 6);
-      if (ballOver === currentOver || (currentBall === 0 && ballOver === currentOver - 1)) {
+      const isLegal = !ball.extra_type || !['wide', 'no_ball'].includes(ball.extra_type);
+      const ballOverBefore = legal > 0 ? Math.floor((legal - 1) / 6) : 0;
+      if (isLegal) legal++;
+      const ballOver = legal > 0 ? Math.floor((legal - 1) / 6) : 0;
+      
+      // Include ball if it belongs to the display over
+      const belongsToOver = isLegal ? ballOver === displayOver : ballOverBefore === displayOver;
+      if (belongsToOver) {
         overBalls.push(ball);
       }
     }
-    return overBalls.slice(-6);
+    return overBalls;
   }, [balls, currentOver, currentBall]);
 
   // Calculate batsman stats from balls
@@ -564,7 +571,10 @@ export function LiveScoring({
 
     const newTotalRuns = currentInnings.total_runs + runs + extraRuns;
     const newTotalWickets = currentInnings.total_wickets + (isWicket ? 1 : 0);
-    const newTotalOvers = isLegalDelivery ? (overNum + (ballNum === 6 ? 0 : ballNum / 10)) : currentInnings.total_overs;
+    // Cricket overs format: 1.4 means 1 over 4 balls. At ball 6, it becomes the next complete over.
+    const newTotalOvers = isLegalDelivery 
+      ? (ballNum === 6 ? Math.floor(newLegalDeliveries / 6) : Math.floor((newLegalDeliveries - 1) / 6) + (ballNum / 10))
+      : currentInnings.total_overs;
 
     const newExtras = currentInnings.extras + extraRuns;
 
@@ -662,23 +672,26 @@ export function LiveScoring({
     if (extraTypeVal === 'wide') {
       rotationRuns = 0; // no strike change on wide (batsman didn't face)
     } else if (extraTypeVal === 'bye' || extraTypeVal === 'leg_bye') {
-      rotationRuns = extraRuns; // batsmen physically ran the bye/LB runs
+      rotationRuns = extraRuns; // byes/LBs: batsmen physically ran these runs
     }
     // For NB: rotation based on bat runs (runs param)
-
-    if (rotationRuns % 2 === 1) {
-      const temp = strikerBatsman;
-      setStrikerBatsman(nonStrikerBatsman);
-      setNonStrikerBatsman(temp);
-    }
 
     const isOverEnd = isLegalDelivery && ballNum === 6;
     const isWicketActive = isWicket && newTotalWickets < maxWickets;
 
+    // Apply mid-delivery strike rotation (odd runs swap)
+    let currentStriker = strikerBatsman;
+    let currentNonStriker = nonStrikerBatsman;
+    if (rotationRuns % 2 === 1) {
+      [currentStriker, currentNonStriker] = [currentNonStriker, currentStriker];
+    }
+
     // Handle combined wicket + over end on same ball
     if (isWicketActive && isOverEnd) {
+      // The batsman who was on strike when the ball was delivered is out
       setDismissedBatsmen(prev => [...prev, strikerBatsman]);
-      // Over end swap: non-striker becomes striker, new batsman goes to non-striker
+      // After over end swap: the non-striker (who survived) takes strike
+      // The new batsman goes to non-striker end
       setStrikerBatsman(nonStrikerBatsman);
       setNonStrikerBatsman('');
       setPreviousOverBowler(currentBowler);
@@ -690,30 +703,48 @@ export function LiveScoring({
       setPendingStriker('');
       setPendingBowler('');
       toast({ title: 'Wicket + Over Complete', description: 'Select new batsman and bowler.' });
-    } else if (isOverEnd) {
-      // Auto rotate strike at end of over
-      const temp = strikerBatsman;
-      setStrikerBatsman(nonStrikerBatsman);
-      setNonStrikerBatsman(temp);
-      setPreviousOverBowler(currentBowler);
-      setCurrentBowler('');
-      setSelectionMode('new_bowler');
-      setPendingBowler('');
-      toast({ title: 'Over Complete', description: `Over ${currentOver + 1} completed. Please select a new bowler.` });
-    } else if (isWicketActive) {
-      // Handle wicket only
+    } else if (isWicketActive && !isOverEnd) {
+      // Wicket mid-over: dismiss the original striker (who faced the ball)
       setDismissedBatsmen(prev => [...prev, strikerBatsman]);
-      setStrikerBatsman('');
+      // After odd-run rotation, currentStriker/currentNonStriker reflect post-rotation state
+      // The dismissed batsman's position needs a replacement
+      if (rotationRuns % 2 === 1) {
+        // Odd runs: striker swapped to non-striker end, then got out there conceptually
+        // Actually in cricket: batsman hits, they cross, if caught the striker is out
+        // The new batsman comes in at the striker's (now non-striker) end
+        setStrikerBatsman(currentStriker); // non-striker is now striker after rotation
+        setNonStrikerBatsman(''); // dismissed batsman's replacement goes here
+      } else {
+        setStrikerBatsman(''); // striker stays at striker end, needs replacement
+        setNonStrikerBatsman(currentNonStriker);
+      }
       setIsWicket(false);
       setWicketType('');
       setSelectedFielder('');
       setSelectionMode('new_batsman');
       setPendingStriker('');
-    } else if (isWicket) {
-      // Reset wicket state even if innings ended
-      setIsWicket(false);
-      setWicketType('');
-      setSelectedFielder('');
+    } else if (isOverEnd) {
+      // Over end: apply run rotation first, then swap for new over
+      // After run rotation: currentStriker, currentNonStriker
+      // Over-end swap reverses them
+      setStrikerBatsman(currentNonStriker);
+      setNonStrikerBatsman(currentStriker);
+      setPreviousOverBowler(currentBowler);
+      setCurrentBowler('');
+      setSelectionMode('new_bowler');
+      setPendingBowler('');
+      toast({ title: 'Over Complete', description: `Over ${currentOver + 1} completed. Please select a new bowler.` });
+    } else {
+      // Normal delivery: just apply rotation
+      setStrikerBatsman(currentStriker);
+      setNonStrikerBatsman(currentNonStriker);
+      
+      if (isWicket) {
+        // Reset wicket state even if innings ended
+        setIsWicket(false);
+        setWicketType('');
+        setSelectedFielder('');
+      }
     }
 
     // Check for milestone notifications (50 or 100 runs)
@@ -879,11 +910,14 @@ export function LiveScoring({
   };
 
   const getBallDisplay = (ball: MatchBall) => {
-    if (ball.is_wicket) return 'W';
-    if (ball.extra_type === 'wide') return `${ball.runs_scored}Wd`;
-    if (ball.extra_type === 'no_ball') return `${ball.runs_scored}Nb`;
-    if (ball.extra_type === 'bye') return `${ball.runs_scored}B`;
-    if (ball.extra_type === 'leg_bye') return `${ball.runs_scored}Lb`;
+    if (ball.is_wicket) {
+      const totalRuns = ball.runs_scored + ball.extras;
+      return totalRuns > 0 ? `W+${totalRuns}` : 'W';
+    }
+    if (ball.extra_type === 'wide') return `${ball.runs_scored + ball.extras}Wd`;
+    if (ball.extra_type === 'no_ball') return `${ball.runs_scored}+${ball.extras}Nb`;
+    if (ball.extra_type === 'bye') return `${ball.extras}B`;
+    if (ball.extra_type === 'leg_bye') return `${ball.extras}Lb`;
     return ball.runs_scored.toString();
   };
 
