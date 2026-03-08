@@ -13,6 +13,7 @@ import * as XLSX from '@e965/xlsx';
 interface BulkPlayerImportProps {
   categorySettings: CategorySetting[];
   onImportComplete: () => void;
+  createdBy: string;
 }
 
 interface PreviewPlayer {
@@ -40,7 +41,7 @@ const VALID_CATEGORIES: PlayerCategory[] = ['platinum', 'gold', 'silver', 'emerg
 const VALID_ROLES: PlayerRole[] = ['batsman', 'bowler', 'all_rounder', 'wicket_keeper'];
 const VALID_HANDS: BattingHand[] = ['left', 'right'];
 
-export function BulkPlayerImport({ categorySettings, onImportComplete }: BulkPlayerImportProps) {
+export function BulkPlayerImport({ categorySettings, onImportComplete, createdBy }: BulkPlayerImportProps) {
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [previewData, setPreviewData] = useState<PreviewPlayer[]>([]);
@@ -198,9 +199,9 @@ export function BulkPlayerImport({ categorySettings, onImportComplete }: BulkPla
 
     setImporting(true);
     
-    const playersToInsert = validPlayers.map(({ isValid, errors, ...player }) => player);
+    const playersToInsert = validPlayers.map(({ isValid, errors, ...player }) => ({ ...player, created_by: createdBy }));
     
-    const { error } = await supabase.from('players').insert(playersToInsert);
+    const { error } = await supabase.from('players').insert(playersToInsert as any);
     
     if (error) {
       toast({ title: 'Import failed', description: error.message, variant: 'destructive' });

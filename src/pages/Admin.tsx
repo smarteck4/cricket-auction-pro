@@ -249,8 +249,9 @@ export default function Admin() {
     const { error } = await supabase.from('players').insert({ 
       ...newPlayer, 
       profile_picture_url: profileUrl,
-      base_price: basePrice 
-    });
+      base_price: basePrice,
+      created_by: user!.id,
+    } as any);
     
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
@@ -300,7 +301,8 @@ export default function Admin() {
       total_points: newOwner.total_points,
       remaining_points: newOwner.total_points,
       team_logo_url: newOwner.team_logo_url || null,
-    });
+      created_by: user!.id,
+    } as any);
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
@@ -356,7 +358,8 @@ export default function Admin() {
         started_at: now,
         timer_duration: timerDuration,
         timer_started_at: now,
-      });
+        created_by: user!.id,
+      } as any);
     }
     
     await supabase.from('players').update({ auction_status: 'active' }).eq('id', player.id);
@@ -627,7 +630,7 @@ export default function Admin() {
             <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
               <h2 className="text-xl font-semibold">Manage Players</h2>
               <div className="flex gap-2 flex-wrap">
-                <BulkPlayerImport categorySettings={categorySettings} onImportComplete={fetchData} />
+                <BulkPlayerImport categorySettings={categorySettings} onImportComplete={fetchData} createdBy={user!.id} />
                 <Button className="gradient-gold" onClick={() => setPlayerDialogOpen(true)}><Plus className="w-4 h-4 mr-2" />Add Player</Button>
                 <PlayerFormModal
                   open={playerDialogOpen}

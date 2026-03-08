@@ -83,6 +83,7 @@ export type Database = {
       current_auction: {
         Row: {
           created_at: string | null
+          created_by: string | null
           current_bid: number
           current_bidder_id: string | null
           id: string
@@ -95,6 +96,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          created_by?: string | null
           current_bid?: number
           current_bidder_id?: string | null
           id?: string
@@ -107,6 +109,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          created_by?: string | null
           current_bid?: number
           current_bidder_id?: string | null
           id?: string
@@ -372,6 +375,7 @@ export type Database = {
       owners: {
         Row: {
           created_at: string | null
+          created_by: string | null
           id: string
           remaining_points: number
           team_logo_url: string | null
@@ -382,6 +386,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          created_by?: string | null
           id?: string
           remaining_points?: number
           team_logo_url?: string | null
@@ -392,6 +397,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          created_by?: string | null
           id?: string
           remaining_points?: number
           team_logo_url?: string | null
@@ -492,6 +498,7 @@ export type Database = {
           category: Database["public"]["Enums"]["player_category"]
           centuries: number
           created_at: string | null
+          created_by: string | null
           economy_rate: number | null
           fifties: number
           highest_score: number | null
@@ -516,6 +523,7 @@ export type Database = {
           category: Database["public"]["Enums"]["player_category"]
           centuries?: number
           created_at?: string | null
+          created_by?: string | null
           economy_rate?: number | null
           fifties?: number
           highest_score?: number | null
@@ -540,6 +548,7 @@ export type Database = {
           category?: Database["public"]["Enums"]["player_category"]
           centuries?: number
           created_at?: string | null
+          created_by?: string | null
           economy_rate?: number | null
           fifties?: number
           highest_score?: number | null
