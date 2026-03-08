@@ -403,6 +403,7 @@ export function LiveScoring({
     if (!nonStriker && strikerBatsman && strikerBatsman !== striker && !dismissed.includes(strikerBatsman) && allBatsmen.length === 1) {
       nonStriker = strikerBatsman;
     }
+    let legalCount = 0;
     let nextBatsmanIdx = 2;
 
     for (const ball of ballsData) {
