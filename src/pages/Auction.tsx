@@ -409,40 +409,40 @@ export default function Auction() {
     <div className="min-h-screen bg-background">
       <Header />
       
-      <main className="container py-8">
-        <div className="flex items-center justify-between mb-8">
+      <main className="container py-4 sm:py-8 px-4 sm:px-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
           <div>
-            <h1 className="font-display text-3xl font-bold">Live Auction</h1>
-            <p className="text-muted-foreground">
+            <h1 className="font-display text-2xl sm:text-3xl font-bold">Live Auction</h1>
+            <p className="text-sm text-muted-foreground">
               {currentAuction?.is_active ? 'Bidding is active' : 'Waiting for auction to start'}
             </p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3">
             {/* Fullscreen Button */}
             {currentAuction?.is_active && currentPlayer && (
               <Button
                 variant="outline"
-                size="lg"
+                size="sm"
                 onClick={() => setIsFullscreen(true)}
                 className="gap-2"
               >
-                <Maximize2 className="w-5 h-5" />
-                Fullscreen
+                <Maximize2 className="w-4 h-4" />
+                <span className="hidden sm:inline">Fullscreen</span>
               </Button>
             )}
             {owner && (
               <Card className="card-shadow">
-                <CardContent className="p-4 flex items-center gap-4">
+                <CardContent className="p-3 sm:p-4 flex items-center gap-3 sm:gap-4">
                   <div className="text-right">
-                    <p className="text-sm text-muted-foreground">Your Balance</p>
-                    <p className="font-display text-2xl font-bold text-gradient-gold">
+                    <p className="text-xs sm:text-sm text-muted-foreground">Balance</p>
+                    <p className="font-display text-lg sm:text-2xl font-bold text-gradient-gold">
                       {owner.remaining_points.toLocaleString()}
                     </p>
                   </div>
-                  <div className="h-12 w-px bg-border" />
+                  <div className="h-8 sm:h-12 w-px bg-border" />
                   <div>
-                    <p className="text-sm text-muted-foreground">Team</p>
-                    <p className="font-medium">{owner.team_name}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Team</p>
+                    <p className="font-medium text-sm sm:text-base truncate max-w-[100px] sm:max-w-none">{owner.team_name}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -525,22 +525,22 @@ export default function Auction() {
                     )}
 
                     {/* Player Stats */}
-                    <div className="grid grid-cols-4 gap-3 mb-6">
-                      <div className="text-center p-3 bg-secondary/50 rounded-lg">
-                        <p className="text-xs text-muted-foreground">Matches</p>
-                        <p className="font-display text-xl font-bold">{currentPlayer.total_matches}</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4 sm:mb-6">
+                      <div className="text-center p-2 sm:p-3 bg-secondary/50 rounded-lg">
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">Matches</p>
+                        <p className="font-display text-lg sm:text-xl font-bold">{currentPlayer.total_matches}</p>
                       </div>
-                      <div className="text-center p-3 bg-secondary/50 rounded-lg">
-                        <p className="text-xs text-muted-foreground">Runs</p>
-                        <p className="font-display text-xl font-bold">{currentPlayer.total_runs}</p>
+                      <div className="text-center p-2 sm:p-3 bg-secondary/50 rounded-lg">
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">Runs</p>
+                        <p className="font-display text-lg sm:text-xl font-bold">{currentPlayer.total_runs}</p>
                       </div>
-                      <div className="text-center p-3 bg-secondary/50 rounded-lg">
-                        <p className="text-xs text-muted-foreground">Strike Rate</p>
-                        <p className="font-display text-xl font-bold">{currentPlayer.strike_rate}</p>
+                      <div className="text-center p-2 sm:p-3 bg-secondary/50 rounded-lg">
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">Strike Rate</p>
+                        <p className="font-display text-lg sm:text-xl font-bold">{currentPlayer.strike_rate}</p>
                       </div>
-                      <div className="text-center p-3 bg-secondary/50 rounded-lg">
-                        <p className="text-xs text-muted-foreground">Wickets</p>
-                        <p className="font-display text-xl font-bold">{currentPlayer.wickets}</p>
+                      <div className="text-center p-2 sm:p-3 bg-secondary/50 rounded-lg">
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">Wickets</p>
+                        <p className="font-display text-lg sm:text-xl font-bold">{currentPlayer.wickets}</p>
                       </div>
                     </div>
 

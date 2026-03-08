@@ -31,7 +31,7 @@ export function AuctionPlayerDisplay({ player, basePrice, currentBid, isActive }
   return (
     <div className="relative w-full overflow-hidden rounded-xl bg-gradient-to-br from-blue-600 via-blue-700 to-blue-900 p-1">
       {/* Inner container with broadcast-style layout */}
-      <div className="relative rounded-lg bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 overflow-hidden min-h-[320px]">
+      <div className="relative rounded-lg bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 overflow-hidden min-h-[280px] sm:min-h-[320px]">
         
         {/* Decorative diagonal lines */}
         <div className="absolute inset-0 overflow-hidden">
@@ -62,19 +62,19 @@ export function AuctionPlayerDisplay({ player, basePrice, currentBid, isActive }
         </div>
 
         {/* Player Name - prominent display */}
-        <div className="absolute top-24 left-6 z-10">
-          <h2 className="font-display text-3xl md:text-4xl font-bold text-white tracking-wide drop-shadow-lg uppercase">
+        <div className="absolute top-20 sm:top-24 left-4 sm:left-6 z-10 right-4 sm:right-auto">
+          <h2 className="font-display text-xl sm:text-3xl md:text-4xl font-bold text-white tracking-wide drop-shadow-lg uppercase truncate">
             {player.name}
           </h2>
         </div>
 
         {/* Main content area */}
-        <div className="pt-36 px-6 pb-6 flex flex-col md:flex-row items-end justify-between gap-6">
+        <div className="pt-28 sm:pt-36 px-4 sm:px-6 pb-4 sm:pb-6 flex flex-col md:flex-row items-end justify-between gap-4 sm:gap-6">
           {/* Left side - Player photo and stats */}
           <div className="flex items-end gap-4">
             {/* Player Photo */}
             <div className="relative flex-shrink-0">
-              <div className="w-24 h-24 md:w-28 md:h-28 rounded-full border-4 border-white/30 overflow-hidden bg-gradient-to-br from-blue-400 to-blue-600 shadow-xl">
+              <div className="w-16 h-16 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-full border-3 sm:border-4 border-white/30 overflow-hidden bg-gradient-to-br from-blue-400 to-blue-600 shadow-xl">
                 {player.profile_picture_url ? (
                   <img
                     src={player.profile_picture_url}
@@ -123,10 +123,10 @@ export function AuctionPlayerDisplay({ player, basePrice, currentBid, isActive }
 
           {/* Right side - Current Bid Display */}
           <div className="relative">
-            <div className="bg-gradient-to-br from-white/95 to-white/90 backdrop-blur px-6 py-4 rounded-lg shadow-xl transform skew-x-[-3deg]">
+            <div className="bg-gradient-to-br from-white/95 to-white/90 backdrop-blur px-4 sm:px-6 py-3 sm:py-4 rounded-lg shadow-xl transform skew-x-[-3deg]">
               <div className="transform skew-x-[3deg]">
-                <p className="text-blue-600 text-xs font-bold tracking-wider mb-1">CURRENT BID</p>
-                <p className="text-blue-800 text-4xl md:text-5xl font-bold font-display">
+                <p className="text-blue-600 text-[10px] sm:text-xs font-bold tracking-wider mb-1">CURRENT BID</p>
+                <p className="text-blue-800 text-2xl sm:text-4xl md:text-5xl font-bold font-display">
                   {currentBid}
                 </p>
               </div>
