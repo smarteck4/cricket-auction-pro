@@ -1789,7 +1789,7 @@ export function LiveScoring({
           )}
         </TabsContent>
 
-        <TabsContent value="balls" className="p-4 overflow-auto">
+        <TabsContent value="balls" className="flex-1 min-h-0 p-4 overflow-auto">
           <div className="space-y-1.5">
             {balls.length > 0 ? (
               balls.slice().reverse().map((ball, i) => (
