@@ -138,12 +138,12 @@ export default function Tournaments() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold">Tournament Management</h1>
+      <main className="container mx-auto px-4 py-4 sm:py-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold">Tournament Management</h1>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setVenueDialogOpen(true)}><MapPin className="h-4 w-4 mr-2" />Add Venue</Button>
-            <Button onClick={() => { setEditingTournament(null); setTournamentDialogOpen(true); }}><Plus className="h-4 w-4 mr-2" />New Tournament</Button>
+            <Button variant="outline" size="sm" onClick={() => setVenueDialogOpen(true)}><MapPin className="h-4 w-4 mr-1 sm:mr-2" /><span className="hidden sm:inline">Add </span>Venue</Button>
+            <Button size="sm" onClick={() => { setEditingTournament(null); setTournamentDialogOpen(true); }}><Plus className="h-4 w-4 mr-1 sm:mr-2" /><span className="hidden sm:inline">New </span>Tournament</Button>
           </div>
         </div>
 
