@@ -117,6 +117,9 @@ export function Header() {
                     <DropdownMenuItem onClick={() => navigate('/tournaments')}>
                       <Trophy className="w-4 h-4 mr-2" /> Tournaments
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/analytics')}>
+                      <BarChart3 className="w-4 h-4 mr-2" /> Analytics
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                   </div>
                   <DropdownMenuItem onClick={handleSignOut}>
