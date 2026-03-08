@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Gavel, Loader2 } from 'lucide-react';
+import { Gavel, Loader2, Eye, EyeOff } from 'lucide-react';
 import { z } from 'zod';
 
 const emailSchema = z.string().email('Invalid email address');
@@ -23,6 +23,7 @@ export default function Auth() {
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showPassword, setShowPassword] = useState(false);
   
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
