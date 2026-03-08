@@ -24,7 +24,8 @@ export function Header() {
   };
 
   const navItems = [
-    ...(role === 'admin' ? [{ to: '/admin', icon: Settings, label: 'Admin Panel' }] : []),
+    ...(role === 'super_admin' ? [{ to: '/super-admin', icon: Shield, label: 'Super Admin' }] : []),
+    ...(role === 'admin' || role === 'super_admin' ? [{ to: '/admin', icon: Settings, label: 'Admin Panel' }] : []),
     ...(role === 'owner' && owner ? [{ to: '/owner', icon: Users, label: 'My Team' }] : []),
     { to: '/players', icon: UsersRound, label: 'Players' },
     { to: '/auction', icon: Gavel, label: 'Auction' },
