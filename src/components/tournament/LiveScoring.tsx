@@ -394,8 +394,15 @@ export function LiveScoring({
     setDismissedBatsmen(dismissed);
 
     let striker = allBatsmen[0] || '';
+    // If non-striker never faced a ball, preserve current state if available and not dismissed
     let nonStriker = allBatsmen[1] || '';
-    let legalCount = 0;
+    if (!nonStriker && nonStrikerBatsman && !dismissed.includes(nonStrikerBatsman)) {
+      nonStriker = nonStrikerBatsman;
+    }
+    // Also try preserving from striker state if only one batsman seen
+    if (!nonStriker && strikerBatsman && strikerBatsman !== striker && !dismissed.includes(strikerBatsman) && allBatsmen.length === 1) {
+      nonStriker = strikerBatsman;
+    }
     let nextBatsmanIdx = 2;
 
     for (const ball of ballsData) {
