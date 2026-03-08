@@ -710,37 +710,34 @@ export default function Admin() {
             )}
 
             {/* Edit Player Dialog */}
-            <Dialog open={!!editingPlayer} onOpenChange={() => setEditingPlayer(null)}>
-              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                <DialogHeader><DialogTitle>Edit Player</DialogTitle></DialogHeader>
-                {editingPlayer && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div><Label>Name</Label><Input value={editingPlayer.name} onChange={e => setEditingPlayer({...editingPlayer, name: e.target.value})} /></div>
-                    <div><Label>Age</Label><Input type="number" value={editingPlayer.age} onChange={e => setEditingPlayer({...editingPlayer, age: +e.target.value})} /></div>
-                    <div><Label>Nationality</Label><Input value={editingPlayer.nationality} onChange={e => setEditingPlayer({...editingPlayer, nationality: e.target.value})} /></div>
-                    <div><Label>Category</Label>
-                      <Select value={editingPlayer.category} onValueChange={v => setEditingPlayer({...editingPlayer, category: v as PlayerCategory})}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>{Object.entries(CATEGORY_LABELS).map(([k,v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
-                    <div><Label>Role</Label>
-                      <Select value={editingPlayer.player_role} onValueChange={v => setEditingPlayer({...editingPlayer, player_role: v as PlayerRole})}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>{Object.entries(ROLE_LABELS).map(([k,v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
-                    <div><Label>Base Price</Label><Input type="number" value={editingPlayer.base_price || 0} onChange={e => setEditingPlayer({...editingPlayer, base_price: +e.target.value})} /></div>
-                    <div><Label>Matches</Label><Input type="number" value={editingPlayer.total_matches || 0} onChange={e => setEditingPlayer({...editingPlayer, total_matches: +e.target.value})} /></div>
-                    <div><Label>Runs</Label><Input type="number" value={editingPlayer.total_runs || 0} onChange={e => setEditingPlayer({...editingPlayer, total_runs: +e.target.value})} /></div>
-                    <div><Label>Wickets</Label><Input type="number" value={editingPlayer.wickets || 0} onChange={e => setEditingPlayer({...editingPlayer, wickets: +e.target.value})} /></div>
-                    <div><Label>Strike Rate</Label><Input type="number" step="0.01" value={editingPlayer.strike_rate || 0} onChange={e => setEditingPlayer({...editingPlayer, strike_rate: +e.target.value})} /></div>
-                    <div className="col-span-2"><Label>Profile Picture URL</Label><Input value={editingPlayer.profile_picture_url || ''} onChange={e => setEditingPlayer({...editingPlayer, profile_picture_url: e.target.value})} /></div>
-                  </div>
-                )}
-                <Button onClick={updatePlayer} className="w-full mt-4 gradient-gold">Save Changes</Button>
-              </DialogContent>
-            </Dialog>
+            <PlayerFormModal
+              open={!!editingPlayer}
+              onOpenChange={(open) => { if (!open) setEditingPlayer(null); }}
+              player={editingPlayer ? {
+                name: editingPlayer.name,
+                age: editingPlayer.age,
+                nationality: editingPlayer.nationality,
+                category: editingPlayer.category,
+                player_role: editingPlayer.player_role,
+                batting_hand: editingPlayer.batting_hand,
+                total_matches: editingPlayer.total_matches || 0,
+                total_runs: editingPlayer.total_runs || 0,
+                highest_score: editingPlayer.highest_score || 0,
+                strike_rate: editingPlayer.strike_rate || 0,
+                wickets: editingPlayer.wickets || 0,
+                bowling_average: editingPlayer.bowling_average || 0,
+                economy_rate: editingPlayer.economy_rate || 0,
+                best_bowling: editingPlayer.best_bowling || '',
+                fifties: editingPlayer.fifties || 0,
+                centuries: editingPlayer.centuries || 0,
+                profile_picture_url: editingPlayer.profile_picture_url || '',
+                base_price: editingPlayer.base_price,
+              } : defaultPlayer}
+              onPlayerChange={(data) => editingPlayer && setEditingPlayer({ ...editingPlayer, ...data })}
+              onSubmit={updatePlayer}
+              title="Edit Player"
+              submitLabel="Save Changes"
+            />
           </TabsContent>
 
           {/* OWNERS TAB */}
