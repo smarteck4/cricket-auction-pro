@@ -910,11 +910,14 @@ export function LiveScoring({
   };
 
   const getBallDisplay = (ball: MatchBall) => {
-    if (ball.is_wicket) return 'W';
-    if (ball.extra_type === 'wide') return `${ball.runs_scored}Wd`;
-    if (ball.extra_type === 'no_ball') return `${ball.runs_scored}Nb`;
-    if (ball.extra_type === 'bye') return `${ball.runs_scored}B`;
-    if (ball.extra_type === 'leg_bye') return `${ball.runs_scored}Lb`;
+    if (ball.is_wicket) {
+      const totalRuns = ball.runs_scored + ball.extras;
+      return totalRuns > 0 ? `W+${totalRuns}` : 'W';
+    }
+    if (ball.extra_type === 'wide') return `${ball.runs_scored + ball.extras}Wd`;
+    if (ball.extra_type === 'no_ball') return `${ball.runs_scored}+${ball.extras}Nb`;
+    if (ball.extra_type === 'bye') return `${ball.extras}B`;
+    if (ball.extra_type === 'leg_bye') return `${ball.extras}Lb`;
     return ball.runs_scored.toString();
   };
 
