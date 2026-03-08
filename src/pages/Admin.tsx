@@ -265,14 +265,24 @@ export default function Admin() {
 
   const updatePlayer = async () => {
     if (!editingPlayer) return;
-    const { error } = await supabase.from('players').update(editingPlayer).eq('id', editingPlayer.id);
+    setUploadingImage(true);
+
+    let profileUrl = editingPlayer.profile_picture_url;
+    if (editImageFile) {
+      const uploadedUrl = await uploadPlayerImage(editImageFile);
+      if (uploadedUrl) profileUrl = uploadedUrl;
+    }
+
+    const { error } = await supabase.from('players').update({ ...editingPlayer, profile_picture_url: profileUrl }).eq('id', editingPlayer.id);
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
       toast({ title: 'Player updated!' });
       setEditingPlayer(null);
+      setEditImageFile(null);
       fetchData();
     }
+    setUploadingImage(false);
   };
 
   const deletePlayer = async (id: string) => {
