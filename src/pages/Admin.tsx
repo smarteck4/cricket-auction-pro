@@ -20,11 +20,12 @@ import { BulkPlayerImport } from '@/components/BulkPlayerImport';
 import { PlayerFormModal, PlayerFormData } from '@/components/PlayerFormModal';
 import { Tabs as RadioTabs, TabsList as RadioTabsList, TabsTrigger as RadioTabsTrigger } from '@/components/ui/tabs';
 
-const defaultPlayer = {
+const defaultPlayer: PlayerFormData = {
   name: '', age: 20, nationality: '', category: 'gold' as PlayerCategory,
   player_role: 'batsman' as PlayerRole, batting_hand: 'right' as BattingHand,
   total_matches: 0, total_runs: 0, highest_score: 0, strike_rate: 0,
-  wickets: 0, bowling_average: 0, economy_rate: 0, best_bowling: '', profile_picture_url: ''
+  wickets: 0, bowling_average: 0, economy_rate: 0, best_bowling: '', profile_picture_url: '',
+  fifties: 0, centuries: 0,
 };
 
 const defaultOwner = { team_name: '', total_points: 10000, team_logo_url: '' };
