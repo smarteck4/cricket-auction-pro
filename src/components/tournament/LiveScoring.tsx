@@ -120,19 +120,26 @@ export function LiveScoring({
   // Current over deliveries for display
   const currentOverBalls = useMemo(() => {
     if (!balls.length) return [];
+    
+    // Determine which over number we're currently in
+    const displayOver = currentBall === 0 && currentOver > 0 ? currentOver - 1 : currentOver;
+    
     let legal = 0;
     const overBalls: MatchBall[] = [];
     
     for (const ball of balls) {
-      if (!ball.extra_type || !['wide', 'no_ball'].includes(ball.extra_type)) {
-        legal++;
-      }
-      const ballOver = Math.floor((legal - 1) / 6);
-      if (ballOver === currentOver || (currentBall === 0 && ballOver === currentOver - 1)) {
+      const isLegal = !ball.extra_type || !['wide', 'no_ball'].includes(ball.extra_type);
+      const ballOverBefore = legal > 0 ? Math.floor((legal - 1) / 6) : 0;
+      if (isLegal) legal++;
+      const ballOver = legal > 0 ? Math.floor((legal - 1) / 6) : 0;
+      
+      // Include ball if it belongs to the display over
+      const belongsToOver = isLegal ? ballOver === displayOver : ballOverBefore === displayOver;
+      if (belongsToOver) {
         overBalls.push(ball);
       }
     }
-    return overBalls.slice(-6);
+    return overBalls;
   }, [balls, currentOver, currentBall]);
 
   // Calculate batsman stats from balls
