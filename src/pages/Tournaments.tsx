@@ -47,19 +47,54 @@ export default function Tournaments() {
       return;
     }
     fetchData();
-    setupRealtime();
+    const cleanupRealtime = setupRealtime();
+    const cleanupPolling = setupPollingFallback();
+    return () => {
+      cleanupRealtime();
+      cleanupPolling();
+    };
   }, [user, role]);
 
   const setupRealtime = () => {
+    let lastRealtimeEvent = Date.now();
     const channel = supabase
       .channel('tournament-updates')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, fetchData)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'match_innings' }, fetchData)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'player_match_stats' }, fetchData)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tournament_points' }, fetchData)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'match_balls' }, fetchData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, () => { lastRealtimeEvent = Date.now(); fetchData(); })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'match_innings' }, () => { lastRealtimeEvent = Date.now(); fetchData(); })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'player_match_stats' }, () => { lastRealtimeEvent = Date.now(); fetchData(); })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tournament_points' }, () => { lastRealtimeEvent = Date.now(); fetchData(); })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'match_balls' }, () => { lastRealtimeEvent = Date.now(); fetchData(); })
       .subscribe();
+    // Expose lastRealtimeEvent for polling fallback
+    (window as any).__lastRealtimeEvent = () => lastRealtimeEvent;
     return () => { supabase.removeChannel(channel); };
+  };
+
+  const setupPollingFallback = () => {
+    let pollInterval = 5000;
+    let isActive = true;
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const poll = () => {
+      if (!isActive) return;
+      const lastEvent = (window as any).__lastRealtimeEvent?.() || 0;
+      const timeSinceLastEvent = Date.now() - lastEvent;
+
+      // If no realtime event in last 10s, poll as fallback
+      if (timeSinceLastEvent > 10000) {
+        fetchData();
+        // Back off polling interval up to 30s
+        pollInterval = Math.min(pollInterval * 1.5, 30000);
+      } else {
+        // Realtime is working, reset interval
+        pollInterval = 5000;
+      }
+
+      timeoutId = setTimeout(poll, pollInterval);
+    };
+
+    timeoutId = setTimeout(poll, pollInterval);
+    return () => { isActive = false; clearTimeout(timeoutId); };
   };
 
   const fetchData = async () => {
