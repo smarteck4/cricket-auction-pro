@@ -1079,7 +1079,7 @@ export function LiveScoring({
 
               {/* Player Selection Modal Overlay */}
               {selectionMode && (
-                <div className="absolute inset-0 z-50 bg-background/98 backdrop-blur-md flex flex-col">
+                <div className="absolute inset-0 z-50 bg-background/98 backdrop-blur-md flex flex-col overflow-hidden">
                   <div className="bg-gradient-to-r from-[hsl(var(--slate-dark))] to-[hsl(var(--slate))] px-5 py-4">
                     <h3 className="text-lg font-bold text-white text-center tracking-wide">
                       {selectionMode === 'opening' && '🏏 Select Opening Players'}
