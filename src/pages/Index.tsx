@@ -32,7 +32,7 @@ export default function Index() {
               </ParallaxSection>
               
               <ParallaxSection speed={0.15}>
-                <h1 className="font-display text-3xl sm:text-5xl md:text-7xl font-bold tracking-tight mb-4 sm:mb-6 animate-fade-in-up">
+                <h1 className="font-display text-3xl sm:text-5xl md:text-7xl font-bold tracking-tight mb-4 sm:mb-6">
                   Build Your Dream{' '}
                   <span className="text-gradient-gold">Cricket Team</span>
                 </h1>
