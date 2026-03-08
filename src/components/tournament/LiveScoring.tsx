@@ -477,8 +477,10 @@ export function LiveScoring({
     }
 
     const atOverEnd = legalCount > 0 && legalCount % 6 === 0;
+    const lastBallWasWicket = ballsData[ballsData.length - 1]?.is_wicket || false;
+    const hasUnreplacedWicket = lastBallWasWicket && !striker;
 
-    if (atOverEnd && !striker) {
+    if (atOverEnd && hasUnreplacedWicket) {
       setPreviousOverBowler(currentBowlerId);
       setCurrentBowler('');
       setSelectionMode('new_batsman_and_bowler');
@@ -489,14 +491,16 @@ export function LiveScoring({
       setCurrentBowler('');
       setSelectionMode('new_bowler');
       setPendingBowler('');
-    } else if (!striker) {
+    } else if (hasUnreplacedWicket) {
       setPreviousOverBowler(prevOverBowler);
       setCurrentBowler(currentBowlerId);
       setSelectionMode('new_batsman');
       setPendingStriker('');
     } else {
+      // Mid-over, no pending wicket - resume normally without any selection prompt
       setPreviousOverBowler(prevOverBowler);
       setCurrentBowler(currentBowlerId);
+      setSelectionMode(null);
     }
 
     // Reconstruct free hit state from ball history
