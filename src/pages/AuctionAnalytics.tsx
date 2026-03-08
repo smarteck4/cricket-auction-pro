@@ -746,6 +746,7 @@ export default function AuctionAnalytics() {
             </Card>
           </TabsContent>
         </Tabs>
+        </div>
       </div>
     </div>
   );
