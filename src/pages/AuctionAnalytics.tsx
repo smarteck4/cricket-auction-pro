@@ -70,6 +70,162 @@ export default function AuctionAnalytics() {
   const [owners, setOwners] = useState<Owner[]>([]);
   const [bids, setBids] = useState<Bid[]>([]);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
+  const reportRef = useRef<HTMLDivElement>(null);
+
+  const exportToPDF = async () => {
+    if (!reportRef.current) return;
+    setExporting(true);
+
+    try {
+      // Capture the report content
+      const canvas = await html2canvas(reportRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+
+      // Title page
+      pdf.setFontSize(24);
+      pdf.setTextColor(30, 58, 95);
+      pdf.text('CricBid Auction Report', pdfWidth / 2, 30, { align: 'center' });
+      pdf.setFontSize(12);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text(`Generated on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`, pdfWidth / 2, 40, { align: 'center' });
+
+      // Summary section
+      pdf.setFontSize(16);
+      pdf.setTextColor(30, 58, 95);
+      pdf.text('Summary', 14, 60);
+      pdf.setFontSize(11);
+      pdf.setTextColor(50, 50, 50);
+      const summaryY = 70;
+      pdf.text(`Total Spent: ${totalSpent.toLocaleString()} pts`, 14, summaryY);
+      pdf.text(`Players Sold: ${totalPlayers}`, 14, summaryY + 7);
+      pdf.text(`Total Bids: ${totalBids}`, 14, summaryY + 14);
+      pdf.text(`Avg Bids per Player: ${avgBidPerPlayer}`, 14, summaryY + 21);
+
+      // Team spending table
+      pdf.setFontSize(16);
+      pdf.setTextColor(30, 58, 95);
+      pdf.text('Team Spending Breakdown', 14, summaryY + 38);
+
+      let tableY = summaryY + 46;
+      pdf.setFontSize(9);
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFillColor(30, 58, 95);
+      pdf.rect(14, tableY, pdfWidth - 28, 8, 'F');
+      pdf.text('Team', 16, tableY + 5.5);
+      pdf.text('Spent', 80, tableY + 5.5);
+      pdf.text('Remaining', 110, tableY + 5.5);
+      pdf.text('Players', 150, tableY + 5.5);
+      tableY += 8;
+
+      spendingByOwner.forEach((team, i) => {
+        pdf.setTextColor(50, 50, 50);
+        pdf.setFillColor(i % 2 === 0 ? 245 : 255, i % 2 === 0 ? 245 : 255, i % 2 === 0 ? 250 : 255);
+        pdf.rect(14, tableY, pdfWidth - 28, 7, 'F');
+        pdf.setFontSize(9);
+        pdf.text(team.name, 16, tableY + 5);
+        pdf.text(team.spent.toLocaleString(), 80, tableY + 5);
+        pdf.text(team.remaining.toLocaleString(), 110, tableY + 5);
+        pdf.text(String(team.players), 150, tableY + 5);
+        tableY += 7;
+      });
+
+      // Category breakdown
+      tableY += 10;
+      if (tableY > pdfHeight - 60) { pdf.addPage(); tableY = 20; }
+      pdf.setFontSize(16);
+      pdf.setTextColor(30, 58, 95);
+      pdf.text('Category Breakdown', 14, tableY);
+      tableY += 8;
+
+      pdf.setFontSize(9);
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFillColor(30, 58, 95);
+      pdf.rect(14, tableY, pdfWidth - 28, 8, 'F');
+      pdf.text('Category', 16, tableY + 5.5);
+      pdf.text('Players', 70, tableY + 5.5);
+      pdf.text('Total Spent', 100, tableY + 5.5);
+      pdf.text('Avg Price', 140, tableY + 5.5);
+      tableY += 8;
+
+      categorySpending.forEach((cat, i) => {
+        pdf.setTextColor(50, 50, 50);
+        pdf.setFillColor(i % 2 === 0 ? 245 : 255, i % 2 === 0 ? 245 : 255, i % 2 === 0 ? 250 : 255);
+        pdf.rect(14, tableY, pdfWidth - 28, 7, 'F');
+        pdf.setFontSize(9);
+        pdf.text(cat.name, 16, tableY + 5);
+        pdf.text(String(cat.playerCount), 70, tableY + 5);
+        pdf.text(cat.totalSpent.toLocaleString(), 100, tableY + 5);
+        pdf.text(cat.avgPrice.toLocaleString(), 140, tableY + 5);
+        tableY += 7;
+      });
+
+      // Top valuations
+      tableY += 10;
+      if (tableY > pdfHeight - 60) { pdf.addPage(); tableY = 20; }
+      pdf.setFontSize(16);
+      pdf.setTextColor(30, 58, 95);
+      pdf.text('Top Price Premiums', 14, tableY);
+      tableY += 8;
+
+      pdf.setFontSize(9);
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFillColor(30, 58, 95);
+      pdf.rect(14, tableY, pdfWidth - 28, 8, 'F');
+      pdf.text('#', 16, tableY + 5.5);
+      pdf.text('Player', 24, tableY + 5.5);
+      pdf.text('Base', 90, tableY + 5.5);
+      pdf.text('Bought', 115, tableY + 5.5);
+      pdf.text('Premium', 145, tableY + 5.5);
+      tableY += 8;
+
+      valuationComparison.slice(0, 15).forEach((player, i) => {
+        if (tableY > pdfHeight - 20) { pdf.addPage(); tableY = 20; }
+        pdf.setTextColor(50, 50, 50);
+        pdf.setFillColor(i % 2 === 0 ? 245 : 255, i % 2 === 0 ? 245 : 255, i % 2 === 0 ? 250 : 255);
+        pdf.rect(14, tableY, pdfWidth - 28, 7, 'F');
+        pdf.setFontSize(9);
+        pdf.text(String(i + 1), 16, tableY + 5);
+        pdf.text(player.name.substring(0, 25), 24, tableY + 5);
+        pdf.text(String(player.basePrice), 90, tableY + 5);
+        pdf.text(String(player.boughtPrice), 115, tableY + 5);
+        pdf.text(`${player.premiumPct > 0 ? '+' : ''}${player.premiumPct}%`, 145, tableY + 5);
+        tableY += 7;
+      });
+
+      // Charts page
+      pdf.addPage();
+      const imgWidth = pdfWidth - 20;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      // If chart image fits, add it; otherwise scale across pages
+      let heightLeft = imgHeight;
+      let position = 10;
+      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+      heightLeft -= pdfHeight;
+      while (heightLeft > 0) {
+        pdf.addPage();
+        position = position - pdfHeight;
+        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
+      }
+
+      pdf.save('CricBid_Auction_Report.pdf');
+    } catch (err) {
+      console.error('PDF export failed:', err);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   useEffect(() => {
     if (!user) {
