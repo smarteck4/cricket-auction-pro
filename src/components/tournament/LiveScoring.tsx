@@ -571,7 +571,10 @@ export function LiveScoring({
 
     const newTotalRuns = currentInnings.total_runs + runs + extraRuns;
     const newTotalWickets = currentInnings.total_wickets + (isWicket ? 1 : 0);
-    const newTotalOvers = isLegalDelivery ? (overNum + (ballNum === 6 ? 0 : ballNum / 10)) : currentInnings.total_overs;
+    // Cricket overs format: 1.4 means 1 over 4 balls. At ball 6, it becomes the next complete over.
+    const newTotalOvers = isLegalDelivery 
+      ? (ballNum === 6 ? Math.floor(newLegalDeliveries / 6) : Math.floor((newLegalDeliveries - 1) / 6) + (ballNum / 10))
+      : currentInnings.total_overs;
 
     const newExtras = currentInnings.extras + extraRuns;
 
