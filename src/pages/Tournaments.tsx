@@ -55,6 +55,9 @@ export default function Tournaments() {
       .channel('tournament-updates')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, fetchData)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'match_innings' }, fetchData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'player_match_stats' }, fetchData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tournament_points' }, fetchData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'match_balls' }, fetchData)
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   };
