@@ -104,6 +104,8 @@ export function PlayerFormModal({
 }: PlayerFormModalProps) {
   const [imageUploadType, setImageUploadType] = useState<'url' | 'file'>('url');
   const [showErrors, setShowErrors] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const errors = useMemo(() => validate(player), [player]);
   const hasErrors = Object.keys(errors).length > 0;
