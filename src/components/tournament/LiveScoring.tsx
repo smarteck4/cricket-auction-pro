@@ -1817,7 +1817,7 @@ export function LiveScoring({
           </div>
         </TabsContent>
 
-        <TabsContent value="info" className="p-5">
+        <TabsContent value="info" className="flex-1 min-h-0 p-5 overflow-auto">
           <div className="space-y-5">
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-muted/30 rounded-xl p-4 border border-border/30">
