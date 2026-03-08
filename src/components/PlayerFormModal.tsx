@@ -293,9 +293,45 @@ export function PlayerFormModal({
                     {showErrors && <FieldError error={errors.profile_picture_url} />}
                   </>
                 ) : (
-                  <div className="space-y-2">
-                    <Input type="file" accept="image/*" onChange={e => { const file = e.target.files?.[0]; onImageFileSelect(file || null); }} />
-                    {selectedImageFile && <p className="text-sm text-muted-foreground">Selected: {selectedImageFile.name}</p>}
+                  <div className="space-y-3">
+                    <div
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                      onClick={() => fileInputRef.current?.click()}
+                      className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+                        isDragging
+                          ? 'border-primary bg-primary/5'
+                          : 'border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50'
+                      }`}
+                    >
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        className="hidden"
+                        onChange={e => { const file = e.target.files?.[0]; handleFileSelect(file || null); }}
+                      />
+                      {selectedImageFile ? (
+                        <div className="space-y-2">
+                          <ImagePlus className="w-8 h-8 mx-auto text-primary" />
+                          <p className="text-sm font-medium">{selectedImageFile.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {(selectedImageFile.size / 1024).toFixed(1)} KB — Click or drop to replace
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <ImagePlus className="w-8 h-8 mx-auto text-muted-foreground" />
+                          <p className="text-sm font-medium">
+                            {isDragging ? 'Drop image here' : 'Drag & drop an image here'}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            or click to browse — JPEG, PNG, WebP, GIF (max 5MB)
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </>
