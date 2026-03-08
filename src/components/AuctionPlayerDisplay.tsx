@@ -74,7 +74,7 @@ export function AuctionPlayerDisplay({ player, basePrice, currentBid, isActive }
           <div className="flex items-end gap-4">
             {/* Player Photo */}
             <div className="relative flex-shrink-0">
-              <div className="w-24 h-24 md:w-28 md:h-28 rounded-full border-4 border-white/30 overflow-hidden bg-gradient-to-br from-blue-400 to-blue-600 shadow-xl">
+              <div className="w-16 h-16 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-full border-3 sm:border-4 border-white/30 overflow-hidden bg-gradient-to-br from-blue-400 to-blue-600 shadow-xl">
                 {player.profile_picture_url ? (
                   <img
                     src={player.profile_picture_url}
