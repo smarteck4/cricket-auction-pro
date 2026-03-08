@@ -1033,7 +1033,7 @@ export function LiveScoring({
 
         <TabsContent value="scoring" className="flex-1 min-h-0 flex flex-col overflow-auto p-0 m-0">
           {currentInnings ? (
-            <div className="flex flex-col flex-1 relative">
+            <div className="flex flex-col flex-1 min-h-0 relative">
               {/* Premium Score Display */}
               <div className="relative bg-gradient-to-br from-card via-card to-primary/5 p-5 text-center border-b border-border/50">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
