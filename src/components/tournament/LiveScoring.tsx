@@ -773,7 +773,7 @@ export function LiveScoring({
     // Wide doesn't affect free hit status
 
     setExtraMode(null);
-    fetchInnings();
+    fetchInnings(true);
   };
 
   const handleRetiredHurt = () => {
