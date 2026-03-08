@@ -69,7 +69,7 @@ export function AuctionPlayerDisplay({ player, basePrice, currentBid, isActive }
         </div>
 
         {/* Main content area */}
-        <div className="pt-36 px-6 pb-6 flex flex-col md:flex-row items-end justify-between gap-6">
+        <div className="pt-28 sm:pt-36 px-4 sm:px-6 pb-4 sm:pb-6 flex flex-col md:flex-row items-end justify-between gap-4 sm:gap-6">
           {/* Left side - Player photo and stats */}
           <div className="flex items-end gap-4">
             {/* Player Photo */}
