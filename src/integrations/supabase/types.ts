@@ -779,6 +779,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      place_bid_atomic: {
+        Args: {
+          p_auction_id: string
+          p_bid_amount: number
+          p_owner_id: string
+          p_player_id: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "spectator" | "admin" | "owner"
