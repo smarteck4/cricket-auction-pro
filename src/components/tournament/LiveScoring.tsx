@@ -1031,7 +1031,7 @@ export function LiveScoring({
           />
         </TabsContent>
 
-        <TabsContent value="scoring" className="flex-1 flex flex-col overflow-auto p-0 m-0">
+        <TabsContent value="scoring" className="flex-1 min-h-0 flex flex-col overflow-auto p-0 m-0">
           {currentInnings ? (
             <div className="flex flex-col flex-1 relative">
               {/* Premium Score Display */}
