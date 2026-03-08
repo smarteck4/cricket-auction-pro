@@ -243,40 +243,18 @@ export default function Auction() {
     
     setBidding(true);
     
-    // Place bid
-    const { error: bidError } = await supabase
-      .from('bids')
-      .insert({
-        player_id: currentPlayer.id,
-        owner_id: owner.id,
-        bid_amount: newBid,
-      });
+    // Place bid atomically
+    const { data: result, error: rpcError } = await supabase.rpc('place_bid_atomic', {
+      p_auction_id: currentAuction.id,
+      p_player_id: currentPlayer.id,
+      p_owner_id: owner.id,
+      p_bid_amount: newBid,
+    });
     
-    if (bidError) {
+    if (rpcError || (result as any)?.error) {
       toast({
         title: 'Error placing bid',
-        description: bidError.message,
-        variant: 'destructive',
-      });
-      setBidding(false);
-      return;
-    }
-    
-    // Update current auction with reset timer
-    const { error: updateError } = await supabase
-      .from('current_auction')
-      .update({
-        current_bid: newBid,
-        current_bidder_id: owner.id,
-        timer_started_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', currentAuction.id);
-    
-    if (updateError) {
-      toast({
-        title: 'Error updating auction',
-        description: updateError.message,
+        description: (result as any)?.error || rpcError?.message,
         variant: 'destructive',
       });
     } else {
