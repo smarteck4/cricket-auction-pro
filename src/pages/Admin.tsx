@@ -249,8 +249,9 @@ export default function Admin() {
     const { error } = await supabase.from('players').insert({ 
       ...newPlayer, 
       profile_picture_url: profileUrl,
-      base_price: basePrice 
-    });
+      base_price: basePrice,
+      created_by: user!.id,
+    } as any);
     
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
