@@ -13,6 +13,7 @@ import * as XLSX from '@e965/xlsx';
 interface BulkPlayerImportProps {
   categorySettings: CategorySetting[];
   onImportComplete: () => void;
+  createdBy: string;
 }
 
 interface PreviewPlayer {
