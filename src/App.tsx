@@ -12,6 +12,7 @@ import Owner from "./pages/Owner";
 import Players from "./pages/Players";
 import Tournaments from "./pages/Tournaments";
 import MatchScoring from "./pages/MatchScoring";
+import AuctionAnalytics from "./pages/AuctionAnalytics";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
