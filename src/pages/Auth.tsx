@@ -181,13 +181,23 @@ export default function Auth() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signin-password">Password</Label>
-                    <Input
-                      id="signin-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                    />
+                    <div className="relative">
+                      <Input
+                        id="signin-password"
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
                     {errors.password && (
                       <p className="text-sm text-destructive">{errors.password}</p>
                     )}
