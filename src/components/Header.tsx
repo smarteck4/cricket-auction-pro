@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
-import { User, LogOut, Settings, Users, Gavel, UsersRound, Trophy } from 'lucide-react';
+import { User, LogOut, Settings, Users, Gavel, UsersRound, Trophy, BarChart3 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
 export function Header() {

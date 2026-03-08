@@ -33,6 +33,7 @@ const App = () => (
             <Route path="/players" element={<Players />} />
             <Route path="/tournaments" element={<Tournaments />} />
             <Route path="/tournaments/match/:matchId/scoring" element={<MatchScoring />} />
+            <Route path="/analytics" element={<AuctionAnalytics />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
