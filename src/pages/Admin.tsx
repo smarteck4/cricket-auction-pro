@@ -723,7 +723,7 @@ export default function Admin() {
             {/* Edit Player Dialog */}
             <PlayerFormModal
               open={!!editingPlayer}
-              onOpenChange={(open) => { if (!open) setEditingPlayer(null); }}
+              onOpenChange={(open) => { if (!open) { setEditingPlayer(null); setEditImageFile(null); } }}
               player={editingPlayer ? {
                 name: editingPlayer.name,
                 age: editingPlayer.age,
@@ -748,6 +748,10 @@ export default function Admin() {
               onSubmit={updatePlayer}
               title="Edit Player"
               submitLabel="Save Changes"
+              isSubmitting={uploadingImage}
+              showImageUpload={true}
+              onImageFileSelect={setEditImageFile}
+              selectedImageFile={editImageFile}
             />
           </TabsContent>
 
