@@ -41,7 +41,7 @@ const VALID_CATEGORIES: PlayerCategory[] = ['platinum', 'gold', 'silver', 'emerg
 const VALID_ROLES: PlayerRole[] = ['batsman', 'bowler', 'all_rounder', 'wicket_keeper'];
 const VALID_HANDS: BattingHand[] = ['left', 'right'];
 
-export function BulkPlayerImport({ categorySettings, onImportComplete }: BulkPlayerImportProps) {
+export function BulkPlayerImport({ categorySettings, onImportComplete, createdBy }: BulkPlayerImportProps) {
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [previewData, setPreviewData] = useState<PreviewPlayer[]>([]);
