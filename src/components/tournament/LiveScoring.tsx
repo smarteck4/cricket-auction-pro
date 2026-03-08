@@ -1170,7 +1170,7 @@ export function LiveScoring({
                     )}
                   </div>
                   
-                  <div className="p-4 border-t bg-card">
+                  <div className="p-4 border-t bg-card shrink-0">
                     <Button onClick={confirmPlayerSelection} className="w-full h-12 text-base font-bold bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/20">
                       ✓ Confirm Selection
                     </Button>
