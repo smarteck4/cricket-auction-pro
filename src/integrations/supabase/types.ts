@@ -798,6 +798,13 @@ export type Database = {
         Returns: Json
       }
       re_auction_player: { Args: { p_player_id: string }; Returns: Json }
+      update_user_role: {
+        Args: {
+          p_new_role: Database["public"]["Enums"]["app_role"]
+          p_user_id: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "spectator" | "admin" | "owner" | "super_admin"
