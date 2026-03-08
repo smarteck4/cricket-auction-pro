@@ -783,7 +783,12 @@ export function LiveScoring({
         toast({ title: 'Select Batsman', description: 'Please select the new batsman.', variant: 'destructive' });
         return;
       }
-      setStrikerBatsman(pendingStriker);
+      // Set the new batsman in whichever position is empty
+      if (!strikerBatsman) {
+        setStrikerBatsman(pendingStriker);
+      } else {
+        setNonStrikerBatsman(pendingStriker);
+      }
     } else if (selectionMode === 'new_bowler') {
       if (!pendingBowler) {
         toast({ title: 'Select Bowler', description: 'Please select the new bowler.', variant: 'destructive' });
