@@ -783,7 +783,12 @@ export function LiveScoring({
         toast({ title: 'Select Batsman', description: 'Please select the new batsman.', variant: 'destructive' });
         return;
       }
-      setStrikerBatsman(pendingStriker);
+      // Set the new batsman in whichever position is empty
+      if (!strikerBatsman) {
+        setStrikerBatsman(pendingStriker);
+      } else {
+        setNonStrikerBatsman(pendingStriker);
+      }
     } else if (selectionMode === 'new_bowler') {
       if (!pendingBowler) {
         toast({ title: 'Select Bowler', description: 'Please select the new bowler.', variant: 'destructive' });
@@ -819,14 +824,31 @@ export function LiveScoring({
     
     const runsToRemove = lastBall.runs_scored + lastBall.extras;
     const wicketsToRemove = lastBall.is_wicket ? 1 : 0;
+    const extrasToRemove = lastBall.extras;
+    const isLegal = !lastBall.extra_type || !['wide', 'no_ball'].includes(lastBall.extra_type);
+    
+    // Recalculate overs from remaining balls
+    const remainingBalls = balls.slice(0, -1);
+    let legalCount = 0;
+    remainingBalls.forEach(b => {
+      if (!b.extra_type || !['wide', 'no_ball'].includes(b.extra_type)) legalCount++;
+    });
+    const newOvers = Math.floor(legalCount / 6) + (legalCount % 6) / 10;
     
     await supabase
       .from('match_innings')
       .update({
         total_runs: currentInnings.total_runs - runsToRemove,
         total_wickets: currentInnings.total_wickets - wicketsToRemove,
+        total_overs: newOvers,
+        extras: currentInnings.extras - extrasToRemove,
       })
       .eq('id', currentInnings.id);
+
+    // If a wicket was undone, remove the batsman from dismissed list
+    if (lastBall.is_wicket && lastBall.batsman_id) {
+      setDismissedBatsmen(prev => prev.filter(id => id !== lastBall.batsman_id));
+    }
 
     toast({ title: 'Undone', description: 'Last ball removed' });
     fetchInnings();
