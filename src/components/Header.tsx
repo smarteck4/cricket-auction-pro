@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { User, LogOut, Settings, Users, Gavel, UsersRound, Trophy, BarChart3, Menu } from 'lucide-react';
+import { User, LogOut, Settings, Users, Gavel, UsersRound, Trophy, BarChart3, Menu, Shield } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useState } from 'react';
 
