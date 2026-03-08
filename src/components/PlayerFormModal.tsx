@@ -1,11 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PlayerCategory, PlayerRole, BattingHand, CATEGORY_LABELS, ROLE_LABELS } from '@/lib/types';
-import { Link, Upload } from 'lucide-react';
+import { Link, Upload, ImagePlus } from 'lucide-react';
 
 export interface PlayerFormData {
   name: string;
@@ -104,6 +104,8 @@ export function PlayerFormModal({
 }: PlayerFormModalProps) {
   const [imageUploadType, setImageUploadType] = useState<'url' | 'file'>('url');
   const [showErrors, setShowErrors] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const errors = useMemo(() => validate(player), [player]);
   const hasErrors = Object.keys(errors).length > 0;
@@ -111,6 +113,35 @@ export function PlayerFormModal({
   const update = (fields: Partial<PlayerFormData>) => {
     onPlayerChange({ ...player, ...fields });
   };
+
+  const handleFileSelect = useCallback((file: File | null) => {
+    if (!file || !onImageFileSelect) return;
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) return;
+    if (file.size > 5 * 1024 * 1024) return;
+    onImageFileSelect(file);
+    setImageUploadType('file');
+  }, [onImageFileSelect]);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleFileSelect(file);
+  }, [handleFileSelect]);
 
   const handleSubmit = () => {
     if (hasErrors) {
@@ -262,9 +293,45 @@ export function PlayerFormModal({
                     {showErrors && <FieldError error={errors.profile_picture_url} />}
                   </>
                 ) : (
-                  <div className="space-y-2">
-                    <Input type="file" accept="image/*" onChange={e => { const file = e.target.files?.[0]; onImageFileSelect(file || null); }} />
-                    {selectedImageFile && <p className="text-sm text-muted-foreground">Selected: {selectedImageFile.name}</p>}
+                  <div className="space-y-3">
+                    <div
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                      onClick={() => fileInputRef.current?.click()}
+                      className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+                        isDragging
+                          ? 'border-primary bg-primary/5'
+                          : 'border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50'
+                      }`}
+                    >
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        className="hidden"
+                        onChange={e => { const file = e.target.files?.[0]; handleFileSelect(file || null); }}
+                      />
+                      {selectedImageFile ? (
+                        <div className="space-y-2">
+                          <ImagePlus className="w-8 h-8 mx-auto text-primary" />
+                          <p className="text-sm font-medium">{selectedImageFile.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {(selectedImageFile.size / 1024).toFixed(1)} KB — Click or drop to replace
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <ImagePlus className="w-8 h-8 mx-auto text-muted-foreground" />
+                          <p className="text-sm font-medium">
+                            {isDragging ? 'Drop image here' : 'Drag & drop an image here'}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            or click to browse — JPEG, PNG, WebP, GIF (max 5MB)
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </>
