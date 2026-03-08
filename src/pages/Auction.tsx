@@ -524,23 +524,47 @@ export default function Auction() {
                       </div>
                     )}
 
-                    {/* Player Stats */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4 sm:mb-6">
-                      <div className="text-center p-2 sm:p-3 bg-secondary/50 rounded-lg">
-                        <p className="text-[10px] sm:text-xs text-muted-foreground">Matches</p>
-                        <p className="font-display text-lg sm:text-xl font-bold">{currentPlayer.total_matches}</p>
+                    {/* Player Bio Stats */}
+                    <div className="space-y-3 mb-4 sm:mb-6">
+                      <div>
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <TrendingUp className="w-3 h-3 text-primary/60" />
+                          <span className="text-[9px] font-bold text-muted-foreground/60 tracking-[0.15em] uppercase">Batting</span>
+                        </div>
+                        <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+                          {[
+                            { label: 'Mat', value: currentPlayer.total_matches || 0 },
+                            { label: 'Runs', value: currentPlayer.total_runs || 0 },
+                            { label: 'HS', value: currentPlayer.highest_score || 0 },
+                            { label: 'SR', value: currentPlayer.strike_rate ? Number(currentPlayer.strike_rate).toFixed(1) : '0.0' },
+                            { label: '50s', value: currentPlayer.fifties || 0 },
+                            { label: '100s', value: currentPlayer.centuries || 0 },
+                          ].map(s => (
+                            <div key={s.label} className="text-center p-2 bg-secondary/30 rounded-lg border border-border/30">
+                              <p className="text-[9px] text-muted-foreground/60 font-semibold uppercase">{s.label}</p>
+                              <p className="font-display text-sm sm:text-base font-black">{s.value}</p>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                      <div className="text-center p-2 sm:p-3 bg-secondary/50 rounded-lg">
-                        <p className="text-[10px] sm:text-xs text-muted-foreground">Runs</p>
-                        <p className="font-display text-lg sm:text-xl font-bold">{currentPlayer.total_runs}</p>
-                      </div>
-                      <div className="text-center p-2 sm:p-3 bg-secondary/50 rounded-lg">
-                        <p className="text-[10px] sm:text-xs text-muted-foreground">Strike Rate</p>
-                        <p className="font-display text-lg sm:text-xl font-bold">{currentPlayer.strike_rate}</p>
-                      </div>
-                      <div className="text-center p-2 sm:p-3 bg-secondary/50 rounded-lg">
-                        <p className="text-[10px] sm:text-xs text-muted-foreground">Wickets</p>
-                        <p className="font-display text-lg sm:text-xl font-bold">{currentPlayer.wickets}</p>
+                      <div>
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <Gavel className="w-3 h-3 text-destructive/50" />
+                          <span className="text-[9px] font-bold text-muted-foreground/60 tracking-[0.15em] uppercase">Bowling</span>
+                        </div>
+                        <div className="grid grid-cols-4 gap-1.5">
+                          {[
+                            { label: 'Wkts', value: currentPlayer.wickets || 0 },
+                            { label: 'Avg', value: currentPlayer.bowling_average ? Number(currentPlayer.bowling_average).toFixed(1) : '-' },
+                            { label: 'Eco', value: currentPlayer.economy_rate ? Number(currentPlayer.economy_rate).toFixed(1) : '-' },
+                            { label: 'Best', value: currentPlayer.best_bowling || '-' },
+                          ].map(s => (
+                            <div key={s.label} className="text-center p-2 bg-secondary/30 rounded-lg border border-border/30">
+                              <p className="text-[9px] text-muted-foreground/60 font-semibold uppercase">{s.label}</p>
+                              <p className="font-display text-sm sm:text-base font-black">{s.value}</p>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
 
