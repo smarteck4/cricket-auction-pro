@@ -974,27 +974,50 @@ export function LiveScoring({
   }
 
   return (
-    <div className="flex flex-col h-full max-h-[85vh]">
-      {/* Header */}
-      <div className="flex items-center gap-3 p-3 border-b bg-primary text-primary-foreground rounded-t-lg">
-        <Button variant="ghost" size="icon" onClick={onClose} className="text-primary-foreground hover:bg-primary/80">
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <span className="font-semibold">Match Centre</span>
-        {isFreeHit && (
-          <Badge className="bg-destructive text-destructive-foreground animate-pulse ml-auto">FREE HIT</Badge>
-        )}
+    <div className="flex flex-col h-full max-h-[85vh] rounded-xl overflow-hidden border border-border/50 shadow-2xl shadow-primary/5 bg-card">
+      {/* Premium Header */}
+      <div className="relative bg-gradient-to-r from-[hsl(var(--slate-dark))] via-[hsl(var(--slate))] to-[hsl(var(--slate-dark))] text-white px-4 py-3">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImciIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTTAgMGg2MHY2MEgweiIgZmlsbD0ibm9uZSIvPjxjaXJjbGUgY3g9IjMwIiBjeT0iMzAiIHI9IjEuNSIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjA1KSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3QgZmlsbD0idXJsKCNnKSIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIvPjwvc3ZnPg==')] opacity-40" />
+        <div className="relative flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={onClose} className="text-white/80 hover:text-white hover:bg-white/10 shrink-0">
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div className="flex-1 flex items-center justify-between">
+            <div>
+              <h2 className="font-bold text-sm sm:text-base tracking-wide">MATCH CENTRE</h2>
+              <p className="text-[10px] sm:text-xs text-white/60 font-medium">{match.format} • {match.overs_per_innings} overs</p>
+            </div>
+            <div className="flex items-center gap-2">
+              {isFreeHit && (
+                <Badge className="bg-red-500 text-white animate-pulse border-0 shadow-lg shadow-red-500/30 text-xs">FREE HIT</Badge>
+              )}
+              <Badge variant="outline" className="border-white/20 text-white/80 text-[10px]">{match.status.toUpperCase()}</Badge>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Tabs */}
+      {/* Premium Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-        <TabsList className="grid grid-cols-5 bg-primary rounded-none">
-          <TabsTrigger value="summary" className="text-primary-foreground data-[state=active]:bg-primary/80 text-xs sm:text-sm">Summary</TabsTrigger>
-          <TabsTrigger value="scoring" className="text-primary-foreground data-[state=active]:bg-primary/80 text-xs sm:text-sm">Scoring</TabsTrigger>
-          <TabsTrigger value="scorecard" className="text-primary-foreground data-[state=active]:bg-primary/80 text-xs sm:text-sm">Scorecard</TabsTrigger>
-          <TabsTrigger value="balls" className="text-primary-foreground data-[state=active]:bg-primary/80 text-xs sm:text-sm">Balls</TabsTrigger>
-          <TabsTrigger value="info" className="text-primary-foreground data-[state=active]:bg-primary/80 text-xs sm:text-sm">Info</TabsTrigger>
-        </TabsList>
+        <div className="bg-[hsl(var(--slate-dark))] border-b border-white/10">
+          <TabsList className="grid grid-cols-5 bg-transparent rounded-none gap-0 p-0 h-auto">
+            {[
+              { value: 'summary', label: 'Summary' },
+              { value: 'scoring', label: 'Scoring' },
+              { value: 'scorecard', label: 'Scorecard' },
+              { value: 'balls', label: 'Balls' },
+              { value: 'info', label: 'Info' },
+            ].map(tab => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="text-white/50 rounded-none border-b-2 border-transparent py-2.5 text-xs sm:text-sm font-medium transition-all data-[state=active]:text-primary data-[state=active]:border-primary data-[state=active]:bg-transparent bg-transparent hover:text-white/70"
+              >
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
 
         <TabsContent value="summary" className="flex-1 overflow-auto p-0 m-0">
           <MatchSummary
@@ -1011,58 +1034,73 @@ export function LiveScoring({
         <TabsContent value="scoring" className="flex-1 flex flex-col overflow-auto p-0 m-0">
           {currentInnings ? (
             <div className="flex flex-col flex-1 relative">
-              {/* Score Display */}
-              <div className="bg-gradient-to-b from-card to-muted text-card-foreground p-4 text-center border-b">
-                <p className="text-sm text-muted-foreground">{battingTeam.team_name}</p>
-                <p className="text-xs text-muted-foreground">Innings {currentInnings.innings_number}</p>
-                <p className="text-5xl font-bold text-primary my-2">
-                  {currentInnings.total_runs}-{currentInnings.total_wickets}
-                </p>
-                <div className="flex justify-center gap-6 text-sm text-muted-foreground">
-                  <span>Ex - {currentInnings.extras}</span>
-                  <span>Ov - {currentOver}.{currentBall}/{match.overs_per_innings}</span>
-                  <span>CRR - {currentRR.toFixed(1)}</span>
+              {/* Premium Score Display */}
+              <div className="relative bg-gradient-to-br from-card via-card to-primary/5 p-5 text-center border-b border-border/50">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <span className="text-xs font-bold tracking-[0.15em] uppercase text-primary">{battingTeam.team_name}</span>
+                  <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">INN {currentInnings.innings_number}</span>
+                </div>
+                <div className="flex items-baseline justify-center gap-1 my-3">
+                  <span className="text-6xl sm:text-7xl font-black tracking-tight bg-gradient-to-b from-foreground to-foreground/70 bg-clip-text text-transparent">
+                    {currentInnings.total_runs}
+                  </span>
+                  <span className="text-2xl sm:text-3xl font-bold text-muted-foreground/60">-</span>
+                  <span className="text-3xl sm:text-4xl font-bold text-destructive/80">{currentInnings.total_wickets}</span>
+                </div>
+                <div className="flex justify-center gap-1 flex-wrap">
+                  <span className="text-xs bg-muted/60 text-muted-foreground px-2.5 py-1 rounded-full font-medium">
+                    Ov {currentOver}.{currentBall}/{match.overs_per_innings}
+                  </span>
+                  <span className="text-xs bg-muted/60 text-muted-foreground px-2.5 py-1 rounded-full font-medium">
+                    CRR {currentRR.toFixed(2)}
+                  </span>
+                  <span className="text-xs bg-muted/60 text-muted-foreground px-2.5 py-1 rounded-full font-medium">
+                    Ext {currentInnings.extras}
+                  </span>
                 </div>
                 {target > 0 && (
-                  <div className="mt-2 text-sm">
-                    <span className="text-muted-foreground">Target {target}</span>
-                    <span className="mx-2">•</span>
-                    <span className="text-muted-foreground">Req. RR - {reqRR.toFixed(1)}</span>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Need {target - currentInnings.total_runs} Runs of {(match.overs_per_innings * 6) - legalDeliveries}
-                    </p>
+                  <div className="mt-3 inline-flex flex-col items-center bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 rounded-lg px-4 py-2 border border-primary/15">
+                    <div className="flex items-center gap-3 text-xs">
+                      <span className="text-muted-foreground">Target <span className="font-bold text-foreground">{target}</span></span>
+                      <span className="w-px h-3 bg-border" />
+                      <span className="text-muted-foreground">Need <span className="font-bold text-primary">{target - currentInnings.total_runs}</span> off <span className="font-semibold">{(match.overs_per_innings * 6) - legalDeliveries}</span></span>
+                      <span className="w-px h-3 bg-border" />
+                      <span className="text-muted-foreground">RRR <span className="font-bold text-destructive">{reqRR.toFixed(2)}</span></span>
+                    </div>
                   </div>
                 )}
                 {isFreeHit && (
-                  <div className="mt-2">
-                    <Badge className="bg-destructive text-destructive-foreground animate-pulse text-sm px-4 py-1">🔴 FREE HIT</Badge>
+                  <div className="mt-3">
+                    <Badge className="bg-red-500/90 text-white animate-pulse text-sm px-5 py-1.5 shadow-lg shadow-red-500/20 border-0">🔴 FREE HIT</Badge>
                   </div>
                 )}
               </div>
 
               {/* Player Selection Modal Overlay */}
               {selectionMode && (
-                <div className="absolute inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col">
-                  <div className="p-4 border-b bg-primary text-primary-foreground">
-                    <h3 className="text-lg font-semibold text-center">
+                <div className="absolute inset-0 z-50 bg-background/98 backdrop-blur-md flex flex-col">
+                  <div className="bg-gradient-to-r from-[hsl(var(--slate-dark))] to-[hsl(var(--slate))] px-5 py-4">
+                    <h3 className="text-lg font-bold text-white text-center tracking-wide">
                       {selectionMode === 'opening' && '🏏 Select Opening Players'}
                       {selectionMode === 'new_batsman' && '🏏 Select New Batsman'}
                       {selectionMode === 'new_bowler' && '🏐 Select New Bowler'}
                       {selectionMode === 'new_batsman_and_bowler' && '🏏 Select New Batsman & Bowler'}
                     </h3>
+                    <p className="text-white/50 text-xs text-center mt-1">Choose players to continue the match</p>
                   </div>
                   
-                  <div className="flex-1 overflow-auto p-4 space-y-4">
+                  <div className="flex-1 overflow-auto p-5 space-y-5">
                     {(selectionMode === 'opening' || selectionMode === 'new_batsman' || selectionMode === 'new_batsman_and_bowler') && (
-                      <div className="space-y-3">
-                        <Label className="text-sm font-medium">
-                          {selectionMode === 'opening' ? 'Striker (Opening Batsman)' : 'New Batsman'}
+                      <div className="space-y-2">
+                        <Label className="text-sm font-semibold text-primary">
+                          {selectionMode === 'opening' ? '⚡ Striker' : '🏏 New Batsman'}
                         </Label>
                         <Select value={pendingStriker} onValueChange={setPendingStriker}>
-                          <SelectTrigger className="w-full h-12 text-base">
+                          <SelectTrigger className="w-full h-12 text-base border-primary/20 focus:ring-primary/30">
                             <SelectValue placeholder="Select batsman..." />
                           </SelectTrigger>
-                          <SelectContent className="bg-background border shadow-lg z-[60]">
+                          <SelectContent className="bg-background border shadow-xl z-[60]">
                             {availableBatsmen.filter(p => p.id !== pendingNonStriker && p.id !== nonStrikerBatsman).map((p) => (
                               <SelectItem key={p.id} value={p.id} className="py-3">
                                 {p.name}
@@ -1089,13 +1127,13 @@ export function LiveScoring({
                     )}
                     
                     {selectionMode === 'opening' && (
-                      <div className="space-y-3">
-                        <Label className="text-sm font-medium">Non-Striker (Opening Batsman)</Label>
+                      <div className="space-y-2">
+                        <Label className="text-sm font-semibold text-muted-foreground">🛡️ Non-Striker</Label>
                         <Select value={pendingNonStriker} onValueChange={setPendingNonStriker}>
                           <SelectTrigger className="w-full h-12 text-base">
                             <SelectValue placeholder="Select batsman..." />
                           </SelectTrigger>
-                          <SelectContent className="bg-background border shadow-lg z-[60]">
+                          <SelectContent className="bg-background border shadow-xl z-[60]">
                             {availableBatsmen.filter(p => p.id !== pendingStriker).map((p) => (
                               <SelectItem key={p.id} value={p.id} className="py-3">
                                 {p.name}
@@ -1107,20 +1145,20 @@ export function LiveScoring({
                     )}
                     
                     {(selectionMode === 'opening' || selectionMode === 'new_bowler' || selectionMode === 'new_batsman_and_bowler') && (
-                      <div className="space-y-3">
-                        <Label className="text-sm font-medium">
-                          {selectionMode === 'opening' ? 'Opening Bowler' : 'New Bowler'}
+                      <div className="space-y-2">
+                        <Label className="text-sm font-semibold text-destructive/80">
+                          {selectionMode === 'opening' ? '🏐 Opening Bowler' : '🏐 New Bowler'}
                         </Label>
                         {selectionMode === 'new_bowler' && previousOverBowler && (
-                          <p className="text-xs text-muted-foreground">
-                            {bowlingTeamPlayers.find(p => p.id === previousOverBowler)?.name} bowled the previous over
+                          <p className="text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded">
+                            ⚠️ {bowlingTeamPlayers.find(p => p.id === previousOverBowler)?.name} bowled the previous over
                           </p>
                         )}
                         <Select value={pendingBowler} onValueChange={setPendingBowler}>
                           <SelectTrigger className="w-full h-12 text-base">
                             <SelectValue placeholder="Select bowler..." />
                           </SelectTrigger>
-                          <SelectContent className="bg-background border shadow-lg z-[60]">
+                          <SelectContent className="bg-background border shadow-xl z-[60]">
                             {availableBowlers.map((p) => (
                               <SelectItem key={p.id} value={p.id} className="py-3">
                                 {p.name}
@@ -1132,102 +1170,107 @@ export function LiveScoring({
                     )}
                   </div>
                   
-                  <div className="p-4 border-t bg-muted">
-                    <Button onClick={confirmPlayerSelection} className="w-full h-12 text-base font-semibold">
-                      Confirm Selection
+                  <div className="p-4 border-t bg-card">
+                    <Button onClick={confirmPlayerSelection} className="w-full h-12 text-base font-bold bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/20">
+                      ✓ Confirm Selection
                     </Button>
                   </div>
                 </div>
               )}
 
-              {/* Batsmen & Bowler Stats */}
-              <div className="bg-background p-3 border-b">
-                <div className="text-xs text-muted-foreground mb-2 flex justify-between">
-                  <span>🏏 Batsman</span>
+              {/* Premium Batsmen & Bowler Stats */}
+              <div className="bg-card/80 backdrop-blur-sm px-3 py-2.5 border-b border-border/50">
+                {/* Batsman Header */}
+                <div className="text-[10px] text-muted-foreground/60 font-bold tracking-[0.1em] uppercase mb-1.5 flex justify-between">
+                  <span>Batsman</span>
                   <div className="flex gap-4 text-center">
-                    <span className="w-8">R</span>
-                    <span className="w-8">B</span>
-                    <span className="w-8">4s</span>
-                    <span className="w-8">6s</span>
-                    <span className="w-12">SR</span>
+                    <span className="w-7">R</span>
+                    <span className="w-7">B</span>
+                    <span className="w-7">4s</span>
+                    <span className="w-7">6s</span>
+                    <span className="w-10">SR</span>
                   </div>
                 </div>
                 
-                <div className="space-y-2">
+                <div className="space-y-1">
                   {/* Striker */}
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                      <span className="text-primary font-bold">🏏</span>
-                      <span className="text-sm font-medium w-36 truncate">
-                        {strikerBatsman ? getPlayerName(strikerBatsman) : <span className="text-muted-foreground italic">Striker *</span>}
+                  <div className="flex justify-between items-center bg-primary/5 rounded-md px-2 py-1.5 border border-primary/10">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
+                      <span className="text-sm font-semibold truncate max-w-[120px] sm:max-w-[160px]">
+                        {strikerBatsman ? getPlayerName(strikerBatsman) : <span className="text-muted-foreground italic text-xs">Striker</span>}
                       </span>
+                      <span className="text-[9px] text-primary/60 font-medium">*</span>
                     </div>
                     {strikerBatsman ? (
-                      <div className="flex gap-4 text-sm text-center font-medium">
-                        <span className="w-8 text-primary">{getBatsmanStats(strikerBatsman).runs}</span>
-                        <span className="w-8">{getBatsmanStats(strikerBatsman).balls}</span>
-                        <span className="w-8 text-accent-foreground">{getBatsmanStats(strikerBatsman).fours}</span>
-                        <span className="w-8 text-secondary-foreground">{getBatsmanStats(strikerBatsman).sixes}</span>
-                        <span className="w-12 text-muted-foreground">{getBatsmanStats(strikerBatsman).strikeRate.toFixed(1)}</span>
+                      <div className="flex gap-4 text-sm text-center tabular-nums">
+                        <span className="w-7 font-bold text-foreground">{getBatsmanStats(strikerBatsman).runs}</span>
+                        <span className="w-7 text-muted-foreground">{getBatsmanStats(strikerBatsman).balls}</span>
+                        <span className="w-7 text-primary">{getBatsmanStats(strikerBatsman).fours}</span>
+                        <span className="w-7 text-accent-foreground">{getBatsmanStats(strikerBatsman).sixes}</span>
+                        <span className="w-10 text-muted-foreground text-xs">{getBatsmanStats(strikerBatsman).strikeRate.toFixed(0)}</span>
                       </div>
                     ) : (
-                      <div className="flex gap-4 text-sm text-center text-muted-foreground">
-                        <span className="w-8">-</span><span className="w-8">-</span><span className="w-8">-</span><span className="w-8">-</span><span className="w-12">-</span>
+                      <div className="flex gap-4 text-sm text-center text-muted-foreground/40">
+                        <span className="w-7">-</span><span className="w-7">-</span><span className="w-7">-</span><span className="w-7">-</span><span className="w-10">-</span>
                       </div>
                     )}
                   </div>
                   
                   {/* Non-Striker */}
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                      <span className="w-5"></span>
-                      <span className="text-sm w-36 truncate">
-                        {nonStrikerBatsman ? getPlayerName(nonStrikerBatsman) : <span className="text-muted-foreground italic">Non-Striker</span>}
+                  <div className="flex justify-between items-center px-2 py-1.5 rounded-md">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 bg-muted-foreground/30 rounded-full" />
+                      <span className="text-sm truncate max-w-[120px] sm:max-w-[160px] text-muted-foreground">
+                        {nonStrikerBatsman ? getPlayerName(nonStrikerBatsman) : <span className="italic text-xs">Non-Striker</span>}
                       </span>
                     </div>
                     {nonStrikerBatsman ? (
-                      <div className="flex gap-4 text-sm text-center">
-                        <span className="w-8">{getBatsmanStats(nonStrikerBatsman).runs}</span>
-                        <span className="w-8">{getBatsmanStats(nonStrikerBatsman).balls}</span>
-                        <span className="w-8">{getBatsmanStats(nonStrikerBatsman).fours}</span>
-                        <span className="w-8">{getBatsmanStats(nonStrikerBatsman).sixes}</span>
-                        <span className="w-12">{getBatsmanStats(nonStrikerBatsman).strikeRate.toFixed(1)}</span>
+                      <div className="flex gap-4 text-sm text-center tabular-nums text-muted-foreground">
+                        <span className="w-7 font-medium text-foreground/80">{getBatsmanStats(nonStrikerBatsman).runs}</span>
+                        <span className="w-7">{getBatsmanStats(nonStrikerBatsman).balls}</span>
+                        <span className="w-7">{getBatsmanStats(nonStrikerBatsman).fours}</span>
+                        <span className="w-7">{getBatsmanStats(nonStrikerBatsman).sixes}</span>
+                        <span className="w-10 text-xs">{getBatsmanStats(nonStrikerBatsman).strikeRate.toFixed(0)}</span>
                       </div>
                     ) : (
-                      <div className="flex gap-4 text-sm text-center text-muted-foreground">
-                        <span className="w-8">-</span><span className="w-8">-</span><span className="w-8">-</span><span className="w-8">-</span><span className="w-12">-</span>
+                      <div className="flex gap-4 text-sm text-center text-muted-foreground/40">
+                        <span className="w-7">-</span><span className="w-7">-</span><span className="w-7">-</span><span className="w-7">-</span><span className="w-10">-</span>
                       </div>
                     )}
                   </div>
                 </div>
 
                 {/* Bowler Stats */}
-                <div className="mt-3 pt-3 border-t">
-                  <div className="text-xs text-muted-foreground mb-2 flex justify-between">
-                    <span>🏐 Bowler</span>
+                <div className="mt-2 pt-2 border-t border-border/30">
+                  <div className="text-[10px] text-muted-foreground/60 font-bold tracking-[0.1em] uppercase mb-1 flex justify-between">
+                    <span>Bowler</span>
                     <div className="flex gap-4 text-center">
-                      <span className="w-8">O</span>
-                      <span className="w-8">M</span>
-                      <span className="w-8">R</span>
-                      <span className="w-8">W</span>
-                      <span className="w-12">Eco</span>
+                      <span className="w-7">O</span>
+                      <span className="w-7">M</span>
+                      <span className="w-7">R</span>
+                      <span className="w-7">W</span>
+                      <span className="w-10">Eco</span>
                     </div>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium w-40 truncate">
-                      {currentBowler ? getPlayerName(currentBowler) : <span className="text-muted-foreground italic">Bowler *</span>}
-                    </span>
+                  <div className="flex justify-between items-center px-2 py-1.5">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 bg-destructive/50 rounded-full" />
+                      <span className="text-sm font-medium truncate max-w-[140px] sm:max-w-[170px]">
+                        {currentBowler ? getPlayerName(currentBowler) : <span className="text-muted-foreground italic text-xs">Bowler</span>}
+                      </span>
+                    </div>
                     {currentBowler ? (
-                      <div className="flex gap-4 text-sm text-center font-medium">
-                        <span className="w-8">{getBowlerStats(currentBowler).overs.toFixed(1)}</span>
-                        <span className="w-8">{getBowlerStats(currentBowler).maidens}</span>
-                        <span className="w-8 text-destructive">{getBowlerStats(currentBowler).runs}</span>
-                        <span className="w-8 text-primary">{getBowlerStats(currentBowler).wickets}</span>
-                        <span className="w-12 text-muted-foreground">{getBowlerStats(currentBowler).economy.toFixed(2)}</span>
+                      <div className="flex gap-4 text-sm text-center tabular-nums">
+                        <span className="w-7">{getBowlerStats(currentBowler).overs.toFixed(1)}</span>
+                        <span className="w-7 text-muted-foreground">{getBowlerStats(currentBowler).maidens}</span>
+                        <span className="w-7 text-destructive">{getBowlerStats(currentBowler).runs}</span>
+                        <span className="w-7 font-bold text-primary">{getBowlerStats(currentBowler).wickets}</span>
+                        <span className="w-10 text-muted-foreground text-xs">{getBowlerStats(currentBowler).economy.toFixed(1)}</span>
                       </div>
                     ) : (
-                      <div className="flex gap-4 text-sm text-center text-muted-foreground">
-                        <span className="w-8">-</span><span className="w-8">-</span><span className="w-8">-</span><span className="w-8">-</span><span className="w-12">-</span>
+                      <div className="flex gap-4 text-sm text-center text-muted-foreground/40">
+                        <span className="w-7">-</span><span className="w-7">-</span><span className="w-7">-</span><span className="w-7">-</span><span className="w-10">-</span>
                       </div>
                     )}
                   </div>
@@ -1235,53 +1278,64 @@ export function LiveScoring({
 
                 {/* Current Partnership */}
                 {currentPartnership && (strikerBatsman || nonStrikerBatsman) && (
-                  <div className="mt-3 pt-3 border-t">
-                    <div className="flex items-center justify-between">
+                  <div className="mt-2 pt-2 border-t border-border/30">
+                    <div className="flex items-center justify-between bg-primary/5 rounded-md px-2.5 py-1.5">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">🤝 Partnership:</span>
-                        <span className="text-sm font-semibold text-primary">{currentPartnership.runs}</span>
-                        <span className="text-xs text-muted-foreground">({currentPartnership.balls} balls)</span>
+                        <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">Partnership</span>
+                        <span className="text-sm font-bold text-primary">{currentPartnership.runs}</span>
+                        <span className="text-[10px] text-muted-foreground">({currentPartnership.balls}b)</span>
                       </div>
                       {currentPartnership.balls > 0 && (
-                        <span className="text-xs text-muted-foreground">
-                          RR: {((currentPartnership.runs / currentPartnership.balls) * 6).toFixed(2)}
+                        <span className="text-[10px] text-muted-foreground font-medium">
+                          RR {((currentPartnership.runs / currentPartnership.balls) * 6).toFixed(2)}
                         </span>
                       )}
-                    </div>
-                    <div className="flex gap-2 mt-1 text-xs text-muted-foreground">
-                      <span>{getPlayerName(strikerBatsman)} & {getPlayerName(nonStrikerBatsman)}</span>
                     </div>
                   </div>
                 )}
               </div>
 
               {/* This Over Display */}
-              <div className="bg-muted p-2 flex items-center gap-2 border-b">
-                <span className="text-xs text-muted-foreground">Over {currentOver + 1}:</span>
-                <div className="flex gap-1 flex-wrap">
+              <div className="bg-muted/40 px-3 py-2 flex items-center gap-2 border-b border-border/30">
+                <span className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-wider shrink-0">Over {currentOver + 1}</span>
+                <div className="flex gap-1.5 flex-wrap">
                   {currentOverBalls.map((ball, i) => (
-                    <Badge
+                    <span
                       key={i}
-                      variant={ball.is_wicket ? 'destructive' : 'secondary'}
-                      className={`text-xs ${ball.runs_scored >= 4 ? 'bg-primary text-primary-foreground' : ''}`}
+                      className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-[11px] font-bold transition-all ${
+                        ball.is_wicket 
+                          ? 'bg-destructive text-white shadow-sm shadow-destructive/30' 
+                          : ball.runs_scored >= 6 
+                          ? 'bg-primary text-white shadow-sm shadow-primary/30'
+                          : ball.runs_scored === 4
+                          ? 'bg-primary/80 text-white shadow-sm'
+                          : ball.extra_type 
+                          ? 'bg-accent/30 text-accent-foreground border border-accent/40'
+                          : 'bg-muted text-muted-foreground border border-border/50'
+                      }`}
                     >
                       {getBallDisplay(ball)}
-                    </Badge>
+                    </span>
                   ))}
                 </div>
               </div>
 
               {/* Scoring Controls */}
-              <div className="p-3 bg-background flex-1">
+              <div className="p-3 bg-card/50 flex-1">
                 {extraMode ? (
-                  /* ===== EXTRA MODE: Show run options for selected extra ===== */
+                  /* ===== EXTRA MODE ===== */
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <Badge variant="outline" className="text-sm font-semibold">
+                      <Badge className={`text-sm font-bold border-0 px-3 py-1 ${
+                        extraMode === 'wide' ? 'bg-blue-500/15 text-blue-600' : 
+                        extraMode === 'no_ball' ? 'bg-red-500/15 text-red-600' :
+                        extraMode === 'bye' ? 'bg-yellow-500/15 text-yellow-700' : 
+                        'bg-green-500/15 text-green-700'
+                      }`}>
                         {extraMode === 'wide' ? '🔵 Wide' : extraMode === 'no_ball' ? '🔴 No Ball' : extraMode === 'bye' ? '🟡 Bye' : '🟢 Leg Bye'}
                         {isWicket && ' + Wicket'}
                       </Badge>
-                      <Button variant="ghost" size="sm" onClick={() => setExtraMode(null)}>✕ Cancel</Button>
+                      <Button variant="ghost" size="sm" onClick={() => setExtraMode(null)} className="text-muted-foreground hover:text-foreground">✕ Cancel</Button>
                     </div>
                     <div className={`grid ${extraMode === 'no_ball' ? 'grid-cols-4' : 'grid-cols-5'} gap-2`}>
                       {(extraMode === 'wide' ? [0,1,2,3,4] : 
@@ -1289,10 +1343,12 @@ export function LiveScoring({
                         [1,2,3,4]).map((run) => (
                         <Button
                           key={run}
-                          onClick={() => {
-                            recordBall(run, true, extraMode);
-                          }}
-                          className={`h-14 text-base font-bold ${run === 4 || run === 6 ? 'bg-primary hover:bg-primary/90 text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'}`}
+                          onClick={() => recordBall(run, true, extraMode)}
+                          className={`h-14 text-base font-bold rounded-xl transition-all active:scale-95 ${
+                            run === 4 || run === 6 
+                              ? 'bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20' 
+                              : 'bg-secondary hover:bg-secondary/80 text-secondary-foreground'
+                          }`}
                         >
                           {extraMode === 'wide' ? (run === 0 ? 'Wd' : `Wd+${run}`) :
                            extraMode === 'no_ball' ? (run === 0 ? 'NB' : `${run}+NB`) :
@@ -1311,13 +1367,12 @@ export function LiveScoring({
                   /* ===== WICKET MODE ===== */
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <Label className="text-sm text-destructive font-semibold">⚠️ Wicket Mode</Label>
-                      <Button variant="ghost" size="sm" onClick={() => { setIsWicket(false); setWicketType(''); setSelectedFielder(''); }}>
+                      <Badge className="bg-destructive/15 text-destructive border-0 text-sm font-bold px-3 py-1">⚠️ Wicket Mode</Badge>
+                      <Button variant="ghost" size="sm" onClick={() => { setIsWicket(false); setWicketType(''); setSelectedFielder(''); }} className="text-muted-foreground">
                         ✕ Cancel
                       </Button>
                     </div>
                     
-                    {/* Dismissal types */}
                     <div className="grid grid-cols-3 gap-2">
                       {(isFreeHit 
                         ? ['run_out'] 
@@ -1328,7 +1383,7 @@ export function LiveScoring({
                           size="sm"
                           variant={wicketType === wt ? 'destructive' : 'outline'}
                           onClick={() => setWicketType(wt)}
-                          className="text-xs"
+                          className={`text-xs rounded-lg h-10 font-semibold transition-all ${wicketType === wt ? 'shadow-md shadow-destructive/20' : ''}`}
                         >
                           {wt.replace('_', ' ').toUpperCase()}
                         </Button>
@@ -1336,18 +1391,17 @@ export function LiveScoring({
                     </div>
                     
                     {isFreeHit && (
-                      <p className="text-xs text-muted-foreground bg-muted p-2 rounded">
+                      <p className="text-xs text-muted-foreground bg-muted/50 p-2.5 rounded-lg border border-border/50">
                         ℹ️ Only run out is allowed on a free hit delivery
                       </p>
                     )}
                     
-                    {/* Fielder selection for caught/run_out/stumped */}
                     {['caught', 'run_out', 'stumped'].includes(wicketType) && (
                       <Select value={selectedFielder} onValueChange={setSelectedFielder}>
-                        <SelectTrigger>
+                        <SelectTrigger className="border-destructive/20">
                           <SelectValue placeholder={wicketType === 'caught' ? 'Select catcher' : 'Select fielder'} />
                         </SelectTrigger>
-                        <SelectContent className="bg-background border shadow-lg z-50">
+                        <SelectContent className="bg-background border shadow-xl z-50">
                           {wicketType === 'caught' && currentBowler && (
                             <SelectItem value={currentBowler} className="font-medium">
                               {getPlayerName(currentBowler)} (Caught & Bowled)
@@ -1360,25 +1414,23 @@ export function LiveScoring({
                       </Select>
                     )}
                     
-                    {/* Record wicket buttons */}
                     <div className="space-y-2">
-                      <Button onClick={() => recordBall(0)} className="w-full h-11" variant="destructive" disabled={!wicketType}>
+                      <Button onClick={() => recordBall(0)} className="w-full h-12 rounded-xl shadow-lg shadow-destructive/15" variant="destructive" disabled={!wicketType}>
                         Record Wicket (0 runs)
                       </Button>
-                      <div className="grid grid-cols-4 gap-1">
+                      <div className="grid grid-cols-4 gap-1.5">
                         {[1,2,3,4].map(r => (
-                          <Button key={r} size="sm" variant="outline" onClick={() => recordBall(r)} disabled={!wicketType} className="text-xs h-9">
+                          <Button key={r} size="sm" variant="outline" onClick={() => recordBall(r)} disabled={!wicketType} className="text-xs h-9 rounded-lg">
                             W+{r}
                           </Button>
                         ))}
                       </div>
-                      {/* Wicket on extras (stumped off wide, run out off NB) */}
                       {(wicketType === 'stumped' || wicketType === 'run_out') && (
                         <div className="flex gap-2 mt-1">
-                          <Button size="sm" variant="outline" onClick={() => recordBall(0, true, 'wide')} disabled={!wicketType} className="text-xs flex-1 h-9">
+                          <Button size="sm" variant="outline" onClick={() => recordBall(0, true, 'wide')} disabled={!wicketType} className="text-xs flex-1 h-9 rounded-lg">
                             W on Wide
                           </Button>
-                          <Button size="sm" variant="outline" onClick={() => recordBall(0, true, 'no_ball')} disabled={!wicketType} className="text-xs flex-1 h-9">
+                          <Button size="sm" variant="outline" onClick={() => recordBall(0, true, 'no_ball')} disabled={!wicketType} className="text-xs flex-1 h-9 rounded-lg">
                             W on No Ball
                           </Button>
                         </div>
@@ -1388,16 +1440,17 @@ export function LiveScoring({
                 ) : (
                   /* ===== NORMAL SCORING MODE ===== */
                   <>
-                    {/* Run Buttons (0-6) */}
-                    <div className="grid grid-cols-7 gap-2 mb-3">
+                    {/* Premium Run Buttons */}
+                    <div className="grid grid-cols-7 gap-1.5 mb-3">
                       {[0, 1, 2, 3, 4, 5, 6].map((run) => (
                         <Button
                           key={run}
                           onClick={() => recordBall(run)}
-                          className={`h-12 text-lg font-bold ${
-                            run === 4 || run === 6 ? 'bg-primary hover:bg-primary/90 text-primary-foreground' : 
-                            run === 0 ? 'bg-muted text-muted-foreground hover:bg-muted/80' : 
-                            'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                          className={`h-14 text-lg font-black rounded-xl transition-all active:scale-95 ${
+                            run === 6 ? 'bg-gradient-to-b from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-primary/40' : 
+                            run === 4 ? 'bg-gradient-to-b from-primary/90 to-primary/70 text-primary-foreground shadow-md shadow-primary/20' : 
+                            run === 0 ? 'bg-muted/80 text-muted-foreground hover:bg-muted border border-border/50' : 
+                            'bg-secondary/80 text-secondary-foreground hover:bg-secondary border border-border/30'
                           }`}
                         >
                           {run === 0 ? '•' : run}
@@ -1406,37 +1459,35 @@ export function LiveScoring({
                     </div>
 
                     {/* Extras Row */}
-                    <div className="grid grid-cols-4 gap-2 mb-3">
-                      <Button variant="outline" onClick={() => setExtraMode('wide')} className="text-xs h-10">
-                        Wide
-                      </Button>
-                      <Button variant="outline" onClick={() => setExtraMode('no_ball')} className="text-xs h-10">
-                        No Ball
-                      </Button>
-                      <Button variant="outline" onClick={() => setExtraMode('bye')} className="text-xs h-10">
-                        Bye
-                      </Button>
-                      <Button variant="outline" onClick={() => setExtraMode('leg_bye')} className="text-xs h-10">
-                        Leg Bye
-                      </Button>
+                    <div className="grid grid-cols-4 gap-1.5 mb-3">
+                      {[
+                        { mode: 'wide' as const, label: 'Wide', color: 'text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30' },
+                        { mode: 'no_ball' as const, label: 'No Ball', color: 'text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30' },
+                        { mode: 'bye' as const, label: 'Bye', color: 'text-yellow-700 hover:bg-yellow-50 dark:hover:bg-yellow-950/30' },
+                        { mode: 'leg_bye' as const, label: 'Leg Bye', color: 'text-green-700 hover:bg-green-50 dark:hover:bg-green-950/30' },
+                      ].map(({ mode, label, color }) => (
+                        <Button key={mode} variant="outline" onClick={() => setExtraMode(mode)} className={`text-xs h-10 rounded-lg font-semibold border-border/50 ${color}`}>
+                          {label}
+                        </Button>
+                      ))}
                     </div>
 
                     {/* Actions Row */}
-                    <div className="grid grid-cols-4 gap-2 mb-3">
-                      <Button variant="outline" onClick={undoLastBall} className="text-xs h-10 gap-1" disabled={!balls.length}>
+                    <div className="grid grid-cols-4 gap-1.5 mb-3">
+                      <Button variant="outline" onClick={undoLastBall} className="text-xs h-10 rounded-lg gap-1 border-border/50 font-medium" disabled={!balls.length}>
                         <RotateCcw className="h-3 w-3" /> Undo
                       </Button>
                       <Button 
                         variant="destructive" 
                         onClick={() => setIsWicket(true)}
-                        className="text-xs h-10"
+                        className="text-xs h-10 rounded-lg font-bold shadow-md shadow-destructive/15"
                       >
                         Wicket
                       </Button>
                       <Button 
                         variant="outline" 
                         onClick={handleRetiredHurt}
-                        className="text-xs h-10"
+                        className="text-xs h-10 rounded-lg border-border/50 font-medium"
                         disabled={!strikerBatsman}
                       >
                         Retired
@@ -1447,7 +1498,7 @@ export function LiveScoring({
                           setStrikerBatsman(nonStrikerBatsman);
                           setNonStrikerBatsman(strikerBatsman);
                         }}
-                        className="text-xs h-10 gap-1"
+                        className="text-xs h-10 rounded-lg gap-1 border-border/50 font-medium"
                         disabled={!strikerBatsman || !nonStrikerBatsman}
                       >
                         <ArrowLeftRight className="h-3 w-3" /> Swap
@@ -1456,13 +1507,13 @@ export function LiveScoring({
                   </>
                 )}
 
-                {/* End Innings Button */}
+                {/* End Innings */}
                 <div className="mt-4 flex gap-2">
-                  <Button variant="outline" onClick={endInnings} className="flex-1">
+                  <Button variant="outline" onClick={endInnings} className="flex-1 rounded-lg border-border/50 font-medium">
                     End Innings
                   </Button>
                   {innings.length >= 2 && innings.every((i) => i.is_completed) && (
-                    <Button onClick={completeMatch} className="flex-1">
+                    <Button onClick={completeMatch} className="flex-1 rounded-lg bg-gradient-to-r from-primary to-primary/80 font-bold shadow-lg shadow-primary/20">
                       Complete Match
                     </Button>
                   )}
@@ -1471,24 +1522,26 @@ export function LiveScoring({
             </div>
           ) : (
             /* Start Innings */
-            <div className="p-6 space-y-4">
-              <h3 className="text-lg font-semibold">Start Innings {innings.length + 1}</h3>
-              <p className="text-sm text-muted-foreground">Select which team will bat first</p>
+            <div className="p-6 space-y-5">
+              <div className="text-center">
+                <h3 className="text-xl font-bold">Start Innings {innings.length + 1}</h3>
+                <p className="text-sm text-muted-foreground mt-1">Select which team will bat first</p>
+              </div>
               <div className="grid grid-cols-2 gap-4">
-                <Button onClick={() => startInnings(team1.id, team2.id)} className="h-24 flex-col">
+                <Button onClick={() => startInnings(team1.id, team2.id)} className="h-28 flex-col rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-xl shadow-primary/20 hover:shadow-primary/30 transition-all">
                   <span className="text-lg font-bold">{team1.team_name}</span>
-                  <span className="text-sm opacity-70">Bats First</span>
+                  <span className="text-xs opacity-70 mt-1">Bats First</span>
                 </Button>
-                <Button onClick={() => startInnings(team2.id, team1.id)} className="h-24 flex-col" variant="outline">
+                <Button onClick={() => startInnings(team2.id, team1.id)} className="h-28 flex-col rounded-xl border-2 border-border/50 hover:border-primary/30 transition-all" variant="outline">
                   <span className="text-lg font-bold">{team2.team_name}</span>
-                  <span className="text-sm opacity-70">Bats First</span>
+                  <span className="text-xs opacity-70 mt-1">Bats First</span>
                 </Button>
               </div>
             </div>
           )}
         </TabsContent>
 
-        {/* ===== FULL INTERNATIONAL SCORECARD ===== */}
+        {/* ===== PREMIUM SCORECARD ===== */}
         <TabsContent value="scorecard" className="flex-1 overflow-auto p-3 m-0">
           {innings.length > 0 ? (
             <div className="space-y-6">
@@ -1499,7 +1552,6 @@ export function LiveScoring({
                 const bowlPlayers = isBattingTeam1 ? team2Players : team1Players;
                 const batTeamName = isBattingTeam1 ? team1.team_name : team2.team_name;
 
-                // Build batting stats from ball data
                 const batStats = new Map<string, { runs: number; balls: number; fours: number; sixes: number; isOut: boolean; howOut: string }>();
                 const bowlStats = new Map<string, { legalBalls: number; runs: number; wickets: number; maidens: number }>();
                 const bowlOverRuns = new Map<string, Map<number, number>>();
@@ -1518,7 +1570,6 @@ export function LiveScoring({
                   totalRuns += ball.runs_scored + ball.extras;
                   if (isLegal) legalBallCount++;
 
-                  // Batsman stats
                   if (ball.batsman_id) {
                     if (!batsmanOrder.includes(ball.batsman_id)) batsmanOrder.push(ball.batsman_id);
                     const existing = batStats.get(ball.batsman_id) || { runs: 0, balls: 0, fours: 0, sixes: 0, isOut: false, howOut: 'not out' };
@@ -1557,7 +1608,6 @@ export function LiveScoring({
                     batStats.set(ball.batsman_id, existing);
                   }
 
-                  // Bowler stats
                   if (ball.bowler_id) {
                     const existing = bowlStats.get(ball.bowler_id) || { legalBalls: 0, runs: 0, wickets: 0, maidens: 0 };
                     const isBowlerCharged = !ball.extra_type || ball.extra_type === 'wide' || ball.extra_type === 'no_ball';
@@ -1569,7 +1619,6 @@ export function LiveScoring({
                     }
                     bowlStats.set(ball.bowler_id, existing);
 
-                    // Track for maiden calculation
                     if (!bowlOverRuns.has(ball.bowler_id)) bowlOverRuns.set(ball.bowler_id, new Map());
                     bowlOverRuns.get(ball.bowler_id)!.set(ball.over_number, (bowlOverRuns.get(ball.bowler_id)!.get(ball.over_number) || 0) + rc);
                     if (!bowlOverBallCount.has(ball.bowler_id)) bowlOverBallCount.set(ball.bowler_id, new Map());
@@ -1579,7 +1628,6 @@ export function LiveScoring({
                   }
                 });
 
-                // Calculate maidens for scorecard
                 bowlOverRuns.forEach((overMap, bowlerId) => {
                   const stats = bowlStats.get(bowlerId);
                   const ballsMap = bowlOverBallCount.get(bowlerId);
@@ -1595,11 +1643,11 @@ export function LiveScoring({
                 const oversDisplay = `${Math.floor(inn.total_overs)}.${Math.round((inn.total_overs % 1) * 10)}`;
 
                 return (
-                  <div key={inn.id} className="border rounded-lg overflow-hidden">
+                  <div key={inn.id} className="rounded-xl overflow-hidden border border-border/50 shadow-md">
                     {/* Innings Header */}
-                    <div className="bg-primary px-3 py-2 flex justify-between items-center">
-                      <span className="font-semibold text-primary-foreground text-sm">{batTeamName} — Innings {inn.innings_number}</span>
-                      <span className="font-bold text-primary-foreground">{inn.total_runs}/{inn.total_wickets} ({oversDisplay} ov)</span>
+                    <div className="bg-gradient-to-r from-[hsl(var(--slate-dark))] to-[hsl(var(--slate))] px-4 py-2.5 flex justify-between items-center">
+                      <span className="font-bold text-white text-sm tracking-wide">{batTeamName} — Innings {inn.innings_number}</span>
+                      <span className="font-black text-white text-lg">{inn.total_runs}/{inn.total_wickets} <span className="text-white/60 text-xs font-medium">({oversDisplay} ov)</span></span>
                     </div>
 
                     {/* Batting Table */}
@@ -1607,14 +1655,14 @@ export function LiveScoring({
                       <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                           <thead>
-                            <tr className="border-b bg-muted/50">
-                              <th className="text-left p-2 font-medium">Batsman</th>
-                              <th className="text-left p-2 font-medium text-xs max-w-[100px]"></th>
-                              <th className="text-center p-2 font-medium w-8">R</th>
-                              <th className="text-center p-2 font-medium w-8">B</th>
-                              <th className="text-center p-2 font-medium w-8">4s</th>
-                              <th className="text-center p-2 font-medium w-8">6s</th>
-                              <th className="text-center p-2 font-medium w-12">SR</th>
+                            <tr className="border-b bg-muted/30">
+                              <th className="text-left p-2.5 font-semibold text-xs text-muted-foreground uppercase tracking-wide">Batsman</th>
+                              <th className="text-left p-2.5 font-medium text-xs max-w-[100px]"></th>
+                              <th className="text-center p-2.5 font-semibold text-xs text-muted-foreground w-8">R</th>
+                              <th className="text-center p-2.5 font-semibold text-xs text-muted-foreground w-8">B</th>
+                              <th className="text-center p-2.5 font-semibold text-xs text-muted-foreground w-8">4s</th>
+                              <th className="text-center p-2.5 font-semibold text-xs text-muted-foreground w-8">6s</th>
+                              <th className="text-center p-2.5 font-semibold text-xs text-muted-foreground w-12">SR</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1623,14 +1671,14 @@ export function LiveScoring({
                               const player = batPlayers.find(p => p.id === id);
                               if (!stats || !player) return null;
                               return (
-                                <tr key={id} className="border-b last:border-0 hover:bg-muted/30">
-                                  <td className="p-2 font-medium text-xs sm:text-sm">{player.name}</td>
-                                  <td className="p-2 text-xs text-muted-foreground max-w-[100px] truncate">{stats.howOut}</td>
-                                  <td className="text-center p-2 font-bold">{stats.runs}</td>
-                                  <td className="text-center p-2 text-muted-foreground">{stats.balls}</td>
-                                  <td className="text-center p-2">{stats.fours}</td>
-                                  <td className="text-center p-2">{stats.sixes}</td>
-                                  <td className="text-center p-2 text-muted-foreground">{stats.balls > 0 ? ((stats.runs / stats.balls) * 100).toFixed(1) : '0.0'}</td>
+                                <tr key={id} className="border-b border-border/30 last:border-0 hover:bg-muted/20 transition-colors">
+                                  <td className="p-2.5 font-semibold text-xs sm:text-sm">{player.name}</td>
+                                  <td className="p-2.5 text-xs text-muted-foreground max-w-[100px] truncate italic">{stats.howOut}</td>
+                                  <td className="text-center p-2.5 font-black text-primary">{stats.runs}</td>
+                                  <td className="text-center p-2.5 text-muted-foreground">{stats.balls}</td>
+                                  <td className="text-center p-2.5">{stats.fours}</td>
+                                  <td className="text-center p-2.5">{stats.sixes}</td>
+                                  <td className="text-center p-2.5 text-muted-foreground text-xs">{stats.balls > 0 ? ((stats.runs / stats.balls) * 100).toFixed(1) : '0.0'}</td>
                                 </tr>
                               );
                             })}
@@ -1640,20 +1688,20 @@ export function LiveScoring({
                     )}
 
                     {/* Extras & Total */}
-                    <div className="border-t px-3 py-2 flex justify-between text-sm bg-muted/30">
-                      <span className="text-muted-foreground">Extras: <span className="font-medium text-foreground">{inn.extras}</span></span>
-                      <span className="font-bold">Total: {inn.total_runs}/{inn.total_wickets} ({oversDisplay} ov)</span>
+                    <div className="border-t border-border/30 px-4 py-2.5 flex justify-between text-sm bg-muted/20">
+                      <span className="text-muted-foreground">Extras: <span className="font-semibold text-foreground">{inn.extras}</span></span>
+                      <span className="font-black">Total: {inn.total_runs}/{inn.total_wickets} ({oversDisplay} ov)</span>
                     </div>
 
                     {/* Fall of Wickets */}
                     {fow.length > 0 && (
-                      <div className="border-t px-3 py-2">
-                        <p className="text-xs font-semibold text-muted-foreground mb-1">Fall of Wickets</p>
+                      <div className="border-t border-border/30 px-4 py-2.5 bg-muted/10">
+                        <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-wider mb-1">Fall of Wickets</p>
                         <p className="text-xs text-muted-foreground leading-relaxed">
                           {fow.map((f, i) => (
                             <span key={i}>
-                              {i > 0 && ' • '}
-                              <span className="font-medium text-foreground">{f.wicketNum}-{f.score}</span>
+                              {i > 0 && <span className="text-border mx-1">•</span>}
+                              <span className="font-bold text-foreground">{f.wicketNum}-{f.score}</span>
                               {' '}({f.batsmanName}, {f.overs})
                             </span>
                           ))}
@@ -1663,16 +1711,16 @@ export function LiveScoring({
 
                     {/* Bowling Table */}
                     {innBalls.length > 0 && (
-                      <div className="border-t overflow-x-auto">
+                      <div className="border-t border-border/30 overflow-x-auto">
                         <table className="w-full text-sm">
                           <thead>
-                            <tr className="border-b bg-muted/50">
-                              <th className="text-left p-2 font-medium">Bowler</th>
-                              <th className="text-center p-2 font-medium w-10">O</th>
-                              <th className="text-center p-2 font-medium w-8">M</th>
-                              <th className="text-center p-2 font-medium w-8">R</th>
-                              <th className="text-center p-2 font-medium w-8">W</th>
-                              <th className="text-center p-2 font-medium w-12">Eco</th>
+                            <tr className="border-b bg-muted/30">
+                              <th className="text-left p-2.5 font-semibold text-xs text-muted-foreground uppercase tracking-wide">Bowler</th>
+                              <th className="text-center p-2.5 font-semibold text-xs text-muted-foreground w-10">O</th>
+                              <th className="text-center p-2.5 font-semibold text-xs text-muted-foreground w-8">M</th>
+                              <th className="text-center p-2.5 font-semibold text-xs text-muted-foreground w-8">R</th>
+                              <th className="text-center p-2.5 font-semibold text-xs text-muted-foreground w-8">W</th>
+                              <th className="text-center p-2.5 font-semibold text-xs text-muted-foreground w-12">Eco</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1681,13 +1729,13 @@ export function LiveScoring({
                               if (!player) return null;
                               const overs = Math.floor(stats.legalBalls / 6) + (stats.legalBalls % 6) / 10;
                               return (
-                                <tr key={id} className="border-b last:border-0 hover:bg-muted/30">
-                                  <td className="p-2 font-medium text-xs sm:text-sm">{player.name}</td>
-                                  <td className="text-center p-2">{overs.toFixed(1)}</td>
-                                  <td className="text-center p-2">{stats.maidens}</td>
-                                  <td className="text-center p-2">{stats.runs}</td>
-                                  <td className="text-center p-2 font-bold">{stats.wickets}</td>
-                                  <td className="text-center p-2 text-muted-foreground">{stats.legalBalls > 0 ? (stats.runs / (stats.legalBalls / 6)).toFixed(2) : '0.00'}</td>
+                                <tr key={id} className="border-b border-border/30 last:border-0 hover:bg-muted/20 transition-colors">
+                                  <td className="p-2.5 font-semibold text-xs sm:text-sm">{player.name}</td>
+                                  <td className="text-center p-2.5">{overs.toFixed(1)}</td>
+                                  <td className="text-center p-2.5 text-muted-foreground">{stats.maidens}</td>
+                                  <td className="text-center p-2.5 text-destructive">{stats.runs}</td>
+                                  <td className="text-center p-2.5 font-black text-primary">{stats.wickets}</td>
+                                  <td className="text-center p-2.5 text-muted-foreground text-xs">{stats.legalBalls > 0 ? (stats.runs / (stats.legalBalls / 6)).toFixed(2) : '0.00'}</td>
                                 </tr>
                               );
                             })}
@@ -1699,33 +1747,35 @@ export function LiveScoring({
                 );
               })}
 
-              {/* Partnerships for current innings */}
+              {/* Partnerships */}
               {partnerships.length > 0 && (
-                <div className="border rounded-lg p-4">
-                  <h4 className="font-semibold mb-3 flex items-center gap-2">
-                    🤝 Partnerships
-                  </h4>
-                  <div className="space-y-2">
+                <div className="rounded-xl border border-border/50 overflow-hidden shadow-sm">
+                  <div className="bg-muted/30 px-4 py-2.5 border-b border-border/30">
+                    <h4 className="font-bold text-sm tracking-wide">🤝 Partnerships</h4>
+                  </div>
+                  <div className="p-3 space-y-2">
                     {partnerships.map((p, idx) => (
                       <div 
                         key={idx} 
-                        className={`flex justify-between items-center p-2 rounded ${p.isActive ? 'bg-primary/10 border border-primary/30' : 'bg-muted/50'}`}
+                        className={`flex justify-between items-center p-2.5 rounded-lg transition-colors ${
+                          p.isActive ? 'bg-primary/8 border border-primary/20 shadow-sm' : 'bg-muted/30'
+                        }`}
                       >
                         <div className="flex-1">
-                          <div className="text-sm font-medium">
+                          <div className="text-sm font-semibold">
                             {getPlayerName(p.batsman1Id)} & {getPlayerName(p.batsman2Id)}
                           </div>
-                          <div className="text-xs text-muted-foreground">
+                          <div className="text-xs text-muted-foreground mt-0.5">
                             {p.balls} balls • RR: {p.balls > 0 ? ((p.runs / p.balls) * 6).toFixed(2) : '0.00'}
                             {p.wicketFellAt && ` • FOW: ${p.wicketFellAt}`}
                           </div>
                         </div>
-                        <div className="text-right">
-                          <span className={`text-lg font-bold ${p.isActive ? 'text-primary' : ''}`}>
+                        <div className="text-right flex items-center gap-2">
+                          <span className={`text-xl font-black ${p.isActive ? 'text-primary' : ''}`}>
                             {p.runs}
                           </span>
                           {p.isActive && (
-                            <Badge variant="outline" className="ml-2 text-xs">Active</Badge>
+                            <span className="text-[9px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">LIVE</span>
                           )}
                         </div>
                       </div>
@@ -1740,89 +1790,114 @@ export function LiveScoring({
         </TabsContent>
 
         <TabsContent value="balls" className="p-4 overflow-auto">
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {balls.length > 0 ? (
               balls.slice().reverse().map((ball, i) => (
-                <div key={ball.id} className="flex justify-between items-center p-2 bg-muted/50 rounded">
-                  <span className="text-sm">
-                    {ball.over_number}.{ball.ball_number} - {getPlayerName(ball.batsman_id)}
+                <div key={ball.id} className="flex justify-between items-center p-2.5 bg-muted/30 rounded-lg border border-border/30 hover:bg-muted/50 transition-colors">
+                  <span className="text-sm font-medium">
+                    <span className="text-muted-foreground text-xs mr-2">{ball.over_number}.{ball.ball_number}</span>
+                    {getPlayerName(ball.batsman_id)}
                   </span>
-                  <Badge variant={ball.is_wicket ? 'destructive' : 'secondary'}>
+                  <span
+                    className={`inline-flex items-center justify-center min-w-[2rem] h-7 rounded-full text-xs font-bold px-2 ${
+                      ball.is_wicket 
+                        ? 'bg-destructive text-white' 
+                        : ball.runs_scored >= 4 
+                        ? 'bg-primary text-white'
+                        : 'bg-secondary text-secondary-foreground'
+                    }`}
+                  >
                     {getBallDisplay(ball)}
-                  </Badge>
+                  </span>
                 </div>
               ))
             ) : (
-              <p className="text-center text-muted-foreground">No balls recorded</p>
+              <p className="text-center text-muted-foreground py-8">No balls recorded</p>
             )}
           </div>
         </TabsContent>
 
-        <TabsContent value="info" className="p-4">
-          <div className="space-y-4">
-            <div>
-              <Label className="text-muted-foreground">Format</Label>
-              <p className="font-medium">{match.format} • {match.overs_per_innings} overs</p>
+        <TabsContent value="info" className="p-5">
+          <div className="space-y-5">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-muted/30 rounded-xl p-4 border border-border/30">
+                <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-1">Format</p>
+                <p className="font-bold text-lg">{match.format}</p>
+                <p className="text-xs text-muted-foreground">{match.overs_per_innings} overs</p>
+              </div>
+              <div className="bg-muted/30 rounded-xl p-4 border border-border/30">
+                <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-1">Status</p>
+                <Badge className="mt-1">{match.status}</Badge>
+              </div>
             </div>
-            <div>
-              <Label className="text-muted-foreground">Teams</Label>
-              <p className="font-medium">{team1.team_name} vs {team2.team_name}</p>
-            </div>
-            <div>
-              <Label className="text-muted-foreground">Status</Label>
-              <Badge className="ml-2">{match.status}</Badge>
+            
+            <div className="bg-muted/30 rounded-xl p-4 border border-border/30">
+              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-2">Teams</p>
+              <div className="flex items-center justify-center gap-4">
+                <span className="font-bold text-sm">{team1.team_name}</span>
+                <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">VS</span>
+                <span className="font-bold text-sm">{team2.team_name}</span>
+              </div>
             </div>
 
-            {/* Simple Scoring Mode */}
-            <div className="pt-4 border-t">
-              <h4 className="font-medium mb-3">Quick Score Entry</h4>
-              <p className="text-sm font-medium mb-2">{team1.team_name}</p>
-              <div className="grid grid-cols-3 gap-2 mb-3">
-                <div>
-                  <Label className="text-xs">Runs</Label>
-                  <Input type="number" value={team1Score.runs} onChange={(e) => setTeam1Score({ ...team1Score, runs: parseInt(e.target.value) || 0 })} />
-                </div>
-                <div>
-                  <Label className="text-xs">Wickets</Label>
-                  <Input type="number" min={0} max={10} value={team1Score.wickets} onChange={(e) => setTeam1Score({ ...team1Score, wickets: parseInt(e.target.value) || 0 })} />
-                </div>
-                <div>
-                  <Label className="text-xs">Overs</Label>
-                  <Input type="number" step="0.1" value={team1Score.overs} onChange={(e) => setTeam1Score({ ...team1Score, overs: parseFloat(e.target.value) || 0 })} />
-                </div>
+            {/* Quick Score Entry */}
+            <div className="rounded-xl border border-border/50 overflow-hidden">
+              <div className="bg-muted/30 px-4 py-2.5 border-b border-border/30">
+                <h4 className="font-bold text-sm">Quick Score Entry</h4>
               </div>
-              <p className="text-sm font-medium mb-2">{team2.team_name}</p>
-              <div className="grid grid-cols-3 gap-2 mb-3">
+              <div className="p-4 space-y-4">
                 <div>
-                  <Label className="text-xs">Runs</Label>
-                  <Input type="number" value={team2Score.runs} onChange={(e) => setTeam2Score({ ...team2Score, runs: parseInt(e.target.value) || 0 })} />
+                  <p className="text-sm font-bold mb-2 text-primary">{team1.team_name}</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Runs</Label>
+                      <Input type="number" value={team1Score.runs} onChange={(e) => setTeam1Score({ ...team1Score, runs: parseInt(e.target.value) || 0 })} className="rounded-lg" />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Wickets</Label>
+                      <Input type="number" min={0} max={10} value={team1Score.wickets} onChange={(e) => setTeam1Score({ ...team1Score, wickets: parseInt(e.target.value) || 0 })} className="rounded-lg" />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Overs</Label>
+                      <Input type="number" step="0.1" value={team1Score.overs} onChange={(e) => setTeam1Score({ ...team1Score, overs: parseFloat(e.target.value) || 0 })} className="rounded-lg" />
+                    </div>
+                  </div>
                 </div>
                 <div>
-                  <Label className="text-xs">Wickets</Label>
-                  <Input type="number" min={0} max={10} value={team2Score.wickets} onChange={(e) => setTeam2Score({ ...team2Score, wickets: parseInt(e.target.value) || 0 })} />
+                  <p className="text-sm font-bold mb-2 text-primary">{team2.team_name}</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Runs</Label>
+                      <Input type="number" value={team2Score.runs} onChange={(e) => setTeam2Score({ ...team2Score, runs: parseInt(e.target.value) || 0 })} className="rounded-lg" />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Wickets</Label>
+                      <Input type="number" min={0} max={10} value={team2Score.wickets} onChange={(e) => setTeam2Score({ ...team2Score, wickets: parseInt(e.target.value) || 0 })} className="rounded-lg" />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Overs</Label>
+                      <Input type="number" step="0.1" value={team2Score.overs} onChange={(e) => setTeam2Score({ ...team2Score, overs: parseFloat(e.target.value) || 0 })} className="rounded-lg" />
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <Label className="text-xs">Overs</Label>
-                  <Input type="number" step="0.1" value={team2Score.overs} onChange={(e) => setTeam2Score({ ...team2Score, overs: parseFloat(e.target.value) || 0 })} />
+                
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Winner</Label>
+                  <Select value={winnerId} onValueChange={setWinnerId}>
+                    <SelectTrigger className="rounded-lg">
+                      <SelectValue placeholder="Select winner" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background border shadow-xl">
+                      <SelectItem value={team1.id}>{team1.team_name}</SelectItem>
+                      <SelectItem value={team2.id}>{team2.team_name}</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label>Winner</Label>
-                <Select value={winnerId} onValueChange={setWinnerId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select winner" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={team1.id}>{team1.team_name}</SelectItem>
-                    <SelectItem value={team2.id}>{team2.team_name}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
 
-              <div className="flex gap-2 mt-4">
-                <Button onClick={saveSimpleScore} variant="outline" className="flex-1">Save</Button>
-                <Button onClick={completeMatch} className="flex-1">Complete</Button>
+                <div className="flex gap-2 pt-2">
+                  <Button onClick={saveSimpleScore} className="flex-1 rounded-lg font-semibold">Save Scores</Button>
+                  <Button onClick={completeMatch} variant="outline" className="flex-1 rounded-lg font-semibold border-primary/30 text-primary hover:bg-primary/5">Complete Match</Button>
+                </div>
               </div>
             </div>
           </div>
