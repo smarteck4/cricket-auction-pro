@@ -52,6 +52,7 @@ export default function Admin() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [editImageFile, setEditImageFile] = useState<File | null>(null);
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [reAuctionTarget, setReAuctionTarget] = useState<Player | null>(null);
 
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState('');
