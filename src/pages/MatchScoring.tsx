@@ -66,23 +66,64 @@ export default function MatchScoring() {
       .select('owner_id, player_id')
       .in('owner_id', [matchData.team1_id, matchData.team2_id]);
 
-    if (teamPlayersData) {
-      const playerIds = teamPlayersData.map(tp => tp.player_id);
+    // Also fetch all player IDs used in match_balls for this match
+    const { data: matchInningsData } = await supabase
+      .from('match_innings')
+      .select('id, batting_team_id')
+      .eq('match_id', matchId);
+
+    let ballPlayerIds: { playerId: string; teamId: string }[] = [];
+    if (matchInningsData && matchInningsData.length > 0) {
+      const inningsIds = matchInningsData.map(i => i.id);
+      const { data: ballsData } = await supabase
+        .from('match_balls')
+        .select('batsman_id, bowler_id, fielder_id, innings_id')
+        .in('innings_id', inningsIds);
+
+      if (ballsData) {
+        const inningsTeamMap = new Map(matchInningsData.map(i => [i.id, i.batting_team_id]));
+        ballsData.forEach(ball => {
+          const battingTeamId = inningsTeamMap.get(ball.innings_id) || '';
+          const bowlingTeamId = battingTeamId === matchData.team1_id ? matchData.team2_id : matchData.team1_id;
+          if (ball.batsman_id) ballPlayerIds.push({ playerId: ball.batsman_id, teamId: battingTeamId });
+          if (ball.bowler_id) ballPlayerIds.push({ playerId: ball.bowler_id, teamId: bowlingTeamId });
+          if (ball.fielder_id) ballPlayerIds.push({ playerId: ball.fielder_id, teamId: bowlingTeamId });
+        });
+      }
+    }
+
+    // Combine all player IDs
+    const teamPlayerIds = teamPlayersData?.map(tp => tp.player_id) || [];
+    const extraPlayerIds = ballPlayerIds.map(bp => bp.playerId).filter(id => !teamPlayerIds.includes(id));
+    const allPlayerIds = [...new Set([...teamPlayerIds, ...extraPlayerIds])];
+
+    if (allPlayerIds.length > 0) {
       const { data: playersData } = await supabase
         .from('players')
         .select('*')
-        .in('id', playerIds);
+        .in('id', allPlayerIds);
 
       if (playersData) {
-        const team1PlayerIds = teamPlayersData
+        const team1PlayerIdsFromRoster = (teamPlayersData || [])
           .filter(tp => tp.owner_id === matchData.team1_id)
           .map(tp => tp.player_id);
-        const team2PlayerIds = teamPlayersData
+        const team2PlayerIdsFromRoster = (teamPlayersData || [])
           .filter(tp => tp.owner_id === matchData.team2_id)
           .map(tp => tp.player_id);
 
-        setTeam1Players(playersData.filter(p => team1PlayerIds.includes(p.id)) as Player[]);
-        setTeam2Players(playersData.filter(p => team2PlayerIds.includes(p.id)) as Player[]);
+        // Add players from match_balls that aren't in the roster
+        const team1ExtraIds = ballPlayerIds
+          .filter(bp => bp.teamId === matchData.team1_id && !team1PlayerIdsFromRoster.includes(bp.playerId))
+          .map(bp => bp.playerId);
+        const team2ExtraIds = ballPlayerIds
+          .filter(bp => bp.teamId === matchData.team2_id && !team2PlayerIdsFromRoster.includes(bp.playerId))
+          .map(bp => bp.playerId);
+
+        const allTeam1Ids = [...new Set([...team1PlayerIdsFromRoster, ...team1ExtraIds])];
+        const allTeam2Ids = [...new Set([...team2PlayerIdsFromRoster, ...team2ExtraIds])];
+
+        setTeam1Players(playersData.filter(p => allTeam1Ids.includes(p.id)) as Player[]);
+        setTeam2Players(playersData.filter(p => allTeam2Ids.includes(p.id)) as Player[]);
       }
     }
 
