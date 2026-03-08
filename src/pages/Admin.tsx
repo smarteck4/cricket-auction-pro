@@ -630,7 +630,7 @@ export default function Admin() {
             <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
               <h2 className="text-xl font-semibold">Manage Players</h2>
               <div className="flex gap-2 flex-wrap">
-                <BulkPlayerImport categorySettings={categorySettings} onImportComplete={fetchData} />
+                <BulkPlayerImport categorySettings={categorySettings} onImportComplete={fetchData} createdBy={user!.id} />
                 <Button className="gradient-gold" onClick={() => setPlayerDialogOpen(true)}><Plus className="w-4 h-4 mr-2" />Add Player</Button>
                 <PlayerFormModal
                   open={playerDialogOpen}
