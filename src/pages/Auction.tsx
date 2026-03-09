@@ -74,23 +74,23 @@ export default function Auction() {
     if (ownersRes.data) setOwners(ownersRes.data as Owner[]);
     if (pendingRes.data) setPendingPlayers(pendingRes.data as Player[]);
     
-    if (auctionRes.data) {
-      setCurrentAuction(auctionRes.data as CurrentAuction);
+    if (auctionData) {
+      setCurrentAuction(auctionData as CurrentAuction);
       
-      if (auctionRes.data.player_id) {
+      if (auctionData.player_id) {
         const { data: playerData } = await supabase
           .from('players')
           .select('*')
-          .eq('id', auctionRes.data.player_id)
+          .eq('id', auctionData.player_id)
           .single();
         if (playerData) setCurrentPlayer(playerData as Player);
       }
       
-      if (auctionRes.data.current_bidder_id) {
+      if (auctionData.current_bidder_id) {
         const { data: bidderData } = await supabase
           .from('owners')
           .select('*')
-          .eq('id', auctionRes.data.current_bidder_id)
+          .eq('id', auctionData.current_bidder_id)
           .single();
         if (bidderData) setCurrentBidder(bidderData as Owner);
       }
