@@ -91,7 +91,7 @@ export default function Admin() {
       supabase.from('players').select('*').order('category'),
       supabase.from('owners').select('*'),
       supabase.from('category_settings').select('*'),
-      supabase.from('current_auction').select('*').limit(1).single(),
+      supabase.from('current_auction').select('*').order('created_at', { ascending: false }).limit(1).maybeSingle(),
     ]);
     
     if (playersRes.data) setPlayers(playersRes.data as Player[]);
