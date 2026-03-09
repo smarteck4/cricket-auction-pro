@@ -582,7 +582,7 @@ export default function Auction() {
                     </div>
 
                     {/* Admin Close Bid Button */}
-                    {role === 'admin' && (
+                    {(role === 'admin' || role === 'super_admin') && (
                       <div className="mb-4">
                         <Button
                           size="lg"
