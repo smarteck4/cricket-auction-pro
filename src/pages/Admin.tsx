@@ -337,7 +337,12 @@ export default function Admin() {
 
   // Auction controls
   const startAuction = async (player: Player) => {
-    const { data: existing } = await supabase.from('current_auction').select('id').limit(1);
+    // Find this admin's existing auction row, or any existing row for super_admin
+    const { data: existing } = await supabase
+      .from('current_auction')
+      .select('id')
+      .order('created_at', { ascending: false })
+      .limit(1);
     const now = new Date().toISOString();
     
     if (existing && existing.length > 0) {
@@ -349,6 +354,7 @@ export default function Admin() {
         started_at: now,
         timer_duration: timerDuration,
         timer_started_at: now,
+        created_by: user!.id,
       }).eq('id', existing[0].id);
     } else {
       await supabase.from('current_auction').insert({
