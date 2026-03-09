@@ -24,7 +24,7 @@ export default function MatchScoring() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user || role !== 'admin') {
+    if (!user || (role !== 'admin' && role !== 'super_admin')) {
       navigate('/');
       return;
     }

@@ -42,7 +42,7 @@ export default function Tournaments() {
   const [editingMatch, setEditingMatch] = useState<Match | null>(null);
 
   useEffect(() => {
-    if (!user || role !== 'admin') {
+    if (!user || (role !== 'admin' && role !== 'super_admin')) {
       navigate('/');
       return;
     }
