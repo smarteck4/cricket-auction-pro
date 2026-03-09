@@ -52,11 +52,24 @@ export default function Auction() {
     setLoading(true);
     
     // Fetch current auction, owners, and pending players in parallel
-    const [auctionRes, ownersRes, pendingRes] = await Promise.all([
-      supabase.from('current_auction').select('*').limit(1).single(),
+    // Try to find an active auction first, otherwise get the most recent one
+    const [activeAuctionRes, ownersRes, pendingRes] = await Promise.all([
+      supabase.from('current_auction').select('*').eq('is_active', true).limit(1).maybeSingle(),
       supabase.from('owners').select('*'),
       supabase.from('players').select('*').eq('auction_status', 'pending').order('category'),
     ]);
+    
+    let auctionData = activeAuctionRes.data;
+    if (!auctionData) {
+      // No active auction, get the most recent one
+      const { data } = await supabase
+        .from('current_auction')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      auctionData = data;
+    }
     
     if (ownersRes.data) setOwners(ownersRes.data as Owner[]);
     if (pendingRes.data) setPendingPlayers(pendingRes.data as Player[]);
