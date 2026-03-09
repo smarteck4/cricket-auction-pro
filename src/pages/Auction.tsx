@@ -379,7 +379,7 @@ export default function Auction() {
       const remaining = calculateRemaining();
       setTimeRemaining(remaining);
       
-      if (remaining <= 0 && role === 'admin' && !closingRef.current) {
+      if (remaining <= 0 && (role === 'admin' || role === 'super_admin') && !closingRef.current) {
         clearInterval(interval);
         autoCloseBid();
       }
