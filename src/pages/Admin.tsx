@@ -78,7 +78,7 @@ export default function Admin() {
   });
 
   useEffect(() => {
-    if (!user || role !== 'admin') {
+    if (!user || (role !== 'admin' && role !== 'super_admin')) {
       navigate('/');
       return;
     }

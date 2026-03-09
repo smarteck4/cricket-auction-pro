@@ -55,7 +55,7 @@ export default function Index() {
                           Enter Auction
                         </Link>
                       </Button>
-                      {role === 'admin' && (
+                      {(role === 'admin' || role === 'super_admin') && (
                         <Button size="lg" variant="outline" className="neu-flat border-0 px-6 sm:px-8 py-5 sm:py-6 hover:scale-105 transition-transform w-full sm:w-auto" asChild>
                           <Link to="/admin">Admin Panel</Link>
                         </Button>

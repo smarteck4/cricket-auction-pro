@@ -379,7 +379,7 @@ export default function Auction() {
       const remaining = calculateRemaining();
       setTimeRemaining(remaining);
       
-      if (remaining <= 0 && role === 'admin' && !closingRef.current) {
+      if (remaining <= 0 && (role === 'admin' || role === 'super_admin') && !closingRef.current) {
         clearInterval(interval);
         autoCloseBid();
       }
@@ -582,7 +582,7 @@ export default function Auction() {
                     </div>
 
                     {/* Admin Close Bid Button */}
-                    {role === 'admin' && (
+                    {(role === 'admin' || role === 'super_admin') && (
                       <div className="mb-4">
                         <Button
                           size="lg"
