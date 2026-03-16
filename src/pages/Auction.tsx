@@ -284,21 +284,32 @@ export default function Auction() {
   const closeBid = async () => {
     if (!currentAuction) return;
 
-    if (currentBidder && currentPlayer) {
+    // Fetch fresh bidder data to avoid stale remaining_points
+    let bidder = currentBidder;
+    if (currentAuction.current_bidder_id) {
+      const { data } = await supabase
+        .from('owners')
+        .select('*')
+        .eq('id', currentAuction.current_bidder_id)
+        .single();
+      if (data) bidder = data as Owner;
+    }
+
+    if (bidder && currentPlayer) {
       // Player sold to current bidder
       await supabase.from('team_players').insert({
-        owner_id: currentBidder.id,
+        owner_id: bidder.id,
         player_id: currentPlayer.id,
         bought_price: currentAuction.current_bid,
       });
       
       // Deduct points from owner
       await supabase.from('owners').update({
-        remaining_points: currentBidder.remaining_points - currentAuction.current_bid
-      }).eq('id', currentBidder.id);
+        remaining_points: bidder.remaining_points - currentAuction.current_bid
+      }).eq('id', bidder.id);
       
       await supabase.from('players').update({ auction_status: 'sold' }).eq('id', currentPlayer.id);
-      toast({ title: 'Player Sold!', description: `${currentPlayer.name} sold to ${currentBidder.team_name} for ${currentAuction.current_bid} points` });
+      toast({ title: 'Player Sold!', description: `${currentPlayer.name} sold to ${bidder.team_name} for ${currentAuction.current_bid} points` });
     } else if (currentPlayer) {
       await supabase.from('players').update({ auction_status: 'unsold' }).eq('id', currentPlayer.id);
       toast({ title: 'Player Unsold', description: `${currentPlayer.name} received no bids` });
