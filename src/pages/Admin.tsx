@@ -83,7 +83,8 @@ export default function Admin() {
       return;
     }
     fetchData();
-    setupRealtimeSubscription();
+    const cleanup = setupRealtimeSubscription();
+    return cleanup;
   }, [user, role, navigate]);
 
   const fetchData = async () => {
@@ -136,7 +137,7 @@ export default function Admin() {
       })
       .subscribe();
 
-    return () => supabase.removeChannel(channel);
+    return () => { supabase.removeChannel(channel); };
   };
 
   // Timer countdown
@@ -376,13 +377,20 @@ export default function Admin() {
   const endAuction = async () => {
     if (!currentAuction) return;
 
-    if (currentBidder && currentPlayer) {
+    // Fetch fresh bidder data to avoid stale remaining_points
+    let bidder = currentBidder;
+    if (currentAuction.current_bidder_id) {
+      const { data } = await supabase.from('owners').select('*').eq('id', currentAuction.current_bidder_id).single();
+      if (data) bidder = data as Owner;
+    }
+
+    if (bidder && currentPlayer) {
       await supabase.from('team_players').insert({
-        owner_id: currentBidder.id,
+        owner_id: bidder.id,
         player_id: currentPlayer.id,
         bought_price: currentAuction.current_bid,
       });
-      await supabase.from('owners').update({ remaining_points: currentBidder.remaining_points - currentAuction.current_bid }).eq('id', currentBidder.id);
+      await supabase.from('owners').update({ remaining_points: bidder.remaining_points - currentAuction.current_bid }).eq('id', bidder.id);
       await supabase.from('players').update({ auction_status: 'sold' }).eq('id', currentPlayer.id);
       toast({ title: 'Player sold!' });
     } else if (currentPlayer) {
