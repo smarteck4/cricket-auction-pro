@@ -83,7 +83,8 @@ export default function Admin() {
       return;
     }
     fetchData();
-    setupRealtimeSubscription();
+    const cleanup = setupRealtimeSubscription();
+    return cleanup;
   }, [user, role, navigate]);
 
   const fetchData = async () => {
