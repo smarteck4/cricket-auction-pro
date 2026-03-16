@@ -45,7 +45,8 @@ export default function Auction() {
     }
     
     fetchData();
-    setupRealtimeSubscription();
+    const cleanup = setupRealtimeSubscription();
+    return cleanup;
   }, [user, navigate]);
 
   const fetchData = async () => {
