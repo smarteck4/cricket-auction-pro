@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS public.unique_player_bid_amount;
