@@ -157,9 +157,23 @@ export default function Auction() {
       )
       .subscribe();
 
+    // Subscribe to owner balance changes so UI updates after bids
+    const ownerChannel = owner ? supabase
+      .channel('owner-balance')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'owners', filter: `id=eq.${owner.id}` },
+        () => {
+          // Refetch data to get updated balance
+          fetchData();
+        }
+      )
+      .subscribe() : null;
+
     return () => {
       supabase.removeChannel(auctionChannel);
       supabase.removeChannel(teamChannel);
+      if (ownerChannel) supabase.removeChannel(ownerChannel);
     };
   };
 
