@@ -145,30 +145,22 @@ export default function Admin() {
     if (closingRef.current || !currentAuction?.is_active) return;
     closingRef.current = true;
 
-    let bidder = currentBidder;
-    if (currentAuction.current_bidder_id) {
-      const { data } = await supabase.from('owners').select('*').eq('id', currentAuction.current_bidder_id).single();
-      if (data) bidder = data as Owner;
+    const { data: result, error } = await supabase.rpc('close_bid_atomic', {
+      p_auction_id: currentAuction.id,
+    });
+
+    const res = result as any;
+    if (!error && res?.success) {
+      if (res.status === 'sold') {
+        toast({ title: 'Time Up - Player Sold!', description: `${res.player_name} sold to ${res.team_name} for ${res.sold_price} pts` });
+      } else if (res.status === 'unsold') {
+        toast({ title: 'Time Up - Player Unsold', description: `${res.player_name} received no bids` });
+      }
     }
 
-    if (bidder && currentPlayer) {
-      await supabase.from('team_players').insert({
-        owner_id: bidder.id,
-        player_id: currentPlayer.id,
-        bought_price: currentAuction.current_bid,
-      });
-      await supabase.from('owners').update({ remaining_points: bidder.remaining_points - currentAuction.current_bid }).eq('id', bidder.id);
-      await supabase.from('players').update({ auction_status: 'sold' }).eq('id', currentPlayer.id);
-      toast({ title: 'Time Up - Player Sold!', description: `${currentPlayer.name} sold to ${bidder.team_name}` });
-    } else if (currentPlayer) {
-      await supabase.from('players').update({ auction_status: 'unsold' }).eq('id', currentPlayer.id);
-      toast({ title: 'Time Up - Player Unsold', description: `${currentPlayer.name} received no bids` });
-    }
-    
-    await supabase.from('current_auction').update({ is_active: false, player_id: null, current_bidder_id: null, current_bid: 0, timer_started_at: null }).eq('id', currentAuction.id);
     closingRef.current = false;
     fetchData();
-  }, [currentAuction, currentBidder, currentPlayer, toast]);
+  }, [currentAuction, toast]);
 
   useEffect(() => {
     if (!currentAuction?.is_active || !currentAuction.timer_started_at) {
