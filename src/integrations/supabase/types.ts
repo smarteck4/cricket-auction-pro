@@ -780,6 +780,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      close_bid_atomic: { Args: { p_auction_id: string }; Returns: Json }
       get_owner_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
