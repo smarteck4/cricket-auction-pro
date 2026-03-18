@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useCountdownBeep } from '@/hooks/useCountdownBeep';
+import { useBidAlert } from '@/hooks/useBidAlert';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -37,6 +38,8 @@ export default function Auction() {
 
   // Countdown beep audio for last 5 seconds
   useCountdownBeep(timeRemaining, currentAuction?.is_active ?? false);
+  const { playBidSound, cleanup: cleanupBidAlert } = useBidAlert();
+  const prevBidRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -46,7 +49,10 @@ export default function Auction() {
     
     fetchData();
     const cleanup = setupRealtimeSubscription();
-    return cleanup;
+    return () => {
+      cleanup();
+      cleanupBidAlert();
+    };
   }, [user, navigate]);
 
   const fetchData = async () => {
@@ -118,6 +124,17 @@ export default function Auction() {
         async (payload) => {
           const auction = payload.new as CurrentAuction;
           setCurrentAuction(auction);
+
+          // Play sound alert when bid amount changes (new bid placed)
+          if (auction.current_bid && auction.current_bid !== prevBidRef.current && auction.is_active) {
+            prevBidRef.current = auction.current_bid;
+            playBidSound();
+            toast({
+              title: '🔔 New Bid!',
+              description: `${auction.current_bid.toLocaleString()} pts`,
+              duration: 2000,
+            });
+          }
           
           if (auction.player_id) {
             const { data: playerData } = await supabase
