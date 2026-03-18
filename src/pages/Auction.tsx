@@ -315,45 +315,27 @@ export default function Auction() {
   const closeBid = async () => {
     if (!currentAuction) return;
 
-    // Fetch fresh bidder data to avoid stale remaining_points
-    let bidder = currentBidder;
-    if (currentAuction.current_bidder_id) {
-      const { data } = await supabase
-        .from('owners')
-        .select('*')
-        .eq('id', currentAuction.current_bidder_id)
-        .single();
-      if (data) bidder = data as Owner;
+    const { data: result, error } = await supabase.rpc('close_bid_atomic', {
+      p_auction_id: currentAuction.id,
+    });
+
+    if (error || (result as any)?.error) {
+      toast({
+        title: 'Error closing bid',
+        description: (result as any)?.error || error?.message,
+        variant: 'destructive',
+      });
+      return;
     }
 
-    if (bidder && currentPlayer) {
-      // Player sold to current bidder
-      await supabase.from('team_players').insert({
-        owner_id: bidder.id,
-        player_id: currentPlayer.id,
-        bought_price: currentAuction.current_bid,
-      });
-      
-      // Deduct points from owner
-      await supabase.from('owners').update({
-        remaining_points: bidder.remaining_points - currentAuction.current_bid
-      }).eq('id', bidder.id);
-      
-      await supabase.from('players').update({ auction_status: 'sold' }).eq('id', currentPlayer.id);
-      toast({ title: 'Player Sold!', description: `${currentPlayer.name} sold to ${bidder.team_name} for ${currentAuction.current_bid} points` });
-    } else if (currentPlayer) {
-      await supabase.from('players').update({ auction_status: 'unsold' }).eq('id', currentPlayer.id);
-      toast({ title: 'Player Unsold', description: `${currentPlayer.name} received no bids` });
+    const res = result as any;
+    if (res.already_closed) {
+      toast({ title: 'Auction already closed', description: 'Another session closed this auction.' });
+    } else if (res.status === 'sold') {
+      toast({ title: 'Player Sold!', description: `${res.player_name} sold to ${res.team_name} for ${res.sold_price} points` });
+    } else if (res.status === 'unsold') {
+      toast({ title: 'Player Unsold', description: `${res.player_name} received no bids${res.reason === 'insufficient_points' ? ' (insufficient points)' : ''}` });
     }
-    
-    // Reset auction
-    await supabase.from('current_auction').update({ 
-      is_active: false, 
-      player_id: null, 
-      current_bidder_id: null, 
-      current_bid: 0,
-      timer_started_at: null
-    }).eq('id', currentAuction.id);
   };
 
   // Auto-close when timer expires
