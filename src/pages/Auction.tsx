@@ -49,7 +49,10 @@ export default function Auction() {
     
     fetchData();
     const cleanup = setupRealtimeSubscription();
-    return cleanup;
+    return () => {
+      cleanup();
+      cleanupBidAlert();
+    };
   }, [user, navigate]);
 
   const fetchData = async () => {
