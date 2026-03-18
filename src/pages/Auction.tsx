@@ -38,6 +38,8 @@ export default function Auction() {
 
   // Countdown beep audio for last 5 seconds
   useCountdownBeep(timeRemaining, currentAuction?.is_active ?? false);
+  const { playBidSound, cleanup: cleanupBidAlert } = useBidAlert();
+  const prevBidRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!user) {
