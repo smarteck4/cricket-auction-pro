@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useCountdownBeep } from '@/hooks/useCountdownBeep';
+import { useBidAlert } from '@/hooks/useBidAlert';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
