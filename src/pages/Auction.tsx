@@ -329,10 +329,11 @@ export default function Auction() {
       p_auction_id: currentAuction.id,
     });
 
-    if (error || (result as any)?.error) {
+    const errRes = result as { error?: string; error_code?: string } | null;
+    if (error || errRes?.error) {
       toast({
-        title: 'Error closing bid',
-        description: (result as any)?.error || error?.message,
+        title: errRes?.error_code ? `Close failed (${errRes.error_code})` : 'Error closing bid',
+        description: errRes?.error || error?.message || 'Unknown error',
         variant: 'destructive',
       });
       return;
