@@ -67,6 +67,16 @@ export default function Admin() {
   const [timeRemaining, setTimeRemaining] = useState(0);
   const closingRef = useRef(false);
 
+  // Close-bid confirmation dialog state
+  type CloseResult =
+    | { kind: 'sold'; playerName: string; teamName: string; soldPrice: number }
+    | { kind: 'unsold'; playerName: string; reason?: string }
+    | { kind: 'already_closed' }
+    | { kind: 'error'; message: string };
+  const [closeDialogOpen, setCloseDialogOpen] = useState(false);
+  const [closing, setClosing] = useState(false);
+  const [closeResult, setCloseResult] = useState<CloseResult | null>(null);
+
   // Filtered players
   const filteredPlayers = players.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
