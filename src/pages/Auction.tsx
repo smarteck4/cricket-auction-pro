@@ -273,7 +273,16 @@ export default function Auction() {
 
   const placeBid = async () => {
     if (!owner || !currentAuction || !currentPlayer) return;
-    
+
+    if (timeRemaining <= 0) {
+      toast({
+        title: 'Timer expired',
+        description: 'You can no longer bid on this player.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     const bidIncrement = Math.max(50, Math.floor(currentAuction.current_bid * 0.1));
     const newBid = currentAuction.current_bid + bidIncrement;
     
