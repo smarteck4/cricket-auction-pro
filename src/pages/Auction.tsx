@@ -305,10 +305,11 @@ export default function Auction() {
       p_bid_amount: newBid,
     });
     
-    if (rpcError || (result as any)?.error) {
+    const res = result as { success?: boolean; error?: string; error_code?: string } | null;
+    if (rpcError || res?.error) {
       toast({
-        title: 'Error placing bid',
-        description: (result as any)?.error || rpcError?.message,
+        title: res?.error_code ? `Bid rejected (${res.error_code})` : 'Error placing bid',
+        description: res?.error || rpcError?.message || 'Unknown error',
         variant: 'destructive',
       });
     } else {
@@ -328,10 +329,11 @@ export default function Auction() {
       p_auction_id: currentAuction.id,
     });
 
-    if (error || (result as any)?.error) {
+    const errRes = result as { error?: string; error_code?: string } | null;
+    if (error || errRes?.error) {
       toast({
-        title: 'Error closing bid',
-        description: (result as any)?.error || error?.message,
+        title: errRes?.error_code ? `Close failed (${errRes.error_code})` : 'Error closing bid',
+        description: errRes?.error || error?.message || 'Unknown error',
         variant: 'destructive',
       });
       return;
@@ -668,10 +670,11 @@ export default function Auction() {
                                       p_bid_amount: newBid,
                                     })
                                     .then(({ data: result, error: rpcError }) => {
-                                      if (rpcError || (result as any)?.error) {
+                                      const res = result as { error?: string; error_code?: string } | null;
+                                      if (rpcError || res?.error) {
                                         toast({
-                                          title: 'Error placing bid',
-                                          description: (result as any)?.error || rpcError?.message,
+                                          title: res?.error_code ? `Bid rejected (${res.error_code})` : 'Error placing bid',
+                                          description: res?.error || rpcError?.message || 'Unknown error',
                                           variant: 'destructive',
                                         });
                                       } else {

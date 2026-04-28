@@ -393,7 +393,8 @@ export default function Admin() {
 
     const res = result as Record<string, unknown>;
     if (res?.error) {
-      setCloseResult({ kind: 'error', message: String(res.error) });
+      const code = res?.error_code ? ` [${String(res.error_code)}]` : '';
+      setCloseResult({ kind: 'error', message: `${String(res.error)}${code}` });
     } else if (res?.already_closed) {
       setCloseResult({ kind: 'already_closed' });
     } else if (res?.status === 'sold') {
