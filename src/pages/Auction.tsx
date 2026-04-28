@@ -698,7 +698,7 @@ export default function Auction() {
                                 });
                               }
                             }}
-                            disabled={bidding || !customBidAmount || parseInt(customBidAmount) <= 0 || !canBid(currentAuction.current_bid + parseInt(customBidAmount || '0'))}
+                            disabled={bidding || timeRemaining <= 0 || !customBidAmount || parseInt(customBidAmount) <= 0 || !canBid(currentAuction.current_bid + parseInt(customBidAmount || '0'))}
                           >
                             <Plus className="w-5 h-5 mr-1" />
                             Bid
