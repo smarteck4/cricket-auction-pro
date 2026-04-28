@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Player, Owner, CategorySetting, PlayerCategory, PlayerRole, BattingHand, CATEGORY_LABELS, ROLE_LABELS, CurrentAuction } from '@/lib/types';
@@ -526,10 +526,32 @@ export default function Admin() {
                           )}
                         </div>
 
-                        {/* Close Bid Button */}
-                        <Button variant="destructive" size="lg" className="w-full" onClick={endAuction}>
-                          <Square className="w-4 h-4 mr-2" />Close Bid Manually
-                        </Button>
+                        {/* Close Bid Button with confirmation */}
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="lg" className="w-full">
+                              <Square className="w-4 h-4 mr-2" />Close Bid Manually
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Close auction for {currentPlayer.name}?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                {currentBidder ? (
+                                  <>This will assign <strong>{currentPlayer.name}</strong> to <strong>{currentBidder.team_name}</strong> for <strong>{currentAuction.current_bid.toLocaleString()} pts</strong>. This cannot be undone.</>
+                                ) : (
+                                  <>No bids have been placed yet. Closing now will mark <strong>{currentPlayer.name}</strong> as <strong>unsold</strong>. This cannot be undone.</>
+                                )}
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={endAuction} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                Yes, close bid
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     ) : (
                       <div className="text-center py-12">
