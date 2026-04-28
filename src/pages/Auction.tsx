@@ -621,11 +621,12 @@ export default function Auction() {
                           size="lg"
                           className="w-full gradient-gold glow-gold text-lg h-14"
                           onClick={placeBid}
-                          disabled={bidding || !canBid(currentAuction.current_bid + getBidIncrement())}
+                          disabled={bidding || timeRemaining <= 0 || !canBid(currentAuction.current_bid + getBidIncrement())}
                         >
                           <Gavel className="w-5 h-5 mr-2" />
-                          Bid {(currentAuction.current_bid + getBidIncrement()).toLocaleString()} pts
-                          <span className="ml-2 text-sm opacity-80">(+{getBidIncrement()})</span>
+                          {timeRemaining <= 0
+                            ? 'Timer Expired'
+                            : <>Bid {(currentAuction.current_bid + getBidIncrement()).toLocaleString()} pts<span className="ml-2 text-sm opacity-80">(+{getBidIncrement()})</span></>}
                         </Button>
 
                         {/* Custom Bid Amount */}
