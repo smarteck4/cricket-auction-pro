@@ -67,6 +67,16 @@ export default function Admin() {
   const [timeRemaining, setTimeRemaining] = useState(0);
   const closingRef = useRef(false);
 
+  // Close-bid confirmation dialog state
+  type CloseResult =
+    | { kind: 'sold'; playerName: string; teamName: string; soldPrice: number }
+    | { kind: 'unsold'; playerName: string; reason?: string }
+    | { kind: 'already_closed' }
+    | { kind: 'error'; message: string };
+  const [closeDialogOpen, setCloseDialogOpen] = useState(false);
+  const [closing, setClosing] = useState(false);
+  const [closeResult, setCloseResult] = useState<CloseResult | null>(null);
+
   // Filtered players
   const filteredPlayers = players.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -368,29 +378,42 @@ export default function Admin() {
 
   const endAuction = async () => {
     if (!currentAuction) return;
+    setClosing(true);
+    setCloseResult(null);
 
     const { data: result, error } = await supabase.rpc('close_bid_atomic', {
       p_auction_id: currentAuction.id,
     });
 
     if (error) {
-      toast({ title: 'Error closing bid', description: error.message, variant: 'destructive' });
+      setCloseResult({ kind: 'error', message: error.message });
+      setClosing(false);
       return;
     }
 
     const res = result as Record<string, unknown>;
     if (res?.error) {
-      toast({ title: 'Close failed', description: String(res.error), variant: 'destructive' });
+      setCloseResult({ kind: 'error', message: String(res.error) });
     } else if (res?.already_closed) {
-      toast({ title: 'Auction already closed' });
+      setCloseResult({ kind: 'already_closed' });
     } else if (res?.status === 'sold') {
-      toast({ title: `🎉 ${res.player_name} sold to ${res.team_name} for ${Number(res.sold_price).toLocaleString()} pts!` });
+      setCloseResult({
+        kind: 'sold',
+        playerName: String(res.player_name),
+        teamName: String(res.team_name),
+        soldPrice: Number(res.sold_price),
+      });
     } else if (res?.status === 'unsold') {
-      toast({ title: `${res.player_name} went unsold`, description: res.reason === 'insufficient_points' ? 'Insufficient points' : undefined });
+      setCloseResult({
+        kind: 'unsold',
+        playerName: String(res.player_name),
+        reason: res.reason === 'insufficient_points' ? 'Winning bidder no longer has enough points' : undefined,
+      });
     } else {
-      toast({ title: 'Auction closed' });
+      setCloseResult({ kind: 'already_closed' });
     }
 
+    setClosing(false);
     fetchData();
   };
 
@@ -526,30 +549,92 @@ export default function Admin() {
                           )}
                         </div>
 
-                        {/* Close Bid Button with confirmation */}
-                        <AlertDialog>
+                        {/* Close Bid Button with confirmation + result */}
+                        <AlertDialog
+                          open={closeDialogOpen}
+                          onOpenChange={(open) => {
+                            setCloseDialogOpen(open);
+                            if (!open) setCloseResult(null);
+                          }}
+                        >
                           <AlertDialogTrigger asChild>
                             <Button variant="destructive" size="lg" className="w-full">
                               <Square className="w-4 h-4 mr-2" />Close Bid Manually
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Close auction for {currentPlayer.name}?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                {currentBidder ? (
-                                  <>This will assign <strong>{currentPlayer.name}</strong> to <strong>{currentBidder.team_name}</strong> for <strong>{currentAuction.current_bid.toLocaleString()} pts</strong>. This cannot be undone.</>
-                                ) : (
-                                  <>No bids have been placed yet. Closing now will mark <strong>{currentPlayer.name}</strong> as <strong>unsold</strong>. This cannot be undone.</>
-                                )}
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={endAuction} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                                Yes, close bid
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
+                            {!closeResult ? (
+                              <>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Close auction for {currentPlayer.name}?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    {currentBidder ? (
+                                      <>This will assign <strong>{currentPlayer.name}</strong> to <strong>{currentBidder.team_name}</strong> for <strong>{currentAuction.current_bid.toLocaleString()} pts</strong>. This cannot be undone.</>
+                                    ) : (
+                                      <>No bids have been placed yet. Closing now will mark <strong>{currentPlayer.name}</strong> as <strong>unsold</strong>. This cannot be undone.</>
+                                    )}
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel disabled={closing}>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={(e) => { e.preventDefault(); endAuction(); }}
+                                    disabled={closing}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    {closing ? 'Closing…' : 'Yes, close bid'}
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </>
+                            ) : (
+                              <>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    {closeResult.kind === 'sold' && '🎉 Player Sold'}
+                                    {closeResult.kind === 'unsold' && 'Player Unsold'}
+                                    {closeResult.kind === 'already_closed' && 'Auction Already Closed'}
+                                    {closeResult.kind === 'error' && 'Close Failed'}
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription asChild>
+                                    <div className="space-y-2">
+                                      {closeResult.kind === 'sold' && (
+                                        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4">
+                                          <p className="text-sm text-muted-foreground">Sold</p>
+                                          <p className="text-lg font-semibold">{closeResult.playerName}</p>
+                                          <p className="text-sm">to <strong>{closeResult.teamName}</strong></p>
+                                          <p className="mt-2 font-display text-2xl font-bold text-gradient-gold">
+                                            {closeResult.soldPrice.toLocaleString()} pts
+                                          </p>
+                                        </div>
+                                      )}
+                                      {closeResult.kind === 'unsold' && (
+                                        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
+                                          <p className="font-semibold">{closeResult.playerName} went unsold.</p>
+                                          {closeResult.reason && (
+                                            <p className="mt-1 text-sm text-muted-foreground">{closeResult.reason}</p>
+                                          )}
+                                        </div>
+                                      )}
+                                      {closeResult.kind === 'already_closed' && (
+                                        <p className="text-sm text-muted-foreground">
+                                          This auction was already closed (likely by the timer or another admin).
+                                        </p>
+                                      )}
+                                      {closeResult.kind === 'error' && (
+                                        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+                                          {closeResult.message}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogAction onClick={() => { setCloseDialogOpen(false); setCloseResult(null); }}>
+                                    Done
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </>
+                            )}
                           </AlertDialogContent>
                         </AlertDialog>
                       </div>
