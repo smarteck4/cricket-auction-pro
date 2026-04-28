@@ -378,29 +378,42 @@ export default function Admin() {
 
   const endAuction = async () => {
     if (!currentAuction) return;
+    setClosing(true);
+    setCloseResult(null);
 
     const { data: result, error } = await supabase.rpc('close_bid_atomic', {
       p_auction_id: currentAuction.id,
     });
 
     if (error) {
-      toast({ title: 'Error closing bid', description: error.message, variant: 'destructive' });
+      setCloseResult({ kind: 'error', message: error.message });
+      setClosing(false);
       return;
     }
 
     const res = result as Record<string, unknown>;
     if (res?.error) {
-      toast({ title: 'Close failed', description: String(res.error), variant: 'destructive' });
+      setCloseResult({ kind: 'error', message: String(res.error) });
     } else if (res?.already_closed) {
-      toast({ title: 'Auction already closed' });
+      setCloseResult({ kind: 'already_closed' });
     } else if (res?.status === 'sold') {
-      toast({ title: `🎉 ${res.player_name} sold to ${res.team_name} for ${Number(res.sold_price).toLocaleString()} pts!` });
+      setCloseResult({
+        kind: 'sold',
+        playerName: String(res.player_name),
+        teamName: String(res.team_name),
+        soldPrice: Number(res.sold_price),
+      });
     } else if (res?.status === 'unsold') {
-      toast({ title: `${res.player_name} went unsold`, description: res.reason === 'insufficient_points' ? 'Insufficient points' : undefined });
+      setCloseResult({
+        kind: 'unsold',
+        playerName: String(res.player_name),
+        reason: res.reason === 'insufficient_points' ? 'Winning bidder no longer has enough points' : undefined,
+      });
     } else {
-      toast({ title: 'Auction closed' });
+      setCloseResult({ kind: 'already_closed' });
     }
 
+    setClosing(false);
     fetchData();
   };
 
