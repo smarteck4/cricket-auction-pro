@@ -647,6 +647,14 @@ export default function Auction() {
                             variant="secondary"
                             className="h-12 px-6"
                             onClick={() => {
+                              if (timeRemaining <= 0) {
+                                toast({
+                                  title: 'Timer expired',
+                                  description: 'You can no longer bid on this player.',
+                                  variant: 'destructive',
+                                });
+                                return;
+                              }
                               const amount = parseInt(customBidAmount);
                               if (amount > 0) {
                                 const newBid = currentAuction.current_bid + amount;
