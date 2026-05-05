@@ -133,25 +133,51 @@ export default function Admin() {
   };
 
   const setupRealtimeSubscription = () => {
+    const hydrate = async (auction: CurrentAuction | null) => {
+      setCurrentAuction(auction);
+      if (!auction || !auction.is_active) {
+        setCurrentPlayer(null);
+        setCurrentBidder(null);
+        setTimeRemaining(0);
+        return;
+      }
+      if (auction.player_id) {
+        const { data: player } = await supabase.from('players').select('*').eq('id', auction.player_id).single();
+        setCurrentPlayer((player as Player) ?? null);
+      } else {
+        setCurrentPlayer(null);
+      }
+      if (auction.current_bidder_id) {
+        const { data: bidder } = await supabase.from('owners').select('*').eq('id', auction.current_bidder_id).single();
+        setCurrentBidder((bidder as Owner) ?? null);
+      } else {
+        setCurrentBidder(null);
+      }
+    };
+
     const channel = supabase
       .channel('admin-auction-updates')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'current_auction' }, async (payload) => {
-        const auction = payload.new as CurrentAuction;
-        setCurrentAuction(auction);
-        
-        if (auction.player_id) {
-          const { data: player } = await supabase.from('players').select('*').eq('id', auction.player_id).single();
-          if (player) setCurrentPlayer(player as Player);
-        } else {
-          setCurrentPlayer(null);
+        if (payload.eventType === 'DELETE') {
+          await hydrate(null);
+          return;
         }
-        
-        if (auction.current_bidder_id) {
-          const { data: bidder } = await supabase.from('owners').select('*').eq('id', auction.current_bidder_id).single();
-          if (bidder) setCurrentBidder(bidder as Owner);
-        } else {
-          setCurrentBidder(null);
-        }
+        await hydrate(payload.new as CurrentAuction);
+      })
+      // New bids should refresh owners (points) and players list immediately
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'bids' }, () => {
+        fetchData();
+      })
+      // Player status changes (sold/unsold) should refresh the players list
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'players' }, (payload) => {
+        const updated = payload.new as Player;
+        setPlayers((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+      })
+      // Owner points change after a sale → refresh owners list
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'owners' }, (payload) => {
+        const updated = payload.new as Owner;
+        setOwners((prev) => prev.map((o) => (o.id === updated.id ? updated : o)));
+        setCurrentBidder((prev) => (prev && prev.id === updated.id ? updated : prev));
       })
       .subscribe();
 
