@@ -111,14 +111,22 @@ export default function Admin() {
     
     if (auctionRes.data) {
       setCurrentAuction(auctionRes.data as CurrentAuction);
-      if (auctionRes.data.player_id) {
+      if (auctionRes.data.player_id && auctionRes.data.is_active) {
         const { data: player } = await supabase.from('players').select('*').eq('id', auctionRes.data.player_id).single();
-        if (player) setCurrentPlayer(player as Player);
+        setCurrentPlayer((player as Player) ?? null);
+      } else {
+        setCurrentPlayer(null);
       }
-      if (auctionRes.data.current_bidder_id) {
+      if (auctionRes.data.current_bidder_id && auctionRes.data.is_active) {
         const { data: bidder } = await supabase.from('owners').select('*').eq('id', auctionRes.data.current_bidder_id).single();
-        if (bidder) setCurrentBidder(bidder as Owner);
+        setCurrentBidder((bidder as Owner) ?? null);
+      } else {
+        setCurrentBidder(null);
       }
+    } else {
+      setCurrentAuction(null);
+      setCurrentPlayer(null);
+      setCurrentBidder(null);
     }
     
     setLoading(false);
@@ -415,7 +423,12 @@ export default function Admin() {
     }
 
     setClosing(false);
-    fetchData();
+    // Immediately clear local auction state so Admin UI reflects closure without reload
+    setCurrentAuction((prev) => prev ? { ...prev, is_active: false, player_id: null, current_bidder_id: null, current_bid: 0, timer_started_at: null } : prev);
+    setCurrentPlayer(null);
+    setCurrentBidder(null);
+    setTimeRemaining(0);
+    await fetchData();
   };
 
   // Re-enter unsold player with demoted category
