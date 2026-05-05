@@ -423,7 +423,12 @@ export default function Admin() {
     }
 
     setClosing(false);
-    fetchData();
+    // Immediately clear local auction state so Admin UI reflects closure without reload
+    setCurrentAuction((prev) => prev ? { ...prev, is_active: false, player_id: null, current_bidder_id: null, current_bid: 0, timer_started_at: null } : prev);
+    setCurrentPlayer(null);
+    setCurrentBidder(null);
+    setTimeRemaining(0);
+    await fetchData();
   };
 
   // Re-enter unsold player with demoted category
