@@ -19,7 +19,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { FullscreenAuction } from '@/components/FullscreenAuction';
 
 export default function Auction() {
-  const { user, role, owner } = useAuth();
+  const { user, role, owner, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -42,6 +42,7 @@ export default function Auction() {
   const prevBidRef = useRef<number | null>(null);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user) {
       navigate('/auth');
       return;
@@ -53,7 +54,7 @@ export default function Auction() {
       cleanup();
       cleanupBidAlert();
     };
-  }, [user, navigate]);
+  }, [user, owner?.id, authLoading, navigate]);
 
   const fetchData = async () => {
     setLoading(true);
