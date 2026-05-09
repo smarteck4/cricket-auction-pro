@@ -14,9 +14,10 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { useState } from 'react';
 
 export function Header() {
-  const { user, role, owner, signOut } = useAuth();
+  const { user, role, owner, loading, signOut } = useAuth();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const roleLabel = loading ? 'Loading role…' : role ?? 'No role assigned';
 
   const handleSignOut = async () => {
     await signOut();
@@ -72,7 +73,7 @@ export function Header() {
                     {user && (
                       <div className="px-3 py-3 mb-2 rounded-lg bg-muted/50">
                         <p className="text-sm font-medium truncate">{user.email}</p>
-                        <p className="text-xs text-muted-foreground capitalize">{role || 'spectator'}</p>
+                        <p className="text-xs text-muted-foreground capitalize">{roleLabel}</p>
                         {owner && <p className="text-xs text-primary font-medium mt-0.5">{owner.team_name}</p>}
                       </div>
                     )}
@@ -106,7 +107,7 @@ export function Header() {
                 <DropdownMenuContent align="end" className="w-56 glass-strong">
                   <div className="px-2 py-1.5">
                     <p className="text-sm font-medium">{user.email}</p>
-                    <p className="text-xs text-muted-foreground capitalize">{role || 'spectator'}</p>
+                    <p className="text-xs text-muted-foreground capitalize">{roleLabel}</p>
                     {owner && (
                       <p className="text-xs text-primary font-medium mt-1">{owner.team_name}</p>
                     )}

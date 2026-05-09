@@ -12,7 +12,7 @@ import { ArrowLeft } from 'lucide-react';
 
 export default function MatchScoring() {
   const { matchId } = useParams<{ matchId: string }>();
-  const { user, role } = useAuth();
+  const { user, role, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -24,6 +24,7 @@ export default function MatchScoring() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user || (role !== 'admin' && role !== 'super_admin')) {
       navigate('/');
       return;
@@ -31,7 +32,7 @@ export default function MatchScoring() {
     if (matchId) {
       fetchMatchData();
     }
-  }, [user, role, matchId]);
+  }, [user, role, authLoading, matchId, navigate]);
 
   const fetchMatchData = async () => {
     if (!matchId) return;

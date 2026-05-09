@@ -32,7 +32,7 @@ const defaultPlayer: PlayerFormData = {
 const defaultOwner = { team_name: '', total_points: 10000, team_logo_url: '' };
 
 export default function Admin() {
-  const { user, role } = useAuth();
+  const { user, role, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -88,6 +88,7 @@ export default function Admin() {
   });
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user || (role !== 'admin' && role !== 'super_admin')) {
       navigate('/');
       return;
@@ -95,7 +96,7 @@ export default function Admin() {
     fetchData();
     const cleanup = setupRealtimeSubscription();
     return cleanup;
-  }, [user, role, navigate]);
+  }, [user, role, authLoading, navigate]);
 
   const fetchData = async () => {
     const [playersRes, ownersRes, settingsRes, auctionRes] = await Promise.all([

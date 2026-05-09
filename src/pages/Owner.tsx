@@ -11,15 +11,16 @@ import { Users, Download, Trophy } from 'lucide-react';
 import * as XLSX from '@e965/xlsx';
 
 export default function Owner() {
-  const { user, role, owner } = useAuth();
+  const { user, role, owner, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [teamPlayers, setTeamPlayers] = useState<(TeamPlayer & { player: Player })[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user || role !== 'owner' || !owner) { navigate('/'); return; }
     fetchTeam();
-  }, [user, role, owner, navigate]);
+  }, [user, role, owner, authLoading, navigate]);
 
   const fetchTeam = async () => {
     if (!owner) return;

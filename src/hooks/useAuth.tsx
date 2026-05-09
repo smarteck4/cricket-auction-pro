@@ -23,59 +23,67 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [owner, setOwner] = useState<Owner | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const loadSessionData = async (nextSession: Session | null) => {
+    setLoading(true);
+    setSession(nextSession);
+    setUser(nextSession?.user ?? null);
+
+    if (!nextSession?.user) {
+      setRole(null);
+      setOwner(null);
+      setLoading(false);
+      return;
+    }
+
+    const nextRole = await fetchUserRole(nextSession.user.id);
+    const nextOwner = await fetchOwnerData(nextSession.user.id);
+    setRole(nextRole);
+    setOwner(nextOwner);
+    setLoading(false);
+  };
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-
-        if (session?.user) {
-          setTimeout(() => {
-            fetchUserRole(session.user.id);
-            fetchOwnerData(session.user.id);
-          }, 0);
-        } else {
-          setRole(null);
-          setOwner(null);
-        }
+      (_event, session) => {
+        void loadSessionData(session);
       }
     );
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchUserRole(session.user.id);
-        fetchOwnerData(session.user.id);
-      }
-      setLoading(false);
+      void loadSessionData(session);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchUserRole = async (userId: string) => {
-    const { data } = await supabase
+  const fetchUserRole = async (userId: string): Promise<AppRole | null> => {
+    const { data, error } = await supabase
       .from('user_roles')
       .select('role')
-      .eq('user_id', userId)
-      .single();
-    
-    if (data) {
-      setRole(data.role as AppRole);
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error('Failed to load user role', error);
+      return null;
     }
+
+    const roles = (data ?? []).map((row) => row.role as AppRole);
+    return (['super_admin', 'admin', 'owner', 'spectator'] as AppRole[]).find((candidate) => roles.includes(candidate)) ?? null;
   };
 
-  const fetchOwnerData = async (userId: string) => {
-    const { data } = await supabase
+  const fetchOwnerData = async (userId: string): Promise<Owner | null> => {
+    const { data, error } = await supabase
       .from('owners')
       .select('*')
       .eq('user_id', userId)
-      .single();
-    
-    if (data) {
-      setOwner(data as Owner);
+      .maybeSingle();
+
+    if (error) {
+      console.error('Failed to load owner data', error);
+      return null;
     }
+
+    return (data as Owner) ?? null;
   };
 
   const signIn = async (email: string, password: string) => {

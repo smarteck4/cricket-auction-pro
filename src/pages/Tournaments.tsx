@@ -21,7 +21,7 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 
 export default function Tournaments() {
-  const { user, role } = useAuth();
+  const { user, role, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -42,6 +42,7 @@ export default function Tournaments() {
   const [editingMatch, setEditingMatch] = useState<Match | null>(null);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user || (role !== 'admin' && role !== 'super_admin')) {
       navigate('/');
       return;
@@ -53,7 +54,7 @@ export default function Tournaments() {
       cleanupRealtime();
       cleanupPolling();
     };
-  }, [user, role]);
+  }, [user, role, authLoading, navigate]);
 
   const setupRealtime = () => {
     let lastRealtimeEvent = Date.now();
