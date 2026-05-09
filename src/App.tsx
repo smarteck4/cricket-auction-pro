@@ -14,6 +14,7 @@ import Tournaments from "./pages/Tournaments";
 import MatchScoring from "./pages/MatchScoring";
 import AuctionAnalytics from "./pages/AuctionAnalytics";
 import SuperAdmin from "./pages/SuperAdmin";
+import RoleDebug from "./pages/RoleDebug";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/tournaments/match/:matchId/scoring" element={<MatchScoring />} />
             <Route path="/analytics" element={<AuctionAnalytics />} />
             <Route path="/super-admin" element={<SuperAdmin />} />
+            <Route path="/debug/role" element={<RoleDebug />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
