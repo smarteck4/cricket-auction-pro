@@ -121,9 +121,7 @@ export default function SuperAdmin() {
     u.role.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (loading) return <div className="min-h-screen bg-background"><Header /><div className="container py-20 text-center">Verifying permissions…</div></div>;
-  if (accessDenied) return <AccessDenied reason={accessDenied} />;
-  if (role !== 'super_admin') return null;
+  if (loading || role !== 'super_admin') return null;
 
   return (
     <div className="min-h-screen bg-background">
