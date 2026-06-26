@@ -19,8 +19,6 @@ import { MatchCard } from '@/components/tournament/MatchCard';
 import { Plus, Trophy, Calendar, MapPin, BarChart3, Edit, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import { checkPermission } from '@/lib/permissions';
-import { AccessDenied } from '@/components/AccessDenied';
 
 export default function Tournaments() {
   const { user, role, loading: authLoading } = useAuth();
