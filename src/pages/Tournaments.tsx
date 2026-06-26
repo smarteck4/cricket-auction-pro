@@ -178,12 +178,6 @@ export default function Tournaments() {
   const tournamentMatches = selectedTournament ? matches.filter((m) => m.tournament_id === selectedTournament.id) : [];
   const tournamentPoints = selectedTournament ? points.filter((p) => p.tournament_id === selectedTournament.id) : [];
 
-  if (authLoading) {
-    return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>;
-  }
-
-  if (accessDenied) return <AccessDenied reason={accessDenied} />;
-
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>;
   }
