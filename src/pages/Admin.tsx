@@ -92,18 +92,11 @@ export default function Admin() {
 
   useEffect(() => {
     if (authLoading) return;
-    const result = checkPermission({
-      context: 'Admin page',
-      userId: user?.id,
-      currentRole: role,
-      requiredRoles: ['admin', 'super_admin'],
-    });
-    setAccessDenied(result.allowed ? null : result.reason);
-    if (!result.allowed) return;
     fetchData();
     const cleanup = setupRealtimeSubscription();
     return cleanup;
   }, [user, role, authLoading]);
+
 
 
   const fetchData = async () => {
