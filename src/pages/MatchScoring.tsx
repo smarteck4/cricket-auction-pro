@@ -142,8 +142,6 @@ export default function MatchScoring() {
     navigate('/tournaments');
   };
 
-  if (accessDenied) return <AccessDenied reason={accessDenied} />;
-
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
