@@ -9,6 +9,8 @@ import { Match } from '@/lib/tournament-types';
 import { Owner, Player } from '@/lib/types';
 import { LiveScoring } from '@/components/tournament/LiveScoring';
 import { ArrowLeft } from 'lucide-react';
+import { checkPermission } from '@/lib/permissions';
+import { AccessDenied } from '@/components/AccessDenied';
 
 export default function MatchScoring() {
   const { matchId } = useParams<{ matchId: string }>();
