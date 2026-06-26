@@ -11,8 +11,6 @@ import { Input } from '@/components/ui/input';
 import { Shield, Search, UserCog } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { checkPermission } from '@/lib/permissions';
-import { AccessDenied } from '@/components/AccessDenied';
 
 interface UserWithRole {
   id: string;
