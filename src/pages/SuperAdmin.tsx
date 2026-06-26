@@ -28,18 +28,7 @@ export default function SuperAdmin() {
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [updatingUser, setUpdatingUser] = useState<string | null>(null);
-  const [accessDenied, setAccessDenied] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (loading) return;
-    const result = checkPermission({
-      context: 'Super Admin page',
-      userId: user?.id,
-      currentRole: role,
-      requiredRoles: ['super_admin'],
-    });
-    setAccessDenied(result.allowed ? null : result.reason);
-  }, [user, role, loading]);
 
 
   useEffect(() => {
