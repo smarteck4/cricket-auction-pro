@@ -16,6 +16,7 @@ import AuctionAnalytics from "./pages/AuctionAnalytics";
 import SuperAdmin from "./pages/SuperAdmin";
 import RoleDebug from "./pages/RoleDebug";
 import NotFound from "./pages/NotFound";
+import { RequireRole } from "@/components/RequireRole";
 
 const queryClient = new QueryClient();
 
