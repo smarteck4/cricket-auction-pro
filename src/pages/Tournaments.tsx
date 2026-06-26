@@ -42,13 +42,18 @@ export default function Tournaments() {
   const [venueDialogOpen, setVenueDialogOpen] = useState(false);
   const [editingTournament, setEditingTournament] = useState<Tournament | null>(null);
   const [editingMatch, setEditingMatch] = useState<Match | null>(null);
+  const [accessDenied, setAccessDenied] = useState<string | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user || (role !== 'admin' && role !== 'super_admin')) {
-      navigate('/');
-      return;
-    }
+    const result = checkPermission({
+      context: 'Tournaments page',
+      userId: user?.id,
+      currentRole: role,
+      requiredRoles: ['admin', 'super_admin'],
+    });
+    setAccessDenied(result.allowed ? null : result.reason);
+    if (!result.allowed) return;
     fetchData();
     const cleanupRealtime = setupRealtime();
     const cleanupPolling = setupPollingFallback();
@@ -56,7 +61,8 @@ export default function Tournaments() {
       cleanupRealtime();
       cleanupPolling();
     };
-  }, [user, role, authLoading, navigate]);
+  }, [user, role, authLoading]);
+
 
   const setupRealtime = () => {
     let lastRealtimeEvent = Date.now();
