@@ -19,6 +19,8 @@ import { MatchCard } from '@/components/tournament/MatchCard';
 import { Plus, Trophy, Calendar, MapPin, BarChart3, Edit, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
+import { checkPermission } from '@/lib/permissions';
+import { AccessDenied } from '@/components/AccessDenied';
 
 export default function Tournaments() {
   const { user, role, loading: authLoading } = useAuth();
@@ -40,13 +42,18 @@ export default function Tournaments() {
   const [venueDialogOpen, setVenueDialogOpen] = useState(false);
   const [editingTournament, setEditingTournament] = useState<Tournament | null>(null);
   const [editingMatch, setEditingMatch] = useState<Match | null>(null);
+  const [accessDenied, setAccessDenied] = useState<string | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user || (role !== 'admin' && role !== 'super_admin')) {
-      navigate('/');
-      return;
-    }
+    const result = checkPermission({
+      context: 'Tournaments page',
+      userId: user?.id,
+      currentRole: role,
+      requiredRoles: ['admin', 'super_admin'],
+    });
+    setAccessDenied(result.allowed ? null : result.reason);
+    if (!result.allowed) return;
     fetchData();
     const cleanupRealtime = setupRealtime();
     const cleanupPolling = setupPollingFallback();
@@ -54,7 +61,8 @@ export default function Tournaments() {
       cleanupRealtime();
       cleanupPolling();
     };
-  }, [user, role, authLoading, navigate]);
+  }, [user, role, authLoading]);
+
 
   const setupRealtime = () => {
     let lastRealtimeEvent = Date.now();
@@ -169,6 +177,12 @@ export default function Tournaments() {
 
   const tournamentMatches = selectedTournament ? matches.filter((m) => m.tournament_id === selectedTournament.id) : [];
   const tournamentPoints = selectedTournament ? points.filter((p) => p.tournament_id === selectedTournament.id) : [];
+
+  if (authLoading) {
+    return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>;
+  }
+
+  if (accessDenied) return <AccessDenied reason={accessDenied} />;
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>;

@@ -20,6 +20,8 @@ import { Plus, Play, Square, Users, Trash2, Edit, Gavel, Timer, User, AlertCircl
 import { BulkPlayerImport } from '@/components/BulkPlayerImport';
 import { PlayerFormModal, PlayerFormData } from '@/components/PlayerFormModal';
 import { Tabs as RadioTabs, TabsList as RadioTabsList, TabsTrigger as RadioTabsTrigger } from '@/components/ui/tabs';
+import { checkPermission } from '@/lib/permissions';
+import { AccessDenied } from '@/components/AccessDenied';
 
 const defaultPlayer: PlayerFormData = {
   name: '', age: 20, nationality: '', category: 'gold' as PlayerCategory,
@@ -40,6 +42,7 @@ export default function Admin() {
   const [owners, setOwners] = useState<Owner[]>([]);
   const [categorySettings, setCategorySettings] = useState<CategorySetting[]>([]);
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState<string | null>(null);
   const [playerDialogOpen, setPlayerDialogOpen] = useState(false);
   const [ownerDialogOpen, setOwnerDialogOpen] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
@@ -89,14 +92,19 @@ export default function Admin() {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user || (role !== 'admin' && role !== 'super_admin')) {
-      navigate('/');
-      return;
-    }
+    const result = checkPermission({
+      context: 'Admin page',
+      userId: user?.id,
+      currentRole: role,
+      requiredRoles: ['admin', 'super_admin'],
+    });
+    setAccessDenied(result.allowed ? null : result.reason);
+    if (!result.allowed) return;
     fetchData();
     const cleanup = setupRealtimeSubscription();
     return cleanup;
-  }, [user, role, authLoading, navigate]);
+  }, [user, role, authLoading]);
+
 
   const fetchData = async () => {
     const [playersRes, ownersRes, settingsRes, auctionRes] = await Promise.all([
@@ -515,6 +523,9 @@ export default function Admin() {
     });
     fetchData();
   };
+
+  if (authLoading) return <div className="min-h-screen bg-background"><Header /><div className="container py-20 text-center">Verifying permissions…</div></div>;
+  if (accessDenied) return <AccessDenied reason={accessDenied} />;
 
   if (loading) return <div className="min-h-screen bg-background"><Header /><div className="container py-20 text-center">Loading...</div></div>;
 

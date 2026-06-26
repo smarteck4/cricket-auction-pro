@@ -9,18 +9,30 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TeamPlayer, Player, MIN_TEAM_REQUIREMENTS, ROLE_LABELS } from '@/lib/types';
 import { Users, Download, Trophy } from 'lucide-react';
 import * as XLSX from '@e965/xlsx';
+import { checkPermission } from '@/lib/permissions';
+import { AccessDenied } from '@/components/AccessDenied';
 
 export default function Owner() {
   const { user, role, owner, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [teamPlayers, setTeamPlayers] = useState<(TeamPlayer & { player: Player })[]>([]);
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState<string | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user || role !== 'owner' || !owner) { navigate('/'); return; }
+    const result = checkPermission({
+      context: 'My Team (Owner) page',
+      userId: user?.id,
+      currentRole: role,
+      requiredRoles: ['owner'],
+      extraRequirement: { label: 'a team must be assigned to your account', satisfied: !!owner },
+    });
+    setAccessDenied(result.allowed ? null : result.reason);
+    if (!result.allowed) return;
     fetchTeam();
-  }, [user, role, owner, authLoading, navigate]);
+  }, [user, role, owner, authLoading]);
+
 
   const fetchTeam = async () => {
     if (!owner) return;
@@ -42,6 +54,9 @@ export default function Owner() {
   };
 
   const getCategoryCount = (cat: string) => teamPlayers.filter(tp => tp.player.category === cat).length;
+
+  if (authLoading) return <div className="min-h-screen bg-background"><Header /><div className="container py-20 text-center">Verifying permissions…</div></div>;
+  if (accessDenied) return <AccessDenied reason={accessDenied} />;
 
   if (loading) return <div className="min-h-screen bg-background"><Header /><div className="container py-20 text-center">Loading...</div></div>;
 
