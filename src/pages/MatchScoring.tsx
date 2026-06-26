@@ -24,17 +24,22 @@ export default function MatchScoring() {
   const [team1Players, setTeam1Players] = useState<Player[]>([]);
   const [team2Players, setTeam2Players] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState<string | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user || (role !== 'admin' && role !== 'super_admin')) {
-      navigate('/');
-      return;
-    }
+    const result = checkPermission({
+      context: 'Match Scoring page',
+      userId: user?.id,
+      currentRole: role,
+      requiredRoles: ['admin', 'super_admin'],
+    });
+    setAccessDenied(result.allowed ? null : result.reason);
+    if (!result.allowed) return;
     if (matchId) {
       fetchMatchData();
     }
-  }, [user, role, authLoading, matchId, navigate]);
+  }, [user, role, authLoading, matchId]);
 
   const fetchMatchData = async () => {
     if (!matchId) return;
