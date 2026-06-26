@@ -89,14 +89,19 @@ export default function Admin() {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user || (role !== 'admin' && role !== 'super_admin')) {
-      navigate('/');
-      return;
-    }
+    const result = checkPermission({
+      context: 'Admin page',
+      userId: user?.id,
+      currentRole: role,
+      requiredRoles: ['admin', 'super_admin'],
+    });
+    setAccessDenied(result.allowed ? null : result.reason);
+    if (!result.allowed) return;
     fetchData();
     const cleanup = setupRealtimeSubscription();
     return cleanup;
-  }, [user, role, authLoading, navigate]);
+  }, [user, role, authLoading]);
+
 
   const fetchData = async () => {
     const [playersRes, ownersRes, settingsRes, auctionRes] = await Promise.all([
