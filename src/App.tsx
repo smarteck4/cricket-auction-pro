@@ -16,6 +16,7 @@ import AuctionAnalytics from "./pages/AuctionAnalytics";
 import SuperAdmin from "./pages/SuperAdmin";
 import RoleDebug from "./pages/RoleDebug";
 import NotFound from "./pages/NotFound";
+import { RequireRole } from "@/components/RequireRole";
 
 const queryClient = new QueryClient();
 
@@ -30,13 +31,14 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/auction" element={<Auction />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/owner" element={<Owner />} />
+            <Route path="/admin" element={<RequireRole roles={['admin', 'super_admin']} context="Admin page"><Admin /></RequireRole>} />
+            <Route path="/owner" element={<RequireRole roles={['owner']} requireOwner context="My Team (Owner) page"><Owner /></RequireRole>} />
             <Route path="/players" element={<Players />} />
-            <Route path="/tournaments" element={<Tournaments />} />
-            <Route path="/tournaments/match/:matchId/scoring" element={<MatchScoring />} />
+            <Route path="/tournaments" element={<RequireRole roles={['admin', 'super_admin']} context="Tournaments page"><Tournaments /></RequireRole>} />
+            <Route path="/tournaments/match/:matchId/scoring" element={<RequireRole roles={['admin', 'super_admin']} context="Match Scoring page"><MatchScoring /></RequireRole>} />
             <Route path="/analytics" element={<AuctionAnalytics />} />
-            <Route path="/super-admin" element={<SuperAdmin />} />
+            <Route path="/super-admin" element={<RequireRole roles={['super_admin']} context="Super Admin page"><SuperAdmin /></RequireRole>} />
+
             <Route path="/debug/role" element={<RoleDebug />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

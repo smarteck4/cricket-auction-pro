@@ -11,8 +11,6 @@ import { Input } from '@/components/ui/input';
 import { Shield, Search, UserCog } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { checkPermission } from '@/lib/permissions';
-import { AccessDenied } from '@/components/AccessDenied';
 
 interface UserWithRole {
   id: string;
@@ -28,18 +26,7 @@ export default function SuperAdmin() {
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [updatingUser, setUpdatingUser] = useState<string | null>(null);
-  const [accessDenied, setAccessDenied] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (loading) return;
-    const result = checkPermission({
-      context: 'Super Admin page',
-      userId: user?.id,
-      currentRole: role,
-      requiredRoles: ['super_admin'],
-    });
-    setAccessDenied(result.allowed ? null : result.reason);
-  }, [user, role, loading]);
 
 
   useEffect(() => {
@@ -121,9 +108,7 @@ export default function SuperAdmin() {
     u.role.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (loading) return <div className="min-h-screen bg-background"><Header /><div className="container py-20 text-center">Verifying permissions…</div></div>;
-  if (accessDenied) return <AccessDenied reason={accessDenied} />;
-  if (role !== 'super_admin') return null;
+  if (loading || role !== 'super_admin') return null;
 
   return (
     <div className="min-h-screen bg-background">
