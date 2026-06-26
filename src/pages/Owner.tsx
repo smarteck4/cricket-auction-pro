@@ -17,12 +17,22 @@ export default function Owner() {
   const navigate = useNavigate();
   const [teamPlayers, setTeamPlayers] = useState<(TeamPlayer & { player: Player })[]>([]);
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState<string | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user || role !== 'owner' || !owner) { navigate('/'); return; }
+    const result = checkPermission({
+      context: 'My Team (Owner) page',
+      userId: user?.id,
+      currentRole: role,
+      requiredRoles: ['owner'],
+      extraRequirement: { label: 'a team must be assigned to your account', satisfied: !!owner },
+    });
+    setAccessDenied(result.allowed ? null : result.reason);
+    if (!result.allowed) return;
     fetchTeam();
-  }, [user, role, owner, authLoading, navigate]);
+  }, [user, role, owner, authLoading]);
+
 
   const fetchTeam = async () => {
     if (!owner) return;
