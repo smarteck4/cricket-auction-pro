@@ -524,6 +524,9 @@ export default function Admin() {
     fetchData();
   };
 
+  if (authLoading) return <div className="min-h-screen bg-background"><Header /><div className="container py-20 text-center">Verifying permissions…</div></div>;
+  if (accessDenied) return <AccessDenied reason={accessDenied} />;
+
   if (loading) return <div className="min-h-screen bg-background"><Header /><div className="container py-20 text-center">Loading...</div></div>;
 
   const pendingPlayers = players.filter(p => p.auction_status === 'pending');
