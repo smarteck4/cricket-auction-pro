@@ -42,6 +42,7 @@ export default function Admin() {
   const [owners, setOwners] = useState<Owner[]>([]);
   const [categorySettings, setCategorySettings] = useState<CategorySetting[]>([]);
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState<string | null>(null);
   const [playerDialogOpen, setPlayerDialogOpen] = useState(false);
   const [ownerDialogOpen, setOwnerDialogOpen] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
