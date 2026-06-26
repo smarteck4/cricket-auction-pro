@@ -20,8 +20,6 @@ import { Plus, Play, Square, Users, Trash2, Edit, Gavel, Timer, User, AlertCircl
 import { BulkPlayerImport } from '@/components/BulkPlayerImport';
 import { PlayerFormModal, PlayerFormData } from '@/components/PlayerFormModal';
 import { Tabs as RadioTabs, TabsList as RadioTabsList, TabsTrigger as RadioTabsTrigger } from '@/components/ui/tabs';
-import { checkPermission } from '@/lib/permissions';
-import { AccessDenied } from '@/components/AccessDenied';
 
 const defaultPlayer: PlayerFormData = {
   name: '', age: 20, nationality: '', category: 'gold' as PlayerCategory,
