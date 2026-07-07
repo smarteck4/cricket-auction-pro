@@ -400,7 +400,8 @@ export default function Auction() {
 
     const calculateRemaining = () => {
       const startTime = new Date(currentAuction.timer_started_at!).getTime();
-      const now = Date.now();
+      // Use the server-aligned clock so the countdown matches the server's timer enforcement.
+      const now = Date.now() + serverOffsetRef.current;
       const elapsed = Math.floor((now - startTime) / 1000);
       const remaining = Math.max(0, currentAuction.timer_duration - elapsed);
       return remaining;
