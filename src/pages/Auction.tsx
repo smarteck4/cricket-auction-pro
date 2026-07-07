@@ -45,13 +45,29 @@ export default function Auction() {
   const { playBidSound, cleanup: cleanupBidAlert } = useBidAlert();
   const prevBidRef = useRef<number | null>(null);
 
+  const syncServerTime = useCallback(async () => {
+    try {
+      const t0 = Date.now();
+      const { data, error } = await supabase.rpc('get_server_time');
+      const t1 = Date.now();
+      if (error || !data) return;
+      const serverMs = new Date(data as unknown as string).getTime();
+      // Account for round-trip latency by assuming the server timestamp was taken mid-flight.
+      const clientMid = t0 + (t1 - t0) / 2;
+      serverOffsetRef.current = serverMs - clientMid;
+    } catch {
+      // Keep offset at 0 (fall back to device clock) if the sync fails.
+    }
+  }, []);
+
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
       navigate('/auth');
       return;
     }
-    
+
+    syncServerTime();
     fetchData();
     const cleanup = setupRealtimeSubscription();
     return () => {
