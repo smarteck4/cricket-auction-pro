@@ -406,14 +406,15 @@ export default function Auction() {
       return;
     }
 
-    const calculateRemaining = () => {
-      const startTime = new Date(currentAuction.timer_started_at!).getTime();
-      // Use the server-aligned clock so the countdown matches the server's timer enforcement.
-      const now = Date.now() + serverOffsetRef.current;
-      const elapsed = Math.floor((now - startTime) / 1000);
-      const remaining = Math.max(0, currentAuction.timer_duration - elapsed);
-      return remaining;
-    };
+    const calculateRemaining = () =>
+      calculateTimeRemaining({
+        timerStartedAt: currentAuction.timer_started_at,
+        timerDuration: currentAuction.timer_duration,
+        isActive: currentAuction.is_active,
+        nowMs: Date.now(),
+        // Use the server-aligned clock so the countdown matches the server's timer enforcement.
+        serverOffsetMs: serverOffsetRef.current,
+      });
 
     setTimeRemaining(calculateRemaining());
 
