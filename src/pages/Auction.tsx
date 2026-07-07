@@ -35,6 +35,10 @@ export default function Auction() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [customBidAmount, setCustomBidAmount] = useState<string>('');
   const closingRef = useRef(false);
+  // Difference between server clock and this device's clock (serverNow - clientNow), in ms.
+  // Keeps the countdown aligned with the server so bids aren't rejected as TIMER_EXPIRED
+  // when the device clock is slightly off.
+  const serverOffsetRef = useRef<number>(0);
 
   // Countdown beep audio for last 5 seconds
   useCountdownBeep(timeRemaining, currentAuction?.is_active ?? false);
