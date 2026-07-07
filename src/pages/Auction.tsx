@@ -699,25 +699,23 @@ export default function Auction() {
                                       p_bid_amount: newBid,
                                     })
                                     .then(({ data: result, error: rpcError }) => {
-                                      const res = result as { error?: string; error_code?: string } | null;
-                                      if (rpcError || res?.error) {
-                                        if (res?.error_code === 'TIMER_EXPIRED') {
-                                          syncServerTime();
-                                          toast({
-                                            title: 'Too late — timer ended',
-                                            description: 'The auction timer closed just before your bid reached the server.',
-                                          });
-                                        } else {
-                                          toast({
-                                            title: res?.error_code ? `Bid rejected (${res.error_code})` : 'Error placing bid',
-                                            description: res?.error || rpcError?.message || 'Unknown error',
-                                            variant: 'destructive',
-                                          });
-                                        }
+                                      const outcome = classifyBidResult(result as any, rpcError, newBid);
+                                      if (outcome.kind === 'timer_expired') {
+                                        syncServerTime();
+                                        toast({
+                                          title: 'Too late — timer ended',
+                                          description: 'The auction timer closed just before your bid reached the server.',
+                                        });
+                                      } else if (outcome.kind === 'error') {
+                                        toast({
+                                          title: outcome.code ? `Bid rejected (${outcome.code})` : 'Error placing bid',
+                                          description: outcome.message,
+                                          variant: 'destructive',
+                                        });
                                       } else {
                                         toast({
                                           title: 'Bid placed!',
-                                          description: `You bid ${newBid} points (+${amount})`,
+                                          description: `You bid ${outcome.bidAmount} points (+${amount})`,
                                         });
                                         setCustomBidAmount('');
                                       }
