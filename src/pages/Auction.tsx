@@ -328,11 +328,20 @@ export default function Auction() {
     
     const res = result as { success?: boolean; error?: string; error_code?: string } | null;
     if (rpcError || res?.error) {
-      toast({
-        title: res?.error_code ? `Bid rejected (${res.error_code})` : 'Error placing bid',
-        description: res?.error || rpcError?.message || 'Unknown error',
-        variant: 'destructive',
-      });
+      // A slightly out-of-sync clock can still race the server boundary; re-sync for next time.
+      if (res?.error_code === 'TIMER_EXPIRED') {
+        syncServerTime();
+        toast({
+          title: 'Too late — timer ended',
+          description: 'The auction timer closed just before your bid reached the server.',
+        });
+      } else {
+        toast({
+          title: res?.error_code ? `Bid rejected (${res.error_code})` : 'Error placing bid',
+          description: res?.error || rpcError?.message || 'Unknown error',
+          variant: 'destructive',
+        });
+      }
     } else {
       toast({
         title: 'Bid placed!',
