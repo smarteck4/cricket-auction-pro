@@ -35,11 +35,30 @@ export default function Auction() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [customBidAmount, setCustomBidAmount] = useState<string>('');
   const closingRef = useRef(false);
+  // Difference between server clock and this device's clock (serverNow - clientNow), in ms.
+  // Keeps the countdown aligned with the server so bids aren't rejected as TIMER_EXPIRED
+  // when the device clock is slightly off.
+  const serverOffsetRef = useRef<number>(0);
 
   // Countdown beep audio for last 5 seconds
   useCountdownBeep(timeRemaining, currentAuction?.is_active ?? false);
   const { playBidSound, cleanup: cleanupBidAlert } = useBidAlert();
   const prevBidRef = useRef<number | null>(null);
+
+  const syncServerTime = useCallback(async () => {
+    try {
+      const t0 = Date.now();
+      const { data, error } = await supabase.rpc('get_server_time');
+      const t1 = Date.now();
+      if (error || !data) return;
+      const serverMs = new Date(data as unknown as string).getTime();
+      // Account for round-trip latency by assuming the server timestamp was taken mid-flight.
+      const clientMid = t0 + (t1 - t0) / 2;
+      serverOffsetRef.current = serverMs - clientMid;
+    } catch {
+      // Keep offset at 0 (fall back to device clock) if the sync fails.
+    }
+  }, []);
 
   useEffect(() => {
     if (authLoading) return;
@@ -47,7 +66,8 @@ export default function Auction() {
       navigate('/auth');
       return;
     }
-    
+
+    syncServerTime();
     fetchData();
     const cleanup = setupRealtimeSubscription();
     return () => {
@@ -308,11 +328,20 @@ export default function Auction() {
     
     const res = result as { success?: boolean; error?: string; error_code?: string } | null;
     if (rpcError || res?.error) {
-      toast({
-        title: res?.error_code ? `Bid rejected (${res.error_code})` : 'Error placing bid',
-        description: res?.error || rpcError?.message || 'Unknown error',
-        variant: 'destructive',
-      });
+      // A slightly out-of-sync clock can still race the server boundary; re-sync for next time.
+      if (res?.error_code === 'TIMER_EXPIRED') {
+        syncServerTime();
+        toast({
+          title: 'Too late — timer ended',
+          description: 'The auction timer closed just before your bid reached the server.',
+        });
+      } else {
+        toast({
+          title: res?.error_code ? `Bid rejected (${res.error_code})` : 'Error placing bid',
+          description: res?.error || rpcError?.message || 'Unknown error',
+          variant: 'destructive',
+        });
+      }
     } else {
       toast({
         title: 'Bid placed!',
@@ -380,7 +409,8 @@ export default function Auction() {
 
     const calculateRemaining = () => {
       const startTime = new Date(currentAuction.timer_started_at!).getTime();
-      const now = Date.now();
+      // Use the server-aligned clock so the countdown matches the server's timer enforcement.
+      const now = Date.now() + serverOffsetRef.current;
       const elapsed = Math.floor((now - startTime) / 1000);
       const remaining = Math.max(0, currentAuction.timer_duration - elapsed);
       return remaining;
@@ -673,11 +703,19 @@ export default function Auction() {
                                     .then(({ data: result, error: rpcError }) => {
                                       const res = result as { error?: string; error_code?: string } | null;
                                       if (rpcError || res?.error) {
-                                        toast({
-                                          title: res?.error_code ? `Bid rejected (${res.error_code})` : 'Error placing bid',
-                                          description: res?.error || rpcError?.message || 'Unknown error',
-                                          variant: 'destructive',
-                                        });
+                                        if (res?.error_code === 'TIMER_EXPIRED') {
+                                          syncServerTime();
+                                          toast({
+                                            title: 'Too late — timer ended',
+                                            description: 'The auction timer closed just before your bid reached the server.',
+                                          });
+                                        } else {
+                                          toast({
+                                            title: res?.error_code ? `Bid rejected (${res.error_code})` : 'Error placing bid',
+                                            description: res?.error || rpcError?.message || 'Unknown error',
+                                            variant: 'destructive',
+                                          });
+                                        }
                                       } else {
                                         toast({
                                           title: 'Bid placed!',
