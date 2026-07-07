@@ -1,12 +1,12 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuTrigger 
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { User, LogOut, Settings, Users, Gavel, UsersRound, Trophy, BarChart3, Menu, Shield } from 'lucide-react';
@@ -46,8 +46,8 @@ export function Header() {
 
         <nav className="flex items-center gap-1 sm:gap-2">
           <ThemeToggle />
-          
-          {user ? (
+
+          {user && (
             <>
               {/* Desktop nav */}
               <div className="hidden lg:flex items-center gap-1">
@@ -68,28 +68,46 @@ export function Header() {
                     <Menu className="w-5 h-5" />
                   </Button>
                 </SheetTrigger>
+
                 <SheetContent side="right" className="w-72 pt-12">
                   <div className="flex flex-col gap-1">
-                    {user && (
-                      <div className="px-3 py-3 mb-2 rounded-lg bg-muted/50">
-                        <p className="text-sm font-medium truncate">{user.email}</p>
-                        <p className="text-xs text-muted-foreground capitalize">{roleLabel}</p>
-                        {owner && <p className="text-xs text-primary font-medium mt-0.5">{owner.team_name}</p>}
-                      </div>
-                    )}
+                    <div className="px-3 py-3 mb-2 rounded-lg bg-muted/50">
+                      <p className="text-sm font-medium truncate">{user.email}</p>
+                      <p className="text-xs text-muted-foreground capitalize">
+                        {roleLabel}
+                      </p>
+                      {owner && (
+                        <p className="text-xs text-primary font-medium mt-0.5">
+                          {owner.team_name}
+                        </p>
+                      )}
+                    </div>
+
                     {navItems.map((item) => (
                       <Button
                         key={item.to}
                         variant="ghost"
                         className="justify-start h-11"
-                        onClick={() => { navigate(item.to); setMobileOpen(false); }}
+                        onClick={() => {
+                          navigate(item.to);
+                          setMobileOpen(false);
+                        }}
                       >
                         <item.icon className="w-4 h-4 mr-3" />
                         {item.label}
                       </Button>
                     ))}
+
                     <div className="border-t my-2" />
-                    <Button variant="ghost" className="justify-start h-11 text-destructive" onClick={() => { handleSignOut(); setMobileOpen(false); }}>
+
+                    <Button
+                      variant="ghost"
+                      className="justify-start h-11 text-destructive"
+                      onClick={() => {
+                        handleSignOut();
+                        setMobileOpen(false);
+                      }}
+                    >
                       <LogOut className="w-4 h-4 mr-3" />
                       Sign Out
                     </Button>
@@ -97,22 +115,33 @@ export function Header() {
                 </SheetContent>
               </Sheet>
 
-              {/* User dropdown (desktop only) */}
+              {/* User dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="icon" className="rounded-full neu-flat border-0 hidden lg:flex">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="rounded-full neu-flat border-0 hidden lg:flex"
+                  >
                     <User className="w-4 h-4" />
                   </Button>
                 </DropdownMenuTrigger>
+
                 <DropdownMenuContent align="end" className="w-56 glass-strong">
                   <div className="px-2 py-1.5">
                     <p className="text-sm font-medium">{user.email}</p>
-                    <p className="text-xs text-muted-foreground capitalize">{roleLabel}</p>
+                    <p className="text-xs text-muted-foreground capitalize">
+                      {roleLabel}
+                    </p>
                     {owner && (
-                      <p className="text-xs text-primary font-medium mt-1">{owner.team_name}</p>
+                      <p className="text-xs text-primary font-medium mt-1">
+                        {owner.team_name}
+                      </p>
                     )}
                   </div>
+
                   <DropdownMenuSeparator />
+
                   <DropdownMenuItem onClick={handleSignOut}>
                     <LogOut className="w-4 h-4 mr-2" />
                     Sign Out
@@ -120,15 +149,6 @@ export function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
             </>
-          ) : (
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/auth">Sign In</Link>
-              </Button>
-              <Button size="sm" className="gradient-gold neu-flat border-0" asChild>
-                <Link to="/auth?mode=signup">Get Started</Link>
-              </Button>
-            </div>
           )}
         </nav>
       </div>
