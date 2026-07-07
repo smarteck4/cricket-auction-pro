@@ -17,6 +17,7 @@ import { Gavel, Users, TrendingUp, Clock, User, AlertCircle, Square, Timer, List
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { FullscreenAuction } from '@/components/FullscreenAuction';
+import { calculateTimeRemaining, computeServerOffset, classifyBidResult } from '@/lib/auction-timer';
 
 export default function Auction() {
   const { user, role, owner, loading: authLoading } = useAuth();
@@ -51,10 +52,8 @@ export default function Auction() {
       const { data, error } = await supabase.rpc('get_server_time');
       const t1 = Date.now();
       if (error || !data) return;
-      const serverMs = new Date(data as unknown as string).getTime();
       // Account for round-trip latency by assuming the server timestamp was taken mid-flight.
-      const clientMid = t0 + (t1 - t0) / 2;
-      serverOffsetRef.current = serverMs - clientMid;
+      serverOffsetRef.current = computeServerOffset(t0, t1, data as unknown as string);
     } catch {
       // Keep offset at 0 (fall back to device clock) if the sync fails.
     }
@@ -326,26 +325,24 @@ export default function Auction() {
       p_bid_amount: newBid,
     });
     
-    const res = result as { success?: boolean; error?: string; error_code?: string } | null;
-    if (rpcError || res?.error) {
+    const outcome = classifyBidResult(result as any, rpcError, newBid);
+    if (outcome.kind === 'timer_expired') {
       // A slightly out-of-sync clock can still race the server boundary; re-sync for next time.
-      if (res?.error_code === 'TIMER_EXPIRED') {
-        syncServerTime();
-        toast({
-          title: 'Too late — timer ended',
-          description: 'The auction timer closed just before your bid reached the server.',
-        });
-      } else {
-        toast({
-          title: res?.error_code ? `Bid rejected (${res.error_code})` : 'Error placing bid',
-          description: res?.error || rpcError?.message || 'Unknown error',
-          variant: 'destructive',
-        });
-      }
+      syncServerTime();
+      toast({
+        title: 'Too late — timer ended',
+        description: 'The auction timer closed just before your bid reached the server.',
+      });
+    } else if (outcome.kind === 'error') {
+      toast({
+        title: outcome.code ? `Bid rejected (${outcome.code})` : 'Error placing bid',
+        description: outcome.message,
+        variant: 'destructive',
+      });
     } else {
       toast({
         title: 'Bid placed!',
-        description: `You bid ${newBid} points`,
+        description: `You bid ${outcome.bidAmount} points`,
       });
     }
     
@@ -407,14 +404,15 @@ export default function Auction() {
       return;
     }
 
-    const calculateRemaining = () => {
-      const startTime = new Date(currentAuction.timer_started_at!).getTime();
-      // Use the server-aligned clock so the countdown matches the server's timer enforcement.
-      const now = Date.now() + serverOffsetRef.current;
-      const elapsed = Math.floor((now - startTime) / 1000);
-      const remaining = Math.max(0, currentAuction.timer_duration - elapsed);
-      return remaining;
-    };
+    const calculateRemaining = () =>
+      calculateTimeRemaining({
+        timerStartedAt: currentAuction.timer_started_at,
+        timerDuration: currentAuction.timer_duration,
+        isActive: currentAuction.is_active,
+        nowMs: Date.now(),
+        // Use the server-aligned clock so the countdown matches the server's timer enforcement.
+        serverOffsetMs: serverOffsetRef.current,
+      });
 
     setTimeRemaining(calculateRemaining());
 
@@ -701,25 +699,23 @@ export default function Auction() {
                                       p_bid_amount: newBid,
                                     })
                                     .then(({ data: result, error: rpcError }) => {
-                                      const res = result as { error?: string; error_code?: string } | null;
-                                      if (rpcError || res?.error) {
-                                        if (res?.error_code === 'TIMER_EXPIRED') {
-                                          syncServerTime();
-                                          toast({
-                                            title: 'Too late — timer ended',
-                                            description: 'The auction timer closed just before your bid reached the server.',
-                                          });
-                                        } else {
-                                          toast({
-                                            title: res?.error_code ? `Bid rejected (${res.error_code})` : 'Error placing bid',
-                                            description: res?.error || rpcError?.message || 'Unknown error',
-                                            variant: 'destructive',
-                                          });
-                                        }
+                                      const outcome = classifyBidResult(result as any, rpcError, newBid);
+                                      if (outcome.kind === 'timer_expired') {
+                                        syncServerTime();
+                                        toast({
+                                          title: 'Too late — timer ended',
+                                          description: 'The auction timer closed just before your bid reached the server.',
+                                        });
+                                      } else if (outcome.kind === 'error') {
+                                        toast({
+                                          title: outcome.code ? `Bid rejected (${outcome.code})` : 'Error placing bid',
+                                          description: outcome.message,
+                                          variant: 'destructive',
+                                        });
                                       } else {
                                         toast({
                                           title: 'Bid placed!',
-                                          description: `You bid ${newBid} points (+${amount})`,
+                                          description: `You bid ${outcome.bidAmount} points (+${amount})`,
                                         });
                                         setCustomBidAmount('');
                                       }
