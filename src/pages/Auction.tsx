@@ -40,6 +40,10 @@ export default function Auction() {
   // Keeps the countdown aligned with the server so bids aren't rejected as TIMER_EXPIRED
   // when the device clock is slightly off.
   const serverOffsetRef = useRef<number>(0);
+  // Whether we've successfully aligned the countdown to the server clock.
+  // Until this is true we must NOT lock the bid button on the device clock,
+  // otherwise a device whose clock runs ahead falsely shows "Timer Expired".
+  const [clockSynced, setClockSynced] = useState(false);
 
   // Countdown beep audio for last 5 seconds
   useCountdownBeep(timeRemaining, currentAuction?.is_active ?? false);
@@ -54,6 +58,7 @@ export default function Auction() {
       if (error || !data) return;
       // Account for round-trip latency by assuming the server timestamp was taken mid-flight.
       serverOffsetRef.current = computeServerOffset(t0, t1, data as unknown as string);
+      setClockSynced(true);
     } catch {
       // Keep offset at 0 (fall back to device clock) if the sync fails.
     }
@@ -294,7 +299,9 @@ export default function Auction() {
   const placeBid = async () => {
     if (!owner || !currentAuction || !currentPlayer) return;
 
-    if (timeRemaining <= 0) {
+    // Only pre-block when the countdown is trustworthy (clock aligned to server).
+    // Otherwise let the server arbitrate (it returns TIMER_EXPIRED, handled below).
+    if (clockSynced && timeRemaining <= 0) {
       toast({
         title: 'Timer expired',
         description: 'You can no longer bid on this player.',
@@ -427,7 +434,7 @@ export default function Auction() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [currentAuction?.is_active, currentAuction?.timer_started_at, currentAuction?.timer_duration, role, autoCloseBid]);
+  }, [currentAuction?.is_active, currentAuction?.timer_started_at, currentAuction?.timer_duration, role, autoCloseBid, clockSynced]);
 
   const getBidIncrement = () => {
     if (!currentAuction) return 50;
@@ -652,10 +659,10 @@ export default function Auction() {
                           size="lg"
                           className="w-full gradient-gold glow-gold text-lg h-14"
                           onClick={placeBid}
-                          disabled={bidding || timeRemaining <= 0 || !canBid(currentAuction.current_bid + getBidIncrement())}
+                          disabled={bidding || (clockSynced && timeRemaining <= 0) || !canBid(currentAuction.current_bid + getBidIncrement())}
                         >
                           <Gavel className="w-5 h-5 mr-2" />
-                          {timeRemaining <= 0
+                          {clockSynced && timeRemaining <= 0
                             ? 'Timer Expired'
                             : <>Bid {(currentAuction.current_bid + getBidIncrement()).toLocaleString()} pts<span className="ml-2 text-sm opacity-80">(+{getBidIncrement()})</span></>}
                         </Button>
@@ -678,7 +685,7 @@ export default function Auction() {
                             variant="secondary"
                             className="h-12 px-6"
                             onClick={() => {
-                              if (timeRemaining <= 0) {
+                              if (clockSynced && timeRemaining <= 0) {
                                 toast({
                                   title: 'Timer expired',
                                   description: 'You can no longer bid on this player.',
@@ -736,7 +743,7 @@ export default function Auction() {
                                 });
                               }
                             }}
-                            disabled={bidding || timeRemaining <= 0 || !customBidAmount || parseInt(customBidAmount) <= 0 || !canBid(currentAuction.current_bid + parseInt(customBidAmount || '0'))}
+                            disabled={bidding || (clockSynced && timeRemaining <= 0) || !customBidAmount || parseInt(customBidAmount) <= 0 || !canBid(currentAuction.current_bid + parseInt(customBidAmount || '0'))}
                           >
                             <Plus className="w-5 h-5 mr-1" />
                             Bid
