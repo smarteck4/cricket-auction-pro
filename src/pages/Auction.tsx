@@ -40,6 +40,10 @@ export default function Auction() {
   // Keeps the countdown aligned with the server so bids aren't rejected as TIMER_EXPIRED
   // when the device clock is slightly off.
   const serverOffsetRef = useRef<number>(0);
+  // Whether we've successfully aligned the countdown to the server clock.
+  // Until this is true we must NOT lock the bid button on the device clock,
+  // otherwise a device whose clock runs ahead falsely shows "Timer Expired".
+  const [clockSynced, setClockSynced] = useState(false);
 
   // Countdown beep audio for last 5 seconds
   useCountdownBeep(timeRemaining, currentAuction?.is_active ?? false);
