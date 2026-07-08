@@ -710,7 +710,7 @@ export default function Auction() {
                             variant="secondary"
                             className="h-12 px-6"
                             onClick={() => {
-                              if (clockSynced && timeRemaining <= 0) {
+                              if (isBidWindowClosed(clockSynced, timeRemaining)) {
                                 toast({
                                   title: 'Timer expired',
                                   description: 'You can no longer bid on this player.',
