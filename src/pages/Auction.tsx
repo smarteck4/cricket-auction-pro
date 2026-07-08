@@ -326,7 +326,7 @@ export default function Auction() {
 
     // Only pre-block when the countdown is trustworthy (clock aligned to server).
     // Otherwise let the server arbitrate (it returns TIMER_EXPIRED, handled below).
-    if (clockSynced && timeRemaining <= 0) {
+    if (isBidWindowClosed(clockSynced, timeRemaining)) {
       toast({
         title: 'Timer expired',
         description: 'You can no longer bid on this player.',
