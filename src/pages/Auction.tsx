@@ -432,7 +432,7 @@ export default function Auction() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [currentAuction?.is_active, currentAuction?.timer_started_at, currentAuction?.timer_duration, role, autoCloseBid]);
+  }, [currentAuction?.is_active, currentAuction?.timer_started_at, currentAuction?.timer_duration, role, autoCloseBid, clockSynced]);
 
   const getBidIncrement = () => {
     if (!currentAuction) return 50;
