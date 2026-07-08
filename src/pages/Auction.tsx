@@ -58,6 +58,7 @@ export default function Auction() {
       if (error || !data) return;
       // Account for round-trip latency by assuming the server timestamp was taken mid-flight.
       serverOffsetRef.current = computeServerOffset(t0, t1, data as unknown as string);
+      setClockSynced(true);
     } catch {
       // Keep offset at 0 (fall back to device clock) if the sync fails.
     }
