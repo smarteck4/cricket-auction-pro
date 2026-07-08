@@ -17,7 +17,17 @@ import { Gavel, Users, TrendingUp, Clock, User, AlertCircle, Square, Timer, List
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { FullscreenAuction } from '@/components/FullscreenAuction';
-import { calculateTimeRemaining, computeServerOffset, classifyBidResult } from '@/lib/auction-timer';
+import {
+  calculateTimeRemaining,
+  computeServerOffset,
+  classifyBidResult,
+  isBidWindowClosed,
+  isBidButtonDisabled,
+  applyAuctionRealtimeEvent,
+  initialOwnerScreenState,
+  type OwnerScreenState,
+  type AuctionSnapshot,
+} from '@/lib/auction-timer';
 
 export default function Auction() {
   const { user, role, owner, loading: authLoading } = useAuth();
@@ -48,7 +58,9 @@ export default function Auction() {
   // Countdown beep audio for last 5 seconds
   useCountdownBeep(timeRemaining, currentAuction?.is_active ?? false);
   const { playBidSound, cleanup: cleanupBidAlert } = useBidAlert();
-  const prevBidRef = useRef<number | null>(null);
+  // Per-screen realtime state: drives new-bid chime, leading-bidder logo swap,
+  // instant player appearance and timer resets from current_auction broadcasts.
+  const screenStateRef = useRef<OwnerScreenState>(initialOwnerScreenState());
 
   const syncServerTime = useCallback(async () => {
     try {
@@ -150,9 +162,21 @@ export default function Auction() {
           const auction = payload.new as CurrentAuction;
           setCurrentAuction(auction);
 
-          // Play sound alert when bid amount changes (new bid placed)
-          if (auction.current_bid && auction.current_bid !== prevBidRef.current && auction.is_active) {
-            prevBidRef.current = auction.current_bid;
+          // Derive per-screen effects (new bid, timer reset, bidder/player change)
+          // through the shared pure reducer so every owner screen reacts identically.
+          const snapshot: AuctionSnapshot = {
+            auctionId: auction.id,
+            playerId: auction.player_id,
+            currentBid: auction.current_bid,
+            currentBidderId: auction.current_bidder_id,
+            timerStartedAt: auction.timer_started_at,
+            isActive: auction.is_active,
+          };
+          const { state, effects } = applyAuctionRealtimeEvent(screenStateRef.current, snapshot);
+          screenStateRef.current = state;
+
+          // Play sound alert when a new (higher) bid is placed
+          if (effects.newBid) {
             playBidSound();
             toast({
               title: '🔔 New Bid!',
@@ -160,6 +184,7 @@ export default function Auction() {
               duration: 2000,
             });
           }
+
           
           if (auction.player_id) {
             const { data: playerData } = await supabase
@@ -301,7 +326,7 @@ export default function Auction() {
 
     // Only pre-block when the countdown is trustworthy (clock aligned to server).
     // Otherwise let the server arbitrate (it returns TIMER_EXPIRED, handled below).
-    if (clockSynced && timeRemaining <= 0) {
+    if (isBidWindowClosed(clockSynced, timeRemaining)) {
       toast({
         title: 'Timer expired',
         description: 'You can no longer bid on this player.',
@@ -659,10 +684,10 @@ export default function Auction() {
                           size="lg"
                           className="w-full gradient-gold glow-gold text-lg h-14"
                           onClick={placeBid}
-                          disabled={bidding || (clockSynced && timeRemaining <= 0) || !canBid(currentAuction.current_bid + getBidIncrement())}
+                          disabled={isBidButtonDisabled({ bidding, clockSynced, timeRemaining, canAfford: canBid(currentAuction.current_bid + getBidIncrement()) })}
                         >
                           <Gavel className="w-5 h-5 mr-2" />
-                          {clockSynced && timeRemaining <= 0
+                          {isBidWindowClosed(clockSynced, timeRemaining)
                             ? 'Timer Expired'
                             : <>Bid {(currentAuction.current_bid + getBidIncrement()).toLocaleString()} pts<span className="ml-2 text-sm opacity-80">(+{getBidIncrement()})</span></>}
                         </Button>
@@ -685,7 +710,7 @@ export default function Auction() {
                             variant="secondary"
                             className="h-12 px-6"
                             onClick={() => {
-                              if (clockSynced && timeRemaining <= 0) {
+                              if (isBidWindowClosed(clockSynced, timeRemaining)) {
                                 toast({
                                   title: 'Timer expired',
                                   description: 'You can no longer bid on this player.',
@@ -743,7 +768,7 @@ export default function Auction() {
                                 });
                               }
                             }}
-                            disabled={bidding || (clockSynced && timeRemaining <= 0) || !customBidAmount || parseInt(customBidAmount) <= 0 || !canBid(currentAuction.current_bid + parseInt(customBidAmount || '0'))}
+                            disabled={isBidButtonDisabled({ bidding, clockSynced, timeRemaining, canAfford: canBid(currentAuction.current_bid + parseInt(customBidAmount || '0')) }) || !customBidAmount || parseInt(customBidAmount) <= 0}
                           >
                             <Plus className="w-5 h-5 mr-1" />
                             Bid
