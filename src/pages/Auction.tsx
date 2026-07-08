@@ -17,7 +17,17 @@ import { Gavel, Users, TrendingUp, Clock, User, AlertCircle, Square, Timer, List
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { FullscreenAuction } from '@/components/FullscreenAuction';
-import { calculateTimeRemaining, computeServerOffset, classifyBidResult } from '@/lib/auction-timer';
+import {
+  calculateTimeRemaining,
+  computeServerOffset,
+  classifyBidResult,
+  isBidWindowClosed,
+  isBidButtonDisabled,
+  applyAuctionRealtimeEvent,
+  initialOwnerScreenState,
+  type OwnerScreenState,
+  type AuctionSnapshot,
+} from '@/lib/auction-timer';
 
 export default function Auction() {
   const { user, role, owner, loading: authLoading } = useAuth();
