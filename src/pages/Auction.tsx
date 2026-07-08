@@ -162,9 +162,21 @@ export default function Auction() {
           const auction = payload.new as CurrentAuction;
           setCurrentAuction(auction);
 
-          // Play sound alert when bid amount changes (new bid placed)
-          if (auction.current_bid && auction.current_bid !== prevBidRef.current && auction.is_active) {
-            prevBidRef.current = auction.current_bid;
+          // Derive per-screen effects (new bid, timer reset, bidder/player change)
+          // through the shared pure reducer so every owner screen reacts identically.
+          const snapshot: AuctionSnapshot = {
+            auctionId: auction.id,
+            playerId: auction.player_id,
+            currentBid: auction.current_bid,
+            currentBidderId: auction.current_bidder_id,
+            timerStartedAt: auction.timer_started_at,
+            isActive: auction.is_active,
+          };
+          const { state, effects } = applyAuctionRealtimeEvent(screenStateRef.current, snapshot);
+          screenStateRef.current = state;
+
+          // Play sound alert when a new (higher) bid is placed
+          if (effects.newBid) {
             playBidSound();
             toast({
               title: '🔔 New Bid!',
@@ -172,6 +184,7 @@ export default function Auction() {
               duration: 2000,
             });
           }
+
           
           if (auction.player_id) {
             const { data: playerData } = await supabase
