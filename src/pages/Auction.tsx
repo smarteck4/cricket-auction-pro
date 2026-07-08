@@ -58,7 +58,9 @@ export default function Auction() {
   // Countdown beep audio for last 5 seconds
   useCountdownBeep(timeRemaining, currentAuction?.is_active ?? false);
   const { playBidSound, cleanup: cleanupBidAlert } = useBidAlert();
-  const prevBidRef = useRef<number | null>(null);
+  // Per-screen realtime state: drives new-bid chime, leading-bidder logo swap,
+  // instant player appearance and timer resets from current_auction broadcasts.
+  const screenStateRef = useRef<OwnerScreenState>(initialOwnerScreenState());
 
   const syncServerTime = useCallback(async () => {
     try {
