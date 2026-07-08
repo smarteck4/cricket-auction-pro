@@ -101,3 +101,106 @@ export function classifyBidResult(
   }
   return { kind: 'success', bidAmount };
 }
+
+// ---------------------------------------------------------------------------
+// Bid button gating
+// ---------------------------------------------------------------------------
+
+/**
+ * Whether the bid window should be treated as closed for UI gating.
+ *
+ * IMPORTANT: we only trust the client countdown once it has been aligned to the
+ * server clock (`clockSynced`). A device whose clock runs ahead of the server
+ * would otherwise report `timeRemaining <= 0` and falsely lock the bid button on
+ * "Timer Expired" while the auction is still open on the server.
+ */
+export function isBidWindowClosed(clockSynced: boolean, timeRemaining: number): boolean {
+  return clockSynced && timeRemaining <= 0;
+}
+
+export interface BidButtonInput {
+  /** A bid RPC is currently in flight. */
+  bidding: boolean;
+  /** Whether the countdown has been aligned to the server clock. */
+  clockSynced: boolean;
+  /** Server-aligned seconds left on the timer. */
+  timeRemaining: number;
+  /** Whether the owner can afford the next bid (points reserve check). */
+  canAfford: boolean;
+}
+
+/**
+ * Should the quick/custom bid button be disabled?
+ * Mirrors the gating used in the Auction page so it can be unit-tested,
+ * including under simulated clock skew.
+ */
+export function isBidButtonDisabled({
+  bidding,
+  clockSynced,
+  timeRemaining,
+  canAfford,
+}: BidButtonInput): boolean {
+  return bidding || isBidWindowClosed(clockSynced, timeRemaining) || !canAfford;
+}
+
+// ---------------------------------------------------------------------------
+// Real-time auction propagation (what each owner screen derives from a broadcast)
+// ---------------------------------------------------------------------------
+
+/** Minimal shape of a current_auction row as broadcast over realtime. */
+export interface AuctionSnapshot {
+  auctionId: string;
+  playerId: string | null;
+  currentBid: number;
+  currentBidderId: string | null;
+  timerStartedAt: string | null;
+  isActive: boolean;
+}
+
+/** Per-screen state each owner's client keeps between realtime events. */
+export interface OwnerScreenState {
+  auction: AuctionSnapshot | null;
+  /** Last bid amount already surfaced (used to fire the "new bid" chime once). */
+  lastSeenBid: number | null;
+}
+
+/** Side effects an owner screen should trigger when a broadcast arrives. */
+export interface RealtimeEffects {
+  /** A different player is now on the block -> render the new player instantly. */
+  playerChanged: boolean;
+  /** The leading bidder changed -> swap the leading-bidder logo/team. */
+  bidderChanged: boolean;
+  /** A fresh, higher bid arrived -> play sound / show toast. */
+  newBid: boolean;
+  /** The timer was (re)started -> reset the countdown. */
+  timerReset: boolean;
+}
+
+export function initialOwnerScreenState(): OwnerScreenState {
+  return { auction: null, lastSeenBid: null };
+}
+
+/**
+ * Pure reducer modelling how a single owner screen reacts to a current_auction
+ * broadcast. Because every owner client runs this same reducer against the same
+ * broadcast, feeding N instances the same event verifies that the timer,
+ * leading-bidder logo, and player appearance stay consistent on every screen.
+ */
+export function applyAuctionRealtimeEvent(
+  prev: OwnerScreenState,
+  next: AuctionSnapshot,
+): { state: OwnerScreenState; effects: RealtimeEffects } {
+  const prevAuction = prev.auction;
+  const playerChanged = (prevAuction?.playerId ?? null) !== (next.playerId ?? null);
+  const bidderChanged = (prevAuction?.currentBidderId ?? null) !== (next.currentBidderId ?? null);
+  const timerReset = (prevAuction?.timerStartedAt ?? null) !== (next.timerStartedAt ?? null);
+  const newBid = next.isActive && next.currentBid > 0 && next.currentBid !== prev.lastSeenBid;
+
+  return {
+    state: {
+      auction: next,
+      lastSeenBid: newBid ? next.currentBid : prev.lastSeenBid,
+    },
+    effects: { playerChanged, bidderChanged, newBid, timerReset },
+  };
+}
