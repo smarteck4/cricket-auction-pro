@@ -326,12 +326,19 @@ export default function Admin() {
     setUploadingImage(true);
 
     let profileUrl = editingPlayer.profile_picture_url;
+    let profilePublicId: string | null = (editingPlayer as any).profile_picture_public_id ?? null;
     if (editImageFile) {
-      const uploadedUrl = await uploadPlayerImage(editImageFile);
-      if (uploadedUrl) profileUrl = uploadedUrl;
+      const uploaded = await uploadPlayerImage(editImageFile);
+      if (!uploaded) {
+        setUploadingImage(false);
+        return;
+      }
+      profileUrl = uploaded.url;
+      profilePublicId = uploaded.publicId || null;
     }
 
-    const { error } = await supabase.from('players').update({ ...editingPlayer, profile_picture_url: profileUrl }).eq('id', editingPlayer.id);
+    const { error } = await supabase.from('players').update({ ...editingPlayer, profile_picture_url: profileUrl, profile_picture_public_id: profilePublicId } as any).eq('id', editingPlayer.id);
+
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
