@@ -231,8 +231,10 @@ export default function Admin() {
     return () => clearInterval(interval);
   }, [currentAuction?.is_active, currentAuction?.timer_started_at, currentAuction?.timer_duration, autoCloseBid]);
 
-  // Upload image to storage
-  const uploadPlayerImage = async (file: File): Promise<string | null> => {
+  // Upload image to Cloudinary via secure edge function
+  const uploadPlayerImage = async (
+    file: File,
+  ): Promise<{ url: string; publicId: string } | null> => {
     // Validate file type and size
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     const maxSize = 5 * 1024 * 1024; // 5MB
@@ -247,25 +249,35 @@ export default function Admin() {
       return null;
     }
 
-    const ext = file.type.split('/')[1] === 'jpeg' ? 'jpg' : file.type.split('/')[1];
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
-    const filePath = `profiles/${fileName}`;
+    // Read the file as a base64 data URL for Cloudinary
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    }).catch(() => null);
 
-    const { error: uploadError } = await supabase.storage
-      .from('player-images')
-      .upload(filePath, file);
-
-    if (uploadError) {
-      toast({ title: 'Upload failed', description: uploadError.message, variant: 'destructive' });
+    if (!dataUrl) {
+      toast({ title: 'Upload failed', description: 'Could not read the selected image.', variant: 'destructive' });
       return null;
     }
 
-    const { data: { publicUrl } } = supabase.storage
-      .from('player-images')
-      .getPublicUrl(filePath);
+    const { data, error } = await supabase.functions.invoke('cloudinary-upload', {
+      body: { file: dataUrl, folder: 'players' },
+    });
 
-    return publicUrl;
+    if (error || !data?.secure_url) {
+      toast({
+        title: 'Upload failed',
+        description: (data as { error?: string })?.error || error?.message || 'Could not upload image to Cloudinary.',
+        variant: 'destructive',
+      });
+      return null;
+    }
+
+    return { url: data.secure_url as string, publicId: (data.public_id as string) || '' };
   };
+
 
   // Player CRUD
   const addPlayer = async () => {
