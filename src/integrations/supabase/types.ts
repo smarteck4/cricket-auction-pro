@@ -506,6 +506,7 @@ export type Database = {
           name: string
           nationality: string
           player_role: Database["public"]["Enums"]["player_role"]
+          profile_picture_public_id: string | null
           profile_picture_url: string | null
           strike_rate: number | null
           total_matches: number | null
@@ -531,6 +532,7 @@ export type Database = {
           name: string
           nationality: string
           player_role: Database["public"]["Enums"]["player_role"]
+          profile_picture_public_id?: string | null
           profile_picture_url?: string | null
           strike_rate?: number | null
           total_matches?: number | null
@@ -556,6 +558,7 @@ export type Database = {
           name?: string
           nationality?: string
           player_role?: Database["public"]["Enums"]["player_role"]
+          profile_picture_public_id?: string | null
           profile_picture_url?: string | null
           strike_rate?: number | null
           total_matches?: number | null
