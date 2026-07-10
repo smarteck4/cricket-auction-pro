@@ -561,22 +561,22 @@ export default function Admin() {
         <h1 className="font-display text-3xl font-bold mb-8">Admin Panel</h1>
         
       <Tabs defaultValue="auction">
-      <TabsList className="mb-6 grid grid-cols-2 md:grid-cols-3 w-full">
-        <TabsTrigger value="auction">
-        <Gavel className="w-4 h-4 mr-2" />
-        Auction Control
-        </TabsTrigger>
+    <TabsList className="mb-6 flex flex-wrap gap-2">
+  <TabsTrigger value="auction">
+    <Gavel className="w-4 h-4 mr-2" />
+    Auction Control
+  </TabsTrigger>
 
-       <TabsTrigger value="players">
-       <Users className="w-4 h-4 mr-2" />
-       Players ({players.length})
-       </TabsTrigger>
+  <TabsTrigger value="players">
+    <Users className="w-4 h-4 mr-2" />
+    Players ({players.length})
+  </TabsTrigger>
 
-      <TabsTrigger value="owners">
-      <Users className="w-4 h-4 mr-2" />
-      Owners ({owners.length})
-      </TabsTrigger>
-      </TabsList>
+  <TabsTrigger value="owners">
+    <Users className="w-4 h-4 mr-2" />
+    Owners ({owners.length})
+  </TabsTrigger>
+</TabsList>
 
           {/* AUCTION CONTROL TAB */}
           <TabsContent value="auction">
