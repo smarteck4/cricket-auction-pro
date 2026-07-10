@@ -284,22 +284,29 @@ export default function Admin() {
     setUploadingImage(true);
     
     let profileUrl = newPlayer.profile_picture_url;
+    let profilePublicId = '';
     
-    // If file upload is selected and a file exists, upload it
+    // If file upload is selected and a file exists, upload it to Cloudinary
     if (imageUploadType === 'file' && selectedImageFile) {
-      const uploadedUrl = await uploadPlayerImage(selectedImageFile);
-      if (uploadedUrl) {
-        profileUrl = uploadedUrl;
+      const uploaded = await uploadPlayerImage(selectedImageFile);
+      if (!uploaded) {
+        // Upload failed — abort so we don't create a player without the image
+        setUploadingImage(false);
+        return;
       }
+      profileUrl = uploaded.url;
+      profilePublicId = uploaded.publicId;
     }
 
     const basePrice = categorySettings.find(c => c.category === newPlayer.category)?.base_price || 100;
     const { error } = await supabase.from('players').insert({ 
       ...newPlayer, 
       profile_picture_url: profileUrl,
+      profile_picture_public_id: profilePublicId || null,
       base_price: basePrice,
       created_by: user!.id,
     } as any);
+
     
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
