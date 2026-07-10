@@ -379,7 +379,16 @@ export default function Admin() {
       .select('id')
       .order('created_at', { ascending: false })
       .limit(1);
-    const now = new Date().toISOString();
+    // Anchor the timer to the SERVER clock, not the admin's device clock.
+    // place_bid_atomic enforces the timer against server NOW(), and each owner's
+    // countdown is aligned to the server. If we used the admin's local clock here
+    // and it ran behind the server, owners would compute timeRemaining <= 0 and see
+    // "Timer Expired" the instant bidding opens (before the first bid).
+    const { data: serverTime } = await supabase.rpc('get_server_time');
+    const now = serverTime
+      ? new Date(serverTime as unknown as string).toISOString()
+      : new Date().toISOString();
+    
     
     if (existing && existing.length > 0) {
       await supabase.from('current_auction').update({
