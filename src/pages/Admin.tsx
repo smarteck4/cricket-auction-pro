@@ -327,6 +327,8 @@ export default function Admin() {
 
     let profileUrl = editingPlayer.profile_picture_url;
     let profilePublicId: string | null = (editingPlayer as any).profile_picture_public_id ?? null;
+    const previousPublicId: string | null = (editingPlayer as any).profile_picture_public_id ?? null;
+    let replacedOldImage = false;
     if (editImageFile) {
       const uploaded = await uploadPlayerImage(editImageFile);
       if (!uploaded) {
@@ -335,6 +337,7 @@ export default function Admin() {
       }
       profileUrl = uploaded.url;
       profilePublicId = uploaded.publicId || null;
+      replacedOldImage = !!previousPublicId && previousPublicId !== profilePublicId;
     }
 
     const { error } = await supabase.from('players').update({ ...editingPlayer, profile_picture_url: profileUrl, profile_picture_public_id: profilePublicId } as any).eq('id', editingPlayer.id);
@@ -342,6 +345,12 @@ export default function Admin() {
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
+      // Replacement succeeded — remove the old Cloudinary asset so it isn't orphaned.
+      if (replacedOldImage && previousPublicId) {
+        supabase.functions.invoke('cloudinary-upload', {
+          body: { action: 'destroy', public_id: previousPublicId },
+        }).catch(() => { /* best-effort cleanup */ });
+      }
       toast({ title: 'Player updated!' });
       setEditingPlayer(null);
       setEditImageFile(null);
@@ -349,6 +358,7 @@ export default function Admin() {
     }
     setUploadingImage(false);
   };
+
 
   const deletePlayer = async (id: string) => {
     await supabase.from('players').delete().eq('id', id);

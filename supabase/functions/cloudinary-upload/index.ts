@@ -66,7 +66,48 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { file, folder = "players" } = await req.json();
+    const { file, folder = "players", action = "upload", public_id: publicIdToDelete } =
+      await req.json();
+
+    // Deletion path: remove an existing asset from Cloudinary.
+    if (action === "destroy") {
+      if (!publicIdToDelete || typeof publicIdToDelete !== "string") {
+        return new Response(JSON.stringify({ error: "No public_id provided" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const destroyTs = Math.round(Date.now() / 1000).toString();
+      const destroyParams = `public_id=${publicIdToDelete}&timestamp=${destroyTs}`;
+      const destroySignature = await sha1Hex(destroyParams + apiSecret);
+
+      const destroyForm = new FormData();
+      destroyForm.append("public_id", publicIdToDelete);
+      destroyForm.append("api_key", apiKey);
+      destroyForm.append("timestamp", destroyTs);
+      destroyForm.append("signature", destroySignature);
+
+      const destroyRes = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudName}/image/destroy`,
+        { method: "POST", body: destroyForm },
+      );
+      const destroyResult = await destroyRes.json();
+
+      if (!destroyRes.ok) {
+        console.error("Cloudinary destroy failed", destroyResult);
+        return new Response(
+          JSON.stringify({ error: destroyResult?.error?.message || "Delete failed" }),
+          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      return new Response(JSON.stringify({ result: destroyResult.result }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (!file || typeof file !== "string") {
       return new Response(JSON.stringify({ error: "No image provided" }), {
         status: 400,
