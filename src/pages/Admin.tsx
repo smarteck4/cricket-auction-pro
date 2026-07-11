@@ -567,27 +567,28 @@ export default function Admin() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container py-8">
-        <h1 className="font-display text-3xl font-bold mb-8">Admin Panel</h1>
+      <main className="container px-3 py-6 sm:px-6 sm:py-8">
+        <h1 className="font-display text-2xl font-bold mb-6 sm:text-3xl sm:mb-8">Admin Panel</h1>
         
       <Tabs defaultValue="auction">
-       <TabsList className="mb-6 inline-flex w-fit max-w-full flex-nowrap gap-2 overflow-x-auto bg-muted p-1">
-        <TabsTrigger value="auction" className="whitespace-nowrap px-4" >
-        <Gavel className="mr-2 h-4 w-4" />
+       <TabsList className="mb-6 grid w-full grid-cols-3 gap-1 bg-muted p-1 sm:inline-flex sm:w-fit sm:max-w-full sm:flex-nowrap sm:gap-2">
+        <TabsTrigger value="auction" className="min-w-0 whitespace-nowrap px-2 sm:px-4" >
+        <Gavel className="h-4 w-4 sm:mr-2" />
         <span className="hidden sm:inline">Auction Control</span>
-        <span className="sm:hidden">Auction</span>
+        <span className="ml-1 truncate sm:hidden">Auction</span>
         </TabsTrigger>
 
-        <TabsTrigger value="players" className="whitespace-nowrap px-4" >
-        <Users className="mr-2 h-4 w-4" />
-         Players ({players.length})
+        <TabsTrigger value="players" className="min-w-0 whitespace-nowrap px-2 sm:px-4" >
+        <Users className="h-4 w-4 sm:mr-2" />
+         <span className="ml-1 truncate">Players ({players.length})</span>
         </TabsTrigger>
 
-        <TabsTrigger value="owners" className="whitespace-nowrap px-4" >
-        <Users className="mr-2 h-4 w-4" />
-         Owners ({owners.length})
+        <TabsTrigger value="owners" className="min-w-0 whitespace-nowrap px-2 sm:px-4" >
+        <Users className="h-4 w-4 sm:mr-2" />
+         <span className="ml-1 truncate">Owners ({owners.length})</span>
         </TabsTrigger>
         </TabsList>
+
 
           {/* AUCTION CONTROL TAB */}
           <TabsContent value="auction">
