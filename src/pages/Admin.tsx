@@ -571,7 +571,7 @@ export default function Admin() {
         <h1 className="font-display text-2xl font-bold mb-6 sm:text-3xl sm:mb-8">Admin Panel</h1>
         
       <Tabs defaultValue="auction">
-       <TabsList className="mb-6 grid w-full grid-cols-3 gap-1 bg-muted p-1 sm:inline-flex sm:w-fit sm:max-w-full sm:flex-nowrap sm:gap-2">
+       <TabsList className="mb-6 grid w-full grid-cols-3 gap-1 sm:inline-flex sm:w-fit sm:max-w-full sm:flex-nowrap sm:gap-2">
         <TabsTrigger value="auction" className="min-w-0 whitespace-nowrap px-2 sm:px-4" >
         <Gavel className="h-4 w-4 sm:mr-2" />
         <span className="hidden sm:inline">Auction Control</span>
