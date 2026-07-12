@@ -20,6 +20,7 @@ import { Plus, Play, Square, Users, Trash2, Edit, Gavel, Timer, User, AlertCircl
 import { BulkPlayerImport } from '@/components/BulkPlayerImport';
 import { PlayerFormModal, PlayerFormData } from '@/components/PlayerFormModal';
 import { Tabs as RadioTabs, TabsList as RadioTabsList, TabsTrigger as RadioTabsTrigger } from '@/components/ui/tabs';
+import { ALLOWED_IMAGE_TYPES, MAX_IMAGE_SIZE, uploadPlayerImageToCloudinary, destroyCloudinaryAsset, shouldDestroyPreviousAsset } from '@/lib/player-image';
 
 const defaultPlayer: PlayerFormData = {
   name: '', age: 20, nationality: '', category: 'gold' as PlayerCategory,
