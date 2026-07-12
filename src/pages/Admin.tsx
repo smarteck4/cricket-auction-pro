@@ -20,6 +20,7 @@ import { Plus, Play, Square, Users, Trash2, Edit, Gavel, Timer, User, AlertCircl
 import { BulkPlayerImport } from '@/components/BulkPlayerImport';
 import { PlayerFormModal, PlayerFormData } from '@/components/PlayerFormModal';
 import { Tabs as RadioTabs, TabsList as RadioTabsList, TabsTrigger as RadioTabsTrigger } from '@/components/ui/tabs';
+import { ALLOWED_IMAGE_TYPES, MAX_IMAGE_SIZE, uploadPlayerImageToCloudinary, destroyCloudinaryAsset, shouldDestroyPreviousAsset } from '@/lib/player-image';
 
 const defaultPlayer: PlayerFormData = {
   name: '', age: 20, nationality: '', category: 'gold' as PlayerCategory,
@@ -236,15 +237,12 @@ export default function Admin() {
     file: File,
   ): Promise<{ url: string; publicId: string } | null> => {
     // Validate file type and size
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-    const maxSize = 5 * 1024 * 1024; // 5MB
-
-    if (!allowedTypes.includes(file.type)) {
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
       toast({ title: 'Invalid file type', description: 'Only JPEG, PNG, WebP, and GIF images are allowed.', variant: 'destructive' });
       return null;
     }
 
-    if (file.size > maxSize) {
+    if (file.size > MAX_IMAGE_SIZE) {
       toast({ title: 'File too large', description: 'Image must be under 5MB.', variant: 'destructive' });
       return null;
     }
@@ -262,20 +260,18 @@ export default function Admin() {
       return null;
     }
 
-    const { data, error } = await supabase.functions.invoke('cloudinary-upload', {
-      body: { file: dataUrl, folder: 'players' },
-    });
+    const uploaded = await uploadPlayerImageToCloudinary(supabase, dataUrl);
 
-    if (error || !data?.secure_url) {
+    if (!uploaded) {
       toast({
         title: 'Upload failed',
-        description: (data as { error?: string })?.error || error?.message || 'Could not upload image to Cloudinary.',
+        description: 'Could not upload image to Cloudinary.',
         variant: 'destructive',
       });
       return null;
     }
 
-    return { url: data.secure_url as string, publicId: (data.public_id as string) || '' };
+    return { url: uploaded.url, publicId: uploaded.publicId };
   };
 
 
@@ -337,7 +333,7 @@ export default function Admin() {
       }
       profileUrl = uploaded.url;
       profilePublicId = uploaded.publicId || null;
-      replacedOldImage = !!previousPublicId && previousPublicId !== profilePublicId;
+      replacedOldImage = shouldDestroyPreviousAsset(previousPublicId, profilePublicId);
     }
 
     const { error } = await supabase.from('players').update({ ...editingPlayer, profile_picture_url: profileUrl, profile_picture_public_id: profilePublicId } as any).eq('id', editingPlayer.id);
@@ -347,9 +343,7 @@ export default function Admin() {
     } else {
       // Replacement succeeded — remove the old Cloudinary asset so it isn't orphaned.
       if (replacedOldImage && previousPublicId) {
-        supabase.functions.invoke('cloudinary-upload', {
-          body: { action: 'destroy', public_id: previousPublicId },
-        }).catch(() => { /* best-effort cleanup */ });
+        destroyCloudinaryAsset(supabase, previousPublicId).catch(() => { /* best-effort cleanup */ });
       }
       toast({ title: 'Player updated!' });
       setEditingPlayer(null);
