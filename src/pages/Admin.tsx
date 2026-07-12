@@ -237,15 +237,12 @@ export default function Admin() {
     file: File,
   ): Promise<{ url: string; publicId: string } | null> => {
     // Validate file type and size
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-    const maxSize = 5 * 1024 * 1024; // 5MB
-
-    if (!allowedTypes.includes(file.type)) {
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
       toast({ title: 'Invalid file type', description: 'Only JPEG, PNG, WebP, and GIF images are allowed.', variant: 'destructive' });
       return null;
     }
 
-    if (file.size > maxSize) {
+    if (file.size > MAX_IMAGE_SIZE) {
       toast({ title: 'File too large', description: 'Image must be under 5MB.', variant: 'destructive' });
       return null;
     }
@@ -263,20 +260,18 @@ export default function Admin() {
       return null;
     }
 
-    const { data, error } = await supabase.functions.invoke('cloudinary-upload', {
-      body: { file: dataUrl, folder: 'players' },
-    });
+    const uploaded = await uploadPlayerImageToCloudinary(supabase, dataUrl);
 
-    if (error || !data?.secure_url) {
+    if (!uploaded) {
       toast({
         title: 'Upload failed',
-        description: (data as { error?: string })?.error || error?.message || 'Could not upload image to Cloudinary.',
+        description: 'Could not upload image to Cloudinary.',
         variant: 'destructive',
       });
       return null;
     }
 
-    return { url: data.secure_url as string, publicId: (data.public_id as string) || '' };
+    return { url: uploaded.url, publicId: uploaded.publicId };
   };
 
 
