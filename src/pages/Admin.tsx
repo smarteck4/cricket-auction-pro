@@ -282,8 +282,8 @@ export default function Admin() {
     let profileUrl = newPlayer.profile_picture_url;
     let profilePublicId = '';
     
-    // If file upload is selected and a file exists, upload it to Cloudinary
-    if (imageUploadType === 'file' && selectedImageFile) {
+    // If a file was selected in the form, upload it to Cloudinary
+    if (selectedImageFile) {
       const uploaded = await uploadPlayerImage(selectedImageFile);
       if (!uploaded) {
         // Upload failed — abort so we don't create a player without the image
