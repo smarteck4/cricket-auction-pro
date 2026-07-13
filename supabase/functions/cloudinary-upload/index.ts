@@ -21,9 +21,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const cloudName = Deno.env.get("CLOUDINARY_CLOUD_NAME");
-    const apiKey = Deno.env.get("CLOUDINARY_API_KEY");
-    const apiSecret = Deno.env.get("CLOUDINARY_API_SECRET");
+    const cloudName = Deno.env.get("CLOUDINARY_CLOUD_NAME")?.trim();
+    const apiKey = Deno.env.get("CLOUDINARY_API_KEY")?.trim();
+    const apiSecret = Deno.env.get("CLOUDINARY_API_SECRET")?.trim();
 
     if (!cloudName || !apiKey || !apiSecret) {
       return new Response(
