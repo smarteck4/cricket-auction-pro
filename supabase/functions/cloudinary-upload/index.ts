@@ -39,6 +39,21 @@ Deno.serve(async (req) => {
       );
     }
 
+    // TEMP DIAGNOSTIC
+    const rawCloud = Deno.env.get("CLOUDINARY_CLOUD_NAME") ?? "";
+    return new Response(
+      JSON.stringify({
+        diag: true,
+        rawLen: rawCloud.length,
+        sanitizedLen: cloudName.length,
+        sanitized: cloudName,
+        codes: Array.from(rawCloud).map((c) => c.charCodeAt(0)),
+        apiKeyLen: apiKey.length,
+        apiSecretLen: apiSecret.length,
+      }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+
     // Authenticate the caller and ensure they are an admin/super_admin.
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
