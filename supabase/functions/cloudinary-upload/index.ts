@@ -10,8 +10,13 @@ const corsHeaders = {
 // Strip whitespace and any non-printable / non-ASCII characters (e.g. a stray
 // zero-width space or newline saved into the secret) that would silently
 // corrupt the cloud name or signature.
+// Strip whitespace, non-printable/non-ASCII characters, and any surrounding
+// quotes (a value saved as "u1wj327x" instead of u1wj327x) that would silently
+// corrupt the cloud name or signature.
 function sanitizeCredential(value: string | undefined): string {
-  return (value ?? "").replace(/[^\x21-\x7E]/g, "");
+  return (value ?? "")
+    .replace(/[^\x21-\x7E]/g, "")
+    .replace(/^["']+|["']+$/g, "");
 }
 
 async function sha1Hex(message: string): Promise<string> {
