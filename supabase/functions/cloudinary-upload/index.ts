@@ -7,6 +7,18 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+// Strip whitespace and any non-printable / non-ASCII characters (e.g. a stray
+// zero-width space or newline saved into the secret) that would silently
+// corrupt the cloud name or signature.
+// Strip whitespace, non-printable/non-ASCII characters, and any surrounding
+// quotes (a value saved as "u1wj327x" instead of u1wj327x) that would silently
+// corrupt the cloud name or signature.
+function sanitizeCredential(value: string | undefined): string {
+  return (value ?? "")
+    .replace(/[^\x21-\x7E]/g, "")
+    .replace(/^["']+|["']+$/g, "");
+}
+
 async function sha1Hex(message: string): Promise<string> {
   const data = new TextEncoder().encode(message);
   const hashBuffer = await crypto.subtle.digest("SHA-1", data);
@@ -21,9 +33,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const cloudName = Deno.env.get("CLOUDINARY_CLOUD_NAME");
-    const apiKey = Deno.env.get("CLOUDINARY_API_KEY");
-    const apiSecret = Deno.env.get("CLOUDINARY_API_SECRET");
+    const cloudName = sanitizeCredential(Deno.env.get("CLOUDINARY_CLOUD_NAME"));
+    const apiKey = sanitizeCredential(Deno.env.get("CLOUDINARY_API_KEY"));
+    const apiSecret = sanitizeCredential(Deno.env.get("CLOUDINARY_API_SECRET"));
 
     if (!cloudName || !apiKey || !apiSecret) {
       return new Response(
