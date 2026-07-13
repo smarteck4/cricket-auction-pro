@@ -7,6 +7,13 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+// Strip whitespace and any non-printable / non-ASCII characters (e.g. a stray
+// zero-width space or newline saved into the secret) that would silently
+// corrupt the cloud name or signature.
+function sanitizeCredential(value: string | undefined): string {
+  return (value ?? "").replace(/[^\x21-\x7E]/g, "");
+}
+
 async function sha1Hex(message: string): Promise<string> {
   const data = new TextEncoder().encode(message);
   const hashBuffer = await crypto.subtle.digest("SHA-1", data);
