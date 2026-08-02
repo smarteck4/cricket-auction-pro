@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { AppRole, Owner } from '@/lib/types';
@@ -22,13 +22,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<AppRole | null>(null);
   const [owner, setOwner] = useState<Owner | null>(null);
   const [loading, setLoading] = useState(true);
+  const loadedUserIdRef = useRef<string | null>(null);
 
-  const loadSessionData = async (nextSession: Session | null) => {
-    setLoading(true);
+  const loadSessionData = async (nextSession: Session | null, showLoading = true) => {
+    if (showLoading) setLoading(true);
     setSession(nextSession);
     setUser(nextSession?.user ?? null);
 
     if (!nextSession?.user) {
+      loadedUserIdRef.current = null;
       setRole(null);
       setOwner(null);
       setLoading(false);
@@ -37,6 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const nextRole = await fetchUserRole(nextSession.user.id);
     const nextOwner = await fetchOwnerData(nextSession.user.id);
+    loadedUserIdRef.current = nextSession.user.id;
     setRole(nextRole);
     setOwner(nextOwner);
     setLoading(false);
@@ -45,6 +48,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
+        const sameUser =
+          session?.user?.id != null && session.user.id === loadedUserIdRef.current;
+
+        // Token refreshes / tab re-focus fire SIGNED_IN + TOKEN_REFRESHED for the
+        // same user. Just update the session silently — never flip `loading`,
+        // which would remount guarded pages and reset the whole UI.
+        if (sameUser) {
+          setSession(session);
+          setUser(session.user);
+          return;
+        }
+
         void loadSessionData(session);
       }
     );
@@ -55,6 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => subscription.unsubscribe();
   }, []);
+
 
   const fetchUserRole = async (userId: string): Promise<AppRole | null> => {
     const { data, error } = await supabase
