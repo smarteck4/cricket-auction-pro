@@ -122,12 +122,16 @@ export function MatchForm({ match, tournaments, teams, venues, onSubmit, onCance
               <SelectValue placeholder="Select team" />
             </SelectTrigger>
             <SelectContent>
+              {teams.length === 0 && (
+                <div className="px-2 py-3 text-xs text-muted-foreground">No teams available yet</div>
+              )}
               {teams.map((t) => (
                 <SelectItem key={t.id} value={t.id}>
                   {t.team_name}
                 </SelectItem>
               ))}
             </SelectContent>
+
           </Select>
           {team1Validation && (
             <p className={`text-xs flex items-center gap-1 ${team1Validation.valid ? 'text-green-600' : 'text-destructive'}`}>
@@ -144,12 +148,16 @@ export function MatchForm({ match, tournaments, teams, venues, onSubmit, onCance
               <SelectValue placeholder="Select team" />
             </SelectTrigger>
             <SelectContent>
+              {teams.filter((t) => t.id !== team1Id).length === 0 && (
+                <div className="px-2 py-3 text-xs text-muted-foreground">No other teams available</div>
+              )}
               {teams.filter((t) => t.id !== team1Id).map((t) => (
                 <SelectItem key={t.id} value={t.id}>
                   {t.team_name}
                 </SelectItem>
               ))}
             </SelectContent>
+
           </Select>
           {team2Validation && (
             <p className={`text-xs flex items-center gap-1 ${team2Validation.valid ? 'text-green-600' : 'text-destructive'}`}>
