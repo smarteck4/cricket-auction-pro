@@ -41,6 +41,10 @@ export default function Tournaments() {
   const [editingTournament, setEditingTournament] = useState<Tournament | null>(null);
   const [editingMatch, setEditingMatch] = useState<Match | null>(null);
 
+  // Admins/super admins organize tournaments; owners & spectators get read-only access.
+  const canManage = role === 'admin' || role === 'super_admin';
+
+
   useEffect(() => {
     if (authLoading) return;
     fetchData();
@@ -176,11 +180,22 @@ export default function Tournaments() {
       <Header />
       <main className="container mx-auto px-4 py-4 sm:py-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold">Tournament Management</h1>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => setVenueDialogOpen(true)}><MapPin className="h-4 w-4 mr-1 sm:mr-2" /><span className="hidden sm:inline">Add </span>Venue</Button>
-            <Button size="sm" onClick={() => { setEditingTournament(null); setTournamentDialogOpen(true); }}><Plus className="h-4 w-4 mr-1 sm:mr-2" /><span className="hidden sm:inline">New </span>Tournament</Button>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold">
+              {canManage ? 'Tournament Management' : 'Tournaments'}
+            </h1>
+            {!canManage && (
+              <p className="text-sm text-muted-foreground mt-1">
+                View-only: fixtures, points table and statistics
+              </p>
+            )}
           </div>
+          {canManage && (
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => setVenueDialogOpen(true)}><MapPin className="h-4 w-4 mr-1 sm:mr-2" /><span className="hidden sm:inline">Add </span>Venue</Button>
+              <Button size="sm" onClick={() => { setEditingTournament(null); setTournamentDialogOpen(true); }}><Plus className="h-4 w-4 mr-1 sm:mr-2" /><span className="hidden sm:inline">New </span>Tournament</Button>
+            </div>
+          )}
         </div>
 
         <div className="grid lg:grid-cols-4 gap-4 sm:gap-6">
@@ -198,13 +213,18 @@ export default function Tournaments() {
                     </div>
                     <Badge className={`${TOURNAMENT_STATUS_COLORS[t.status].bg} ${TOURNAMENT_STATUS_COLORS[t.status].text}`}>{t.status}</Badge>
                   </div>
-                  <div className="flex gap-1 mt-2">
-                    <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); setEditingTournament(t); setTournamentDialogOpen(true); }}><Edit className="h-3 w-3" /></Button>
-                    <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); deleteTournament(t.id); }}><Trash2 className="h-3 w-3" /></Button>
-                  </div>
+                  {canManage && (
+                    <div className="flex gap-1 mt-2">
+                      <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); setEditingTournament(t); setTournamentDialogOpen(true); }}><Edit className="h-3 w-3" /></Button>
+                      <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); deleteTournament(t.id); }}><Trash2 className="h-3 w-3" /></Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}
+            {tournaments.length === 0 && (
+              <p className="text-sm text-muted-foreground">No tournaments yet</p>
+            )}
           </div>
 
           {/* Tournament Details */}
@@ -218,16 +238,25 @@ export default function Tournaments() {
                 </TabsList>
 
                 <TabsContent value="fixtures">
-                  <div className="flex justify-end mb-4">
-                    <Button onClick={() => { setEditingMatch(null); setMatchDialogOpen(true); }}><Plus className="h-4 w-4 mr-2" />Schedule Match</Button>
-                  </div>
+                  {canManage && (
+                    <div className="flex justify-end mb-4">
+                      <Button onClick={() => { setEditingMatch(null); setMatchDialogOpen(true); }}><Plus className="h-4 w-4 mr-2" />Schedule Match</Button>
+                    </div>
+                  )}
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {tournamentMatches.map((m) => (
-                      <MatchCard key={m.id} match={m} team1={teams.find((t) => t.id === m.team1_id)} team2={teams.find((t) => t.id === m.team2_id)} onClick={() => navigate(`/tournaments/match/${m.id}/scoring`)} />
+                      <MatchCard
+                        key={m.id}
+                        match={m}
+                        team1={teams.find((t) => t.id === m.team1_id)}
+                        team2={teams.find((t) => t.id === m.team2_id)}
+                        onClick={canManage ? () => navigate(`/tournaments/match/${m.id}/scoring`) : undefined}
+                      />
                     ))}
                     {tournamentMatches.length === 0 && <p className="text-muted-foreground col-span-full text-center py-8">No matches scheduled yet</p>}
                   </div>
                 </TabsContent>
+
 
                 <TabsContent value="points"><PointsTable points={tournamentPoints} /></TabsContent>
                 <TabsContent value="stats"><StatisticsPanel stats={stats} players={players} /></TabsContent>
