@@ -1,14 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Tournament, Match, Venue, TournamentPoints, PlayerMatchStats, TOURNAMENT_STATUS_COLORS } from '@/lib/tournament-types';
+import { Tournament, Match, Venue, TournamentPoints, PlayerMatchStats } from '@/lib/tournament-types';
 import { Owner, Player } from '@/lib/types';
 import { TournamentForm } from '@/components/tournament/TournamentForm';
 import { MatchForm } from '@/components/tournament/MatchForm';
@@ -16,9 +16,15 @@ import { VenueForm } from '@/components/tournament/VenueForm';
 import { PointsTable } from '@/components/tournament/PointsTable';
 import { StatisticsPanel } from '@/components/tournament/StatisticsPanel';
 import { MatchCard } from '@/components/tournament/MatchCard';
+import {
+  FeaturedMatchTile,
+  TournamentMetaTile,
+  StandingsTile,
+  FixturesTile,
+  LeadersTile,
+  TournamentSummaryStrip,
+} from '@/components/tournament/BroadcastTiles';
 import { Plus, Trophy, Calendar, MapPin, BarChart3, Edit, Trash2 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { format } from 'date-fns';
 
 export default function Tournaments() {
   const { user, role, loading: authLoading } = useAuth();
@@ -34,7 +40,8 @@ export default function Tournaments() {
   const [stats, setStats] = useState<PlayerMatchStats[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [detailTab, setDetailTab] = useState('fixtures');
   const [tournamentDialogOpen, setTournamentDialogOpen] = useState(false);
   const [matchDialogOpen, setMatchDialogOpen] = useState(false);
   const [venueDialogOpen, setVenueDialogOpen] = useState(false);
@@ -43,7 +50,6 @@ export default function Tournaments() {
 
   // Admins/super admins organize tournaments; owners & spectators get read-only access.
   const canManage = role === 'admin' || role === 'super_admin';
-
 
   useEffect(() => {
     if (authLoading) return;
@@ -55,7 +61,6 @@ export default function Tournaments() {
       cleanupPolling();
     };
   }, [user, role, authLoading]);
-
 
   const setupRealtime = () => {
     let lastRealtimeEvent = Date.now();
@@ -120,6 +125,19 @@ export default function Tournaments() {
     setLoading(false);
   };
 
+  // Auto-select the first tournament so the hub is never empty.
+  useEffect(() => {
+    if (!selectedId && tournaments.length > 0) setSelectedId(tournaments[0].id);
+    if (selectedId && !tournaments.some((t) => t.id === selectedId)) {
+      setSelectedId(tournaments[0]?.id ?? null);
+    }
+  }, [tournaments, selectedId]);
+
+  const selectedTournament = useMemo(
+    () => tournaments.find((t) => t.id === selectedId) ?? null,
+    [tournaments, selectedId],
+  );
+
   const saveTournament = async (data: Partial<Tournament>) => {
     const dbData = { ...data } as any;
     if (editingTournament) {
@@ -140,7 +158,7 @@ export default function Tournaments() {
     const { error } = await supabase.from('tournaments').delete().eq('id', id);
     if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); return; }
     toast({ title: 'Tournament Deleted' });
-    if (selectedTournament?.id === id) setSelectedTournament(null);
+    if (selectedId === id) setSelectedId(null);
     fetchData();
   };
 
@@ -170,6 +188,17 @@ export default function Tournaments() {
 
   const tournamentMatches = selectedTournament ? matches.filter((m) => m.tournament_id === selectedTournament.id) : [];
   const tournamentPoints = selectedTournament ? points.filter((p) => p.tournament_id === selectedTournament.id) : [];
+  const tournamentMatchIds = new Set(tournamentMatches.map((m) => m.id));
+  const tournamentStats = stats.filter((s) => tournamentMatchIds.has(s.match_id));
+
+  const featuredMatch =
+    tournamentMatches.find((m) => m.status === 'live') ??
+    tournamentMatches.find((m) => m.status === 'scheduled') ??
+    tournamentMatches[0];
+
+  const openScoring = (m: Match) => {
+    if (canManage) navigate(`/tournaments/match/${m.id}/scoring`);
+  };
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>;
@@ -178,93 +207,138 @@ export default function Tournaments() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container mx-auto px-4 py-4 sm:py-8">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold">
-              {canManage ? 'Tournament Management' : 'Tournaments'}
-            </h1>
-            {!canManage && (
-              <p className="text-sm text-muted-foreground mt-1">
-                View-only: fixtures, points table and statistics
-              </p>
-            )}
-          </div>
-          {canManage && (
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => setVenueDialogOpen(true)}><MapPin className="h-4 w-4 mr-1 sm:mr-2" /><span className="hidden sm:inline">Add </span>Venue</Button>
-              <Button size="sm" onClick={() => { setEditingTournament(null); setTournamentDialogOpen(true); }}><Plus className="h-4 w-4 mr-1 sm:mr-2" /><span className="hidden sm:inline">New </span>Tournament</Button>
-            </div>
-          )}
-        </div>
 
-        <div className="grid lg:grid-cols-4 gap-4 sm:gap-6">
-          {/* Tournament List */}
-          <div className="lg:col-span-1 space-y-3 sm:space-y-4">
-            <h2 className="font-semibold text-lg">Tournaments</h2>
-            {tournaments.map((t) => (
-              <Card key={t.id} className={`cursor-pointer transition-all hover:scale-[1.02] neu-convex border-0 ${selectedTournament?.id === t.id ? 'ring-2 ring-primary neu-pressed' : ''}`} onClick={() => setSelectedTournament(t)}>
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="font-medium">{t.name}</p>
-                      <p className="text-sm text-muted-foreground">{t.format} • {t.overs_per_innings} overs</p>
-                      <p className="text-xs text-muted-foreground mt-1">{format(new Date(t.start_date), 'PP')} - {format(new Date(t.end_date), 'PP')}</p>
-                    </div>
-                    <Badge className={`${TOURNAMENT_STATUS_COLORS[t.status].bg} ${TOURNAMENT_STATUS_COLORS[t.status].text}`}>{t.status}</Badge>
-                  </div>
-                  {canManage && (
-                    <div className="flex gap-1 mt-2">
-                      <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); setEditingTournament(t); setTournamentDialogOpen(true); }}><Edit className="h-3 w-3" /></Button>
-                      <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); deleteTournament(t.id); }}><Trash2 className="h-3 w-3" /></Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-            {tournaments.length === 0 && (
-              <p className="text-sm text-muted-foreground">No tournaments yet</p>
-            )}
-          </div>
-
-          {/* Tournament Details */}
-          <div className="lg:col-span-3">
-            {selectedTournament ? (
-              <Tabs defaultValue="fixtures">
-                <TabsList className="mb-4">
-                  <TabsTrigger value="fixtures"><Calendar className="h-4 w-4 mr-2" />Fixtures</TabsTrigger>
-                  <TabsTrigger value="points"><Trophy className="h-4 w-4 mr-2" />Points Table</TabsTrigger>
-                  <TabsTrigger value="stats"><BarChart3 className="h-4 w-4 mr-2" />Statistics</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="fixtures">
-                  {canManage && (
-                    <div className="flex justify-end mb-4">
-                      <Button onClick={() => { setEditingMatch(null); setMatchDialogOpen(true); }}><Plus className="h-4 w-4 mr-2" />Schedule Match</Button>
-                    </div>
-                  )}
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {tournamentMatches.map((m) => (
-                      <MatchCard
-                        key={m.id}
-                        match={m}
-                        team1={teams.find((t) => t.id === m.team1_id)}
-                        team2={teams.find((t) => t.id === m.team2_id)}
-                        onClick={canManage ? () => navigate(`/tournaments/match/${m.id}/scoring`) : undefined}
-                      />
+      <main className="bc-shell">
+        <div className="container mx-auto px-4 py-6 sm:py-10 flex flex-col gap-6">
+          {/* Broadcast header */}
+          <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+              <h1 className="bc-heading text-2xl sm:text-3xl uppercase text-broadcast-accent">Tournaments</h1>
+              {tournaments.length > 0 && (
+                <Select value={selectedId ?? undefined} onValueChange={setSelectedId}>
+                  <SelectTrigger className="w-full sm:w-64 bg-broadcast-surface/70 border-broadcast-fg/10 text-broadcast-fg">
+                    <SelectValue placeholder="Select tournament" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tournaments.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
                     ))}
-                    {tournamentMatches.length === 0 && <p className="text-muted-foreground col-span-full text-center py-8">No matches scheduled yet</p>}
-                  </div>
-                </TabsContent>
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
 
-
-                <TabsContent value="points"><PointsTable points={tournamentPoints} /></TabsContent>
-                <TabsContent value="stats"><StatisticsPanel stats={stats} players={players} /></TabsContent>
-              </Tabs>
-            ) : (
-              <Card className="neu-convex border-0"><CardContent className="p-8 text-center text-muted-foreground">Select a tournament to view details</CardContent></Card>
+            {canManage && (
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  className="bg-broadcast-accent text-broadcast hover:bg-broadcast-accent/90 font-bold uppercase text-xs tracking-widest"
+                  onClick={() => { setEditingTournament(null); setTournamentDialogOpen(true); }}
+                >
+                  <Plus className="h-4 w-4 mr-1" />New Tournament
+                </Button>
+                <Button
+                  size="sm"
+                  className="bg-broadcast-fg/10 text-broadcast-fg hover:bg-broadcast-fg/20 font-bold uppercase text-xs tracking-widest"
+                  onClick={() => setVenueDialogOpen(true)}
+                >
+                  <MapPin className="h-4 w-4 mr-1" />Add Venue
+                </Button>
+                {selectedTournament && (
+                  <>
+                    <Button
+                      size="icon"
+                      className="bg-broadcast-fg/10 text-broadcast-fg hover:bg-broadcast-fg/20"
+                      aria-label="Edit tournament"
+                      onClick={() => { setEditingTournament(selectedTournament); setTournamentDialogOpen(true); }}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      className="bg-broadcast-fg/10 text-destructive hover:bg-destructive/20"
+                      aria-label="Delete tournament"
+                      onClick={() => deleteTournament(selectedTournament.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </>
+                )}
+              </div>
             )}
-          </div>
+          </header>
+
+          {!selectedTournament ? (
+            <div className="bc-tile p-10 text-center">
+              <Trophy className="h-10 w-10 mx-auto mb-4 text-broadcast-accent/60" />
+              <p className="bc-heading text-lg text-broadcast-fg uppercase">No tournaments yet</p>
+              <p className="text-sm text-broadcast-muted mt-1">
+                {canManage ? 'Naya tournament create karein' : 'Abhi koi tournament organize nahi hua'}
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Bento grid hub */}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                <FeaturedMatchTile
+                  match={featuredMatch}
+                  teams={teams}
+                  onOpen={canManage && featuredMatch ? () => openScoring(featuredMatch) : undefined}
+                />
+                <TournamentMetaTile tournament={selectedTournament} />
+                <StandingsTile points={tournamentPoints} onViewFull={() => setDetailTab('points')} />
+                <FixturesTile
+                  matches={tournamentMatches}
+                  teams={teams}
+                  onSelect={canManage ? openScoring : undefined}
+                />
+                <LeadersTile stats={tournamentStats} players={players} />
+                <TournamentSummaryStrip
+                  matchCount={tournamentMatches.length}
+                  teamCount={tournamentPoints.length}
+                  completed={tournamentMatches.filter((m) => m.status === 'completed').length}
+                />
+              </div>
+
+              {/* Full detail panels keep the app theme for dense tables */}
+              <section className="rounded-2xl bg-background text-foreground p-4 sm:p-6 border border-broadcast-fg/5">
+                <Tabs value={detailTab} onValueChange={setDetailTab}>
+                  <TabsList className="mb-4 flex-wrap h-auto">
+                    <TabsTrigger value="fixtures"><Calendar className="h-4 w-4 mr-2" />Fixtures</TabsTrigger>
+                    <TabsTrigger value="points"><Trophy className="h-4 w-4 mr-2" />Points Table</TabsTrigger>
+                    <TabsTrigger value="stats"><BarChart3 className="h-4 w-4 mr-2" />Statistics</TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="fixtures">
+                    {canManage && (
+                      <div className="flex justify-end mb-4">
+                        <Button onClick={() => { setEditingMatch(null); setMatchDialogOpen(true); }}>
+                          <Plus className="h-4 w-4 mr-2" />Schedule Match
+                        </Button>
+                      </div>
+                    )}
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {tournamentMatches.map((m) => (
+                        <MatchCard
+                          key={m.id}
+                          match={m}
+                          team1={teams.find((t) => t.id === m.team1_id)}
+                          team2={teams.find((t) => t.id === m.team2_id)}
+                          onClick={canManage ? () => openScoring(m) : undefined}
+                        />
+                      ))}
+                      {tournamentMatches.length === 0 && (
+                        <p className="text-muted-foreground col-span-full text-center py-8">No matches scheduled yet</p>
+                      )}
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="points"><PointsTable points={tournamentPoints} /></TabsContent>
+                  <TabsContent value="stats"><StatisticsPanel stats={tournamentStats} players={players} /></TabsContent>
+                </Tabs>
+              </section>
+            </>
+          )}
         </div>
       </main>
 
