@@ -208,7 +208,7 @@ export default function Tournaments() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="bc-shell">
+      <main className="bc-shell min-h-screen">
         <div className="container mx-auto px-4 py-6 sm:py-10 flex flex-col gap-6">
           {/* Broadcast header */}
           <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
