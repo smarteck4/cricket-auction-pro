@@ -87,6 +87,14 @@ export default {
   				'silver-bg': 'hsl(var(--silver-cat-bg))',
   				emerging: 'hsl(var(--emerging))',
   				'emerging-bg': 'hsl(var(--emerging-bg))'
+  			},
+  			broadcast: {
+  				DEFAULT: 'hsl(var(--bc-bg))',
+  				surface: 'hsl(var(--bc-surface))',
+  				fg: 'hsl(var(--bc-fg))',
+  				muted: 'hsl(var(--bc-muted))',
+  				accent: 'hsl(var(--bc-accent))',
+  				'accent-2': 'hsl(var(--bc-accent-2))'
   			}
   		},
   		borderRadius: {
