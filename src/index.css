@@ -42,6 +42,14 @@
 
     --radius: 1rem;
 
+    /* Broadcast hub palette (tournament centre) */
+    --bc-bg: 220 28% 6%;
+    --bc-surface: 220 22% 13%;
+    --bc-fg: 220 12% 96%;
+    --bc-muted: 220 10% 58%;
+    --bc-accent: 45 93% 52%;
+    --bc-accent-2: 158 64% 45%;
+
     /* Neumorphism shadows */
     --neu-light: 220 20% 98%;
     --neu-dark: 220 20% 80%;

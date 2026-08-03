@@ -16,6 +16,8 @@ export default {
   		fontFamily: {
   			sans: ['Space Grotesk', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
   			display: ['Outfit', 'sans-serif'],
+  			heading: ['Archivo Black', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+  			body: ['Hind', 'ui-sans-serif', 'system-ui', 'sans-serif'],
   			serif: ['ui-serif', 'Georgia', 'serif'],
   			mono: ['ui-monospace', 'SFMono-Regular', 'monospace']
   		},
