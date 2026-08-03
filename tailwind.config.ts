@@ -16,6 +16,8 @@ export default {
   		fontFamily: {
   			sans: ['Space Grotesk', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
   			display: ['Outfit', 'sans-serif'],
+  			heading: ['Archivo Black', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+  			body: ['Hind', 'ui-sans-serif', 'system-ui', 'sans-serif'],
   			serif: ['ui-serif', 'Georgia', 'serif'],
   			mono: ['ui-monospace', 'SFMono-Regular', 'monospace']
   		},
@@ -85,6 +87,14 @@ export default {
   				'silver-bg': 'hsl(var(--silver-cat-bg))',
   				emerging: 'hsl(var(--emerging))',
   				'emerging-bg': 'hsl(var(--emerging-bg))'
+  			},
+  			broadcast: {
+  				DEFAULT: 'hsl(var(--bc-bg))',
+  				surface: 'hsl(var(--bc-surface))',
+  				fg: 'hsl(var(--bc-fg))',
+  				muted: 'hsl(var(--bc-muted))',
+  				accent: 'hsl(var(--bc-accent))',
+  				'accent-2': 'hsl(var(--bc-accent-2))'
   			}
   		},
   		borderRadius: {
