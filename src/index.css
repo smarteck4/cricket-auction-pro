@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Hind:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -226,7 +227,46 @@
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid hsl(var(--border) / 0.2);
   }
+
+  /* Broadcast hub (tournament centre) surfaces */
+  .bc-shell {
+    font-family: 'Hind', ui-sans-serif, system-ui, sans-serif;
+    background:
+      radial-gradient(120% 80% at 15% 0%, hsl(var(--bc-accent) / 0.10) 0%, transparent 55%),
+      radial-gradient(90% 70% at 95% 10%, hsl(var(--bc-accent-2) / 0.10) 0%, transparent 50%),
+      hsl(var(--bc-bg));
+    color: hsl(var(--bc-fg));
+  }
+
+  .bc-tile {
+    background: hsl(var(--bc-surface) / 0.55);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border: 1px solid hsl(var(--bc-fg) / 0.07);
+    border-radius: 1rem;
+    transition: border-color 200ms ease, transform 200ms ease, box-shadow 200ms ease;
+  }
+
+  .bc-tile-hover:hover {
+    border-color: hsl(var(--bc-accent) / 0.35);
+    transform: translateY(-2px);
+    box-shadow: 0 16px 40px -20px hsl(var(--bc-accent) / 0.45);
+  }
+
+  .bc-heading {
+    font-family: 'Archivo Black', ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: -0.03em;
+  }
+
+  .bc-label {
+    font-size: 0.625rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: hsl(var(--bc-muted));
+  }
 }
+
 
 @layer utilities {
   .gradient-gold {
