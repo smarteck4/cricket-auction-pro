@@ -1550,6 +1550,7 @@ export function LiveScoring({
                 const isBattingTeam1 = inn.batting_team_id === team1.id;
                 const batPlayers = isBattingTeam1 ? team1Players : team2Players;
                 const bowlPlayers = isBattingTeam1 ? team2Players : team1Players;
+                const batTeam = isBattingTeam1 ? team1 : team2;
                 const batTeamName = isBattingTeam1 ? team1.team_name : team2.team_name;
 
                 const batStats = new Map<string, { runs: number; balls: number; fours: number; sixes: number; isOut: boolean; howOut: string }>();
