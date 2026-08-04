@@ -358,18 +358,25 @@ export function MatchSummary({
     return ball.runs_scored.toString();
   };
 
+  const findPlayer = (id?: string | null) =>
+    id ? [...team1Players, ...team2Players].find((p) => p.id === id) ?? null : null;
+
   const renderTeamSection = (
     stats: NonNullable<typeof inn1Stats>,
     bgClass: string
   ) => {
     const { innings: inn, topBatsmen, topBowlers } = stats;
     const oversDisplay = `${Math.floor(inn.total_overs)}.${Math.round((inn.total_overs % 1) * 10)}`;
+    const battingTeam = inn.batting_team_id === team1.id ? team1 : team2;
 
     return (
       <div className="mb-4">
-        <div className={`${bgClass} px-4 py-3 flex justify-between items-center`}>
-          <span className="font-semibold text-primary-foreground">{getTeamName(inn.batting_team_id)}</span>
-          <div className="flex items-center gap-4 text-primary-foreground">
+        <div className={`${bgClass} px-4 py-3 flex justify-between items-center gap-3`}>
+          <span className="font-semibold text-primary-foreground inline-flex items-center gap-2 min-w-0">
+            <TeamLogo team={battingTeam} size={28} />
+            <span className="truncate">{getTeamName(inn.batting_team_id)}</span>
+          </span>
+          <div className="flex items-center gap-4 text-primary-foreground shrink-0">
             <span className="font-bold">{inn.total_runs}-{inn.total_wickets}</span>
             <span className="text-sm opacity-80">{oversDisplay} Overs</span>
           </div>
@@ -385,16 +392,19 @@ export function MatchSummary({
                 key={i}
                 className={`grid grid-cols-2 divide-x ${i % 2 === 0 ? 'bg-card' : 'bg-muted/30'}`}
               >
-                <div className="flex justify-between items-center px-4 py-2">
+                <div className="flex justify-between items-center gap-2 px-3 sm:px-4 py-2">
                   {batsman ? (
                     <>
-                      <span className="text-sm">
-                        <span className="font-medium">{batsman.name.split(' ')[0]}</span>
-                        {batsman.name.split(' ').slice(1).length > 0 && (
-                          <span className="font-bold"> {batsman.name.split(' ').slice(1).join(' ')}</span>
-                        )}
+                      <span className="text-sm inline-flex items-center gap-2 min-w-0">
+                        <PlayerAvatar player={findPlayer(batsman.id)} size={24} />
+                        <span className="truncate">
+                          <span className="font-medium">{batsman.name.split(' ')[0]}</span>
+                          {batsman.name.split(' ').slice(1).length > 0 && (
+                            <span className="font-bold"> {batsman.name.split(' ').slice(1).join(' ')}</span>
+                          )}
+                        </span>
                       </span>
-                      <span className="font-bold text-sm">
+                      <span className="font-bold text-sm shrink-0">
                         {batsman.runs}
                         {batsman.isNotOut && <span className="text-muted-foreground"> *</span>}
                       </span>
@@ -404,16 +414,19 @@ export function MatchSummary({
                   )}
                 </div>
 
-                <div className="flex justify-between items-center px-4 py-2">
+                <div className="flex justify-between items-center gap-2 px-3 sm:px-4 py-2">
                   {bowler ? (
                     <>
-                      <span className="text-sm">
-                        <span className="font-medium">{bowler.name.split(' ')[0]}</span>
-                        {bowler.name.split(' ').slice(1).length > 0 && (
-                          <span className="font-bold"> {bowler.name.split(' ').slice(1).join(' ')}</span>
-                        )}
+                      <span className="text-sm inline-flex items-center gap-2 min-w-0">
+                        <PlayerAvatar player={findPlayer(bowler.id)} size={24} />
+                        <span className="truncate">
+                          <span className="font-medium">{bowler.name.split(' ')[0]}</span>
+                          {bowler.name.split(' ').slice(1).length > 0 && (
+                            <span className="font-bold"> {bowler.name.split(' ').slice(1).join(' ')}</span>
+                          )}
+                        </span>
                       </span>
-                      <span className="font-bold text-sm">
+                      <span className="font-bold text-sm shrink-0">
                         {bowler.wickets}-{bowler.runs}
                       </span>
                     </>
@@ -428,6 +441,7 @@ export function MatchSummary({
       </div>
     );
   };
+
 
   if (innings.length === 0) {
     return (
