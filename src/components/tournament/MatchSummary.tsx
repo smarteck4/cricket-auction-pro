@@ -4,6 +4,7 @@ import { Player, Owner } from '@/lib/types';
 import { Trophy, Download, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import jsPDF from 'jspdf';
+import { PlayerAvatar, TeamLogo } from './ScoreAvatars';
 
 interface MatchSummaryProps {
   match: Match;

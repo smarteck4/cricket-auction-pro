@@ -11,6 +11,7 @@ import { Player, Owner } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, RotateCcw, AlertCircle, ArrowLeftRight } from 'lucide-react';
 import { MatchSummary } from './MatchSummary';
+import { PlayerNameCell, TeamLogo } from './ScoreAvatars';
 
 interface LiveScoringProps {
   match: Match;
