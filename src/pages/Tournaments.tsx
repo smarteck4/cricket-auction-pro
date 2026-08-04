@@ -24,6 +24,7 @@ import {
   LeadersTile,
   TournamentSummaryStrip,
 } from '@/components/tournament/BroadcastTiles';
+import { TournamentHubSkeleton } from '@/components/tournament/BroadcastSkeleton';
 import { Plus, Trophy, Calendar, MapPin, BarChart3, Edit, Trash2 } from 'lucide-react';
 
 export default function Tournaments() {
@@ -201,7 +202,16 @@ export default function Tournaments() {
   };
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>;
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="bc-shell min-h-screen">
+          <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-10">
+            <TournamentHubSkeleton />
+          </div>
+        </main>
+      </div>
+    );
   }
 
   return (
@@ -209,7 +219,7 @@ export default function Tournaments() {
       <Header />
 
       <main className="bc-shell min-h-screen">
-        <div className="container mx-auto px-4 py-6 sm:py-10 flex flex-col gap-6">
+        <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-10 flex flex-col gap-4 sm:gap-6">
           {/* Broadcast header */}
           <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
@@ -229,17 +239,18 @@ export default function Tournaments() {
             </div>
 
             {canManage && (
-              <div className="flex flex-wrap gap-2">
+              <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
                 <Button
                   size="sm"
-                  className="bg-broadcast-accent text-broadcast hover:bg-broadcast-accent/90 font-bold uppercase text-xs tracking-widest"
+                  className="w-full sm:w-auto bg-broadcast-accent text-broadcast hover:bg-broadcast-accent/90 font-bold uppercase text-[11px] sm:text-xs tracking-widest"
                   onClick={() => { setEditingTournament(null); setTournamentDialogOpen(true); }}
                 >
-                  <Plus className="h-4 w-4 mr-1" />New Tournament
+                  <Plus className="h-4 w-4 mr-1" />New
+                  <span className="hidden sm:inline">&nbsp;Tournament</span>
                 </Button>
                 <Button
                   size="sm"
-                  className="bg-broadcast-fg/10 text-broadcast-fg hover:bg-broadcast-fg/20 font-bold uppercase text-xs tracking-widest"
+                  className="w-full sm:w-auto bg-broadcast-fg/10 text-broadcast-fg hover:bg-broadcast-fg/20 font-bold uppercase text-[11px] sm:text-xs tracking-widest"
                   onClick={() => setVenueDialogOpen(true)}
                 >
                   <MapPin className="h-4 w-4 mr-1" />Add Venue
@@ -279,7 +290,7 @@ export default function Tournaments() {
           ) : (
             <>
               {/* Bento grid hub */}
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4">
                 <FeaturedMatchTile
                   match={featuredMatch}
                   teams={teams}
@@ -301,23 +312,23 @@ export default function Tournaments() {
               </div>
 
               {/* Full detail panels keep the app theme for dense tables */}
-              <section className="rounded-2xl bg-background text-foreground p-4 sm:p-6 border border-broadcast-fg/5">
+              <section className="rounded-2xl bg-background text-foreground p-3 sm:p-6 border border-broadcast-fg/5">
                 <Tabs value={detailTab} onValueChange={setDetailTab}>
-                  <TabsList className="mb-4 flex-wrap h-auto">
-                    <TabsTrigger value="fixtures"><Calendar className="h-4 w-4 mr-2" />Fixtures</TabsTrigger>
-                    <TabsTrigger value="points"><Trophy className="h-4 w-4 mr-2" />Points Table</TabsTrigger>
-                    <TabsTrigger value="stats"><BarChart3 className="h-4 w-4 mr-2" />Statistics</TabsTrigger>
+                  <TabsList className="mb-4 grid w-full grid-cols-3 h-auto gap-1 sm:flex sm:w-auto">
+                    <TabsTrigger value="fixtures" className="text-xs sm:text-sm px-2"><Calendar className="h-4 w-4 mr-1 sm:mr-2" /><span>Fixtures</span></TabsTrigger>
+                    <TabsTrigger value="points" className="text-xs sm:text-sm px-2"><Trophy className="h-4 w-4 mr-1 sm:mr-2" /><span>Points</span></TabsTrigger>
+                    <TabsTrigger value="stats" className="text-xs sm:text-sm px-2"><BarChart3 className="h-4 w-4 mr-1 sm:mr-2" /><span>Stats</span></TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="fixtures">
                     {canManage && (
                       <div className="flex justify-end mb-4">
-                        <Button onClick={() => { setEditingMatch(null); setMatchDialogOpen(true); }}>
+                        <Button className="w-full sm:w-auto" onClick={() => { setEditingMatch(null); setMatchDialogOpen(true); }}>
                           <Plus className="h-4 w-4 mr-2" />Schedule Match
                         </Button>
                       </div>
                     )}
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                       {tournamentMatches.map((m) => (
                         <MatchCard
                           key={m.id}

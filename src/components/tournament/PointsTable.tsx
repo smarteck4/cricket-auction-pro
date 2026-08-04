@@ -13,8 +13,8 @@ export function PointsTable({ points }: PointsTableProps) {
   });
 
   return (
-    <div className="rounded-lg border overflow-hidden">
-      <Table>
+    <div className="rounded-lg border overflow-x-auto">
+      <Table className="min-w-[640px]">
         <TableHeader>
           <TableRow className="bg-muted/50">
             <TableHead className="w-12 text-center">#</TableHead>
