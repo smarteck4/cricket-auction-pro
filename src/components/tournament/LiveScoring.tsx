@@ -11,6 +11,7 @@ import { Player, Owner } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, RotateCcw, AlertCircle, ArrowLeftRight } from 'lucide-react';
 import { MatchSummary } from './MatchSummary';
+import { PlayerNameCell, TeamLogo } from './ScoreAvatars';
 
 interface LiveScoringProps {
   match: Match;
@@ -1550,6 +1551,7 @@ export function LiveScoring({
                 const isBattingTeam1 = inn.batting_team_id === team1.id;
                 const batPlayers = isBattingTeam1 ? team1Players : team2Players;
                 const bowlPlayers = isBattingTeam1 ? team2Players : team1Players;
+                const batTeam = isBattingTeam1 ? team1 : team2;
                 const batTeamName = isBattingTeam1 ? team1.team_name : team2.team_name;
 
                 const batStats = new Map<string, { runs: number; balls: number; fours: number; sixes: number; isOut: boolean; howOut: string }>();
@@ -1646,7 +1648,10 @@ export function LiveScoring({
                   <div key={inn.id} className="rounded-xl overflow-hidden border border-border/50 shadow-md">
                     {/* Innings Header */}
                     <div className="bg-gradient-to-r from-[hsl(var(--slate-dark))] to-[hsl(var(--slate))] px-4 py-2.5 flex justify-between items-center">
-                      <span className="font-bold text-white text-sm tracking-wide">{batTeamName} — Innings {inn.innings_number}</span>
+                      <span className="font-bold text-white text-sm tracking-wide inline-flex items-center gap-2 min-w-0">
+                        <TeamLogo team={batTeam} size={26} />
+                        <span className="truncate">{batTeamName} — Innings {inn.innings_number}</span>
+                      </span>
                       <span className="font-black text-white text-lg">{inn.total_runs}/{inn.total_wickets} <span className="text-white/60 text-xs font-medium">({oversDisplay} ov)</span></span>
                     </div>
 
@@ -1672,7 +1677,7 @@ export function LiveScoring({
                               if (!stats || !player) return null;
                               return (
                                 <tr key={id} className="border-b border-border/30 last:border-0 hover:bg-muted/20 transition-colors">
-                                  <td className="p-2.5 font-semibold text-xs sm:text-sm">{player.name}</td>
+                                  <td className="p-2.5 text-xs sm:text-sm"><PlayerNameCell player={player} /></td>
                                   <td className="p-2.5 text-xs text-muted-foreground max-w-[100px] truncate italic">{stats.howOut}</td>
                                   <td className="text-center p-2.5 font-black text-primary">{stats.runs}</td>
                                   <td className="text-center p-2.5 text-muted-foreground">{stats.balls}</td>
@@ -1730,7 +1735,7 @@ export function LiveScoring({
                               const overs = Math.floor(stats.legalBalls / 6) + (stats.legalBalls % 6) / 10;
                               return (
                                 <tr key={id} className="border-b border-border/30 last:border-0 hover:bg-muted/20 transition-colors">
-                                  <td className="p-2.5 font-semibold text-xs sm:text-sm">{player.name}</td>
+                                  <td className="p-2.5 text-xs sm:text-sm"><PlayerNameCell player={player} /></td>
                                   <td className="text-center p-2.5">{overs.toFixed(1)}</td>
                                   <td className="text-center p-2.5 text-muted-foreground">{stats.maidens}</td>
                                   <td className="text-center p-2.5 text-destructive">{stats.runs}</td>
