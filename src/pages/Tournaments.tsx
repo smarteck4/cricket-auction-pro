@@ -315,9 +315,9 @@ export default function Tournaments() {
               <section className="rounded-2xl bg-background text-foreground p-3 sm:p-6 border border-broadcast-fg/5">
                 <Tabs value={detailTab} onValueChange={setDetailTab}>
                   <TabsList className="mb-4 grid w-full grid-cols-3 h-auto gap-1 sm:flex sm:w-auto">
-                    <TabsTrigger value="fixtures" className="text-xs sm:text-sm px-2"><Calendar className="h-4 w-4 sm:mr-2" /><span className="hidden xs:inline sm:inline">Fixtures</span></TabsTrigger>
-                    <TabsTrigger value="points" className="text-xs sm:text-sm px-2"><Trophy className="h-4 w-4 sm:mr-2" /><span className="hidden xs:inline sm:inline">Points</span></TabsTrigger>
-                    <TabsTrigger value="stats" className="text-xs sm:text-sm px-2"><BarChart3 className="h-4 w-4 sm:mr-2" /><span className="hidden xs:inline sm:inline">Stats</span></TabsTrigger>
+                    <TabsTrigger value="fixtures" className="text-xs sm:text-sm px-2"><Calendar className="h-4 w-4 mr-1 sm:mr-2" /><span>Fixtures</span></TabsTrigger>
+                    <TabsTrigger value="points" className="text-xs sm:text-sm px-2"><Trophy className="h-4 w-4 mr-1 sm:mr-2" /><span>Points</span></TabsTrigger>
+                    <TabsTrigger value="stats" className="text-xs sm:text-sm px-2"><BarChart3 className="h-4 w-4 mr-1 sm:mr-2" /><span>Stats</span></TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="fixtures">
