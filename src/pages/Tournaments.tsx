@@ -24,6 +24,7 @@ import {
   LeadersTile,
   TournamentSummaryStrip,
 } from '@/components/tournament/BroadcastTiles';
+import { TournamentHubSkeleton } from '@/components/tournament/BroadcastSkeleton';
 import { Plus, Trophy, Calendar, MapPin, BarChart3, Edit, Trash2 } from 'lucide-react';
 
 export default function Tournaments() {
@@ -201,7 +202,16 @@ export default function Tournaments() {
   };
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>;
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="bc-shell min-h-screen">
+          <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-10">
+            <TournamentHubSkeleton />
+          </div>
+        </main>
+      </div>
+    );
   }
 
   return (
@@ -209,7 +219,7 @@ export default function Tournaments() {
       <Header />
 
       <main className="bc-shell min-h-screen">
-        <div className="container mx-auto px-4 py-6 sm:py-10 flex flex-col gap-6">
+        <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-10 flex flex-col gap-4 sm:gap-6">
           {/* Broadcast header */}
           <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
