@@ -8,7 +8,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Tournament, Match, Venue, TournamentPoints, PlayerMatchStats } from '@/lib/tournament-types';
+import { Tournament, Match, Venue, TournamentPoints, PlayerMatchStats, MatchInnings, MatchBall } from '@/lib/tournament-types';
+import { deriveStatsFromBalls, mergeMatchStats } from '@/lib/derive-match-stats';
+
 import { Owner, Player } from '@/lib/types';
 import { TournamentForm } from '@/components/tournament/TournamentForm';
 import { MatchForm } from '@/components/tournament/MatchForm';
