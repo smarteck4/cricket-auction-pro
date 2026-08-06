@@ -5,6 +5,8 @@ import { Match, STATUS_COLORS } from '@/lib/tournament-types';
 import { Owner } from '@/lib/types';
 import { format } from 'date-fns';
 import { Calendar, MapPin } from 'lucide-react';
+import { MatchDownloadButton } from './MatchDownloadButton';
+
 
 interface MatchCardProps {
   match: Match;
