@@ -5,6 +5,8 @@ import { Match, STATUS_COLORS } from '@/lib/tournament-types';
 import { Owner } from '@/lib/types';
 import { format } from 'date-fns';
 import { Calendar, MapPin } from 'lucide-react';
+import { MatchDownloadButton } from './MatchDownloadButton';
+
 
 interface MatchCardProps {
   match: Match;
@@ -24,12 +26,18 @@ export function MatchCard({ match, team1, team2, onClick }: MatchCardProps) {
       onClick={onClick}
     >
       <CardContent className="p-4">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between gap-2 mb-3">
           <Badge className={`${statusColors.bg} ${statusColors.text}`}>
             {match.status === 'live' ? '🔴 LIVE' : match.status.toUpperCase()}
           </Badge>
-          <span className="text-sm text-muted-foreground">{match.format}</span>
+          <div className="flex items-center gap-1">
+            <span className="text-sm text-muted-foreground">{match.format}</span>
+            {match.status === 'completed' && (
+              <MatchDownloadButton match={match} team1={team1} team2={team2} />
+            )}
+          </div>
         </div>
+
 
         <div className="flex items-center justify-between gap-4">
           {/* Team 1 */}
