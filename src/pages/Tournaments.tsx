@@ -106,7 +106,7 @@ export default function Tournaments() {
   };
 
   const fetchData = async () => {
-    const [tournamentsRes, matchesRes, venuesRes, teamsRes, playersRes, pointsRes, statsRes] = await Promise.all([
+    const [tournamentsRes, matchesRes, venuesRes, teamsRes, playersRes, pointsRes, statsRes, inningsRes, ballsRes] = await Promise.all([
       supabase.from('tournaments').select('*').order('start_date', { ascending: false }),
       supabase.from('matches').select('*, venue:venues(*)').order('match_date'),
       supabase.from('venues').select('*'),
@@ -114,6 +114,8 @@ export default function Tournaments() {
       supabase.from('players').select('*'),
       supabase.from('tournament_points').select('*, team:owners(id, team_name, team_logo_url)'),
       supabase.from('player_match_stats').select('*'),
+      supabase.from('match_innings').select('*'),
+      supabase.from('match_balls').select('*').order('created_at'),
     ]);
 
     if (tournamentsRes.data) setTournaments(tournamentsRes.data as Tournament[]);
@@ -122,9 +124,16 @@ export default function Tournaments() {
     if (teamsRes.data) setTeams(teamsRes.data as Owner[]);
     if (playersRes.data) setPlayers(playersRes.data as Player[]);
     if (pointsRes.data) setPoints(pointsRes.data as TournamentPoints[]);
-    if (statsRes.data) setStats(statsRes.data as PlayerMatchStats[]);
+
+    // Live stats: derive from ball-by-ball data, fall back to stored rows.
+    const derived = deriveStatsFromBalls(
+      (inningsRes.data as MatchInnings[]) || [],
+      (ballsRes.data as MatchBall[]) || [],
+    );
+    setStats(mergeMatchStats((statsRes.data as PlayerMatchStats[]) || [], derived));
     setLoading(false);
   };
+
 
   // Auto-select the first tournament so the hub is never empty.
   useEffect(() => {
