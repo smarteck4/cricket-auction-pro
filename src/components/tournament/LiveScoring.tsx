@@ -893,6 +893,7 @@ export function LiveScoring({
   };
 
   const undoLastBall = async () => {
+    if (blockIfReadOnly()) return;
     if (!balls.length || !currentInnings) return;
     
     const lastBall = balls[balls.length - 1];
@@ -931,6 +932,7 @@ export function LiveScoring({
   };
 
   const endInnings = async () => {
+    if (blockIfReadOnly()) return;
     if (!currentInnings) return;
     await supabase.from('match_innings').update({ is_completed: true }).eq('id', currentInnings.id);
     toast({ title: 'Innings Completed' });
@@ -938,6 +940,7 @@ export function LiveScoring({
   };
 
   const saveSimpleScore = async () => {
+    if (blockIfReadOnly()) return;
     const existingInn1 = innings.find((i) => i.innings_number === 1);
     const existingInn2 = innings.find((i) => i.innings_number === 2);
 
