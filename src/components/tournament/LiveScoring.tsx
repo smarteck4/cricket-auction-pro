@@ -1089,7 +1089,18 @@ export function LiveScoring({
         </TabsContent>
 
         <TabsContent value="scoring" className="flex-1 min-h-0 flex flex-col overflow-auto p-0 m-0">
-          {currentInnings ? (
+          {isReadOnly ? (
+            <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
+              <div className="rounded-full bg-muted p-4">
+                <AlertCircle className="h-7 w-7 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-bold">Match {match.status === 'cancelled' ? 'Cancelled' : 'Completed'}</h3>
+              <p className="max-w-sm text-sm text-muted-foreground">
+                This match is now a permanent record. Scoring is locked — view the Scorecard, Balls
+                and Summary tabs, or download the full scorecard PDF.
+              </p>
+            </div>
+          ) : currentInnings ? (
             <div className="flex flex-col flex-1 min-h-0 relative">
               {/* Premium Score Display */}
               <div className="relative bg-gradient-to-br from-card via-card to-primary/5 p-5 text-center border-b border-border/50">
