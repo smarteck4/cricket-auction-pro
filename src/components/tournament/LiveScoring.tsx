@@ -607,6 +607,7 @@ export function LiveScoring({
   };
 
   const recordBall = async (runs: number, isExtra = false, extraTypeVal = '') => {
+    if (blockIfReadOnly()) return;
     if (!currentInnings) return;
     
     if (!strikerBatsman || !currentBowler) {
