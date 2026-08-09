@@ -1926,6 +1926,7 @@ export function LiveScoring({
               </div>
             </div>
 
+            {!isReadOnly && (<>
             {/* Quick Score Entry */}
             <div className="rounded-xl border border-border/50 overflow-hidden">
               <div className="bg-muted/30 px-4 py-2.5 border-b border-border/30">
@@ -1986,6 +1987,7 @@ export function LiveScoring({
                 </div>
               </div>
             </div>
+            </>)}
           </div>
         </TabsContent>
       </Tabs>
