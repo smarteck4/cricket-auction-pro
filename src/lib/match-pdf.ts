@@ -33,6 +33,11 @@ interface FullBowlerStats {
   wickets: number;
   economy: string;
   legalBalls: number;
+  dots: number;
+  fours: number;
+  sixes: number;
+  wides: number;
+  noBalls: number;
 }
 
 interface FOW {
@@ -45,14 +50,14 @@ interface FOW {
 const getBallNotation = (ball: MatchBall) => {
   if (ball.is_wicket) {
     const total = ball.runs_scored + ball.extras;
-    if (ball.extra_type === 'wide') return total > 0 ? `W+${total}Wd` : 'W';
-    if (ball.extra_type === 'no_ball') return total > 0 ? `W+${total}Nb` : 'W';
+    if (ball.extra_type === 'wide') return total > 0 ? `W+${total}wd` : 'W';
+    if (ball.extra_type === 'no_ball') return total > 0 ? `W+${total}nb` : 'W';
     return total > 0 ? `W+${total}` : 'W';
   }
-  if (ball.extra_type === 'wide') return ball.extras > 1 ? `${ball.extras}Wd` : 'Wd';
-  if (ball.extra_type === 'no_ball') return ball.runs_scored > 0 ? `${ball.runs_scored}+${ball.extras}Nb` : `${ball.extras}Nb`;
-  if (ball.extra_type === 'bye') return `${ball.extras}B`;
-  if (ball.extra_type === 'leg_bye') return `${ball.extras}Lb`;
+  if (ball.extra_type === 'wide') return ball.extras > 1 ? `${ball.extras}wd` : 'wd';
+  if (ball.extra_type === 'no_ball') return ball.runs_scored > 0 ? `${ball.runs_scored}+${ball.extras}nb` : `${ball.extras}nb`;
+  if (ball.extra_type === 'bye') return `${ball.extras}b`;
+  if (ball.extra_type === 'leg_bye') return `${ball.extras}lb`;
   return ball.runs_scored.toString();
 };
 
@@ -65,15 +70,15 @@ export function getMatchResultText(data: MatchPdfData): string | null {
   const team2Batting = inn1.batting_team_id === team2.id ? inn1 : inn2;
 
   if (team1Batting.total_runs > team2Batting.total_runs) {
-    return `${team1.team_name} win by ${team1Batting.total_runs - team2Batting.total_runs} runs`;
+    return `${team1.team_name} won by ${team1Batting.total_runs - team2Batting.total_runs} runs`;
   }
   if (team2Batting.total_runs > team1Batting.total_runs) {
     if (inn2.batting_team_id === team2.id) {
-      return `${team2.team_name} win by ${10 - team2Batting.total_wickets} wickets`;
+      return `${team2.team_name} won by ${10 - team2Batting.total_wickets} wickets`;
     }
-    return `${team2.team_name} win by ${team2Batting.total_runs - team1Batting.total_runs} runs`;
+    return `${team2.team_name} won by ${team2Batting.total_runs - team1Batting.total_runs} runs`;
   }
-  return 'Match Tied';
+  return 'Match tied';
 }
 
 function analyseInnings(data: MatchPdfData, inningsIndex: number) {
@@ -89,12 +94,16 @@ function analyseInnings(data: MatchPdfData, inningsIndex: number) {
   const bowlTeamName = isBattingTeam1 ? team2.team_name : team1.team_name;
 
   const batStats = new Map<string, { runs: number; balls: number; fours: number; sixes: number; isOut: boolean; howOut: string }>();
-  const bowlStats = new Map<string, { legalBalls: number; runs: number; wickets: number; maidens?: number }>();
+  const bowlStats = new Map<
+    string,
+    { legalBalls: number; runs: number; wickets: number; maidens?: number; dots: number; fours: number; sixes: number; wides: number; noBalls: number }
+  >();
   const bowlOverRuns = new Map<string, Map<number, number>>();
   const bowlOverBalls = new Map<string, Map<number, number>>();
   const fow: FOW[] = [];
   const batsmanOrder: string[] = [];
   const bowlerOrder: string[] = [];
+  const extraBreakdown = { b: 0, lb: 0, w: 0, nb: 0 };
   let totalRuns = 0;
   let totalWickets = 0;
   let legalBallCount = 0;
@@ -106,6 +115,11 @@ function analyseInnings(data: MatchPdfData, inningsIndex: number) {
 
     totalRuns += ball.runs_scored + ball.extras;
     if (isLegal) legalBallCount++;
+
+    if (ball.extra_type === 'bye') extraBreakdown.b += ball.extras;
+    else if (ball.extra_type === 'leg_bye') extraBreakdown.lb += ball.extras;
+    else if (ball.extra_type === 'wide') extraBreakdown.w += ball.extras;
+    else if (ball.extra_type === 'no_ball') extraBreakdown.nb += ball.extras;
 
     if (ball.batsman_id) {
       if (!batsmanOrder.includes(ball.batsman_id)) batsmanOrder.push(ball.batsman_id);
@@ -128,7 +142,7 @@ function analyseInnings(data: MatchPdfData, inningsIndex: number) {
           case 'lbw': existing.howOut = `lbw b ${bowlerName}`; break;
           case 'stumped': existing.howOut = `st ${fielderName} b ${bowlerName}`; break;
           case 'run_out': existing.howOut = fielderName ? `run out (${fielderName})` : 'run out'; break;
-          case 'hit_wicket': existing.howOut = `hit wkt b ${bowlerName}`; break;
+          case 'hit_wicket': existing.howOut = `hit wicket b ${bowlerName}`; break;
           default: existing.howOut = ball.wicket_type || 'out';
         }
         totalWickets++;
@@ -144,11 +158,17 @@ function analyseInnings(data: MatchPdfData, inningsIndex: number) {
 
     if (ball.bowler_id) {
       if (!bowlerOrder.includes(ball.bowler_id)) bowlerOrder.push(ball.bowler_id);
-      const existing = bowlStats.get(ball.bowler_id) || { legalBalls: 0, runs: 0, wickets: 0 };
+      const existing =
+        bowlStats.get(ball.bowler_id) || { legalBalls: 0, runs: 0, wickets: 0, dots: 0, fours: 0, sixes: 0, wides: 0, noBalls: 0 };
       const isBowlerCharged = !ball.extra_type || ball.extra_type === 'wide' || ball.extra_type === 'no_ball';
       const rc = isBowlerCharged ? ball.runs_scored + ball.extras : 0;
       existing.runs += rc;
       if (isLegal) existing.legalBalls++;
+      if (isLegal && ball.runs_scored + ball.extras === 0) existing.dots++;
+      if (isBatsmanRun && ball.runs_scored === 4) existing.fours++;
+      if (isBatsmanRun && ball.runs_scored === 6) existing.sixes++;
+      if (ball.extra_type === 'wide') existing.wides++;
+      if (ball.extra_type === 'no_ball') existing.noBalls++;
       if (ball.is_wicket && ['bowled', 'caught', 'lbw', 'stumped', 'hit_wicket'].includes(ball.wicket_type || '')) {
         existing.wickets++;
       }
@@ -201,8 +221,15 @@ function analyseInnings(data: MatchPdfData, inningsIndex: number) {
       wickets: stats.wickets,
       economy: stats.legalBalls > 0 ? (stats.runs / (stats.legalBalls / 6)).toFixed(2) : '0.00',
       legalBalls: stats.legalBalls,
+      dots: stats.dots,
+      fours: stats.fours,
+      sixes: stats.sixes,
+      wides: stats.wides,
+      noBalls: stats.noBalls,
     };
   });
+
+  const didNotBat = batPlayers.filter(p => !batsmanOrder.includes(p.id)).map(p => p.name);
 
   const overGroups = new Map<number, MatchBall[]>();
   balls.forEach(ball => {
@@ -210,9 +237,31 @@ function analyseInnings(data: MatchPdfData, inningsIndex: number) {
     overGroups.get(ball.over_number)!.push(ball);
   });
 
-  return { inn, batTeamName, bowlTeamName, fullBatsmen, fullBowlers, fow, overGroups, balls };
+  const totalExtras = extraBreakdown.b + extraBreakdown.lb + extraBreakdown.w + extraBreakdown.nb;
+  const runRate = legalBallCount > 0 ? totalRuns / (legalBallCount / 6) : 0;
+
+  return {
+    inn,
+    batTeamName,
+    bowlTeamName,
+    fullBatsmen,
+    fullBowlers,
+    fow,
+    overGroups,
+    balls,
+    extraBreakdown,
+    totalExtras,
+    didNotBat,
+    runRate,
+    legalBallCount,
+  };
 }
 
+/* ============================================================
+   ESPNcricinfo-style scorecard PDF
+   Clean white sheet, thin grey rules, muted table headers,
+   crimson accent — same information hierarchy as cricinfo.
+   ============================================================ */
 export function generateMatchPdf(data: MatchPdfData) {
   const { match, team1, team2, team1Players, team2Players, innings } = data;
   const allPlayers = [...team1Players, ...team2Players];
@@ -222,205 +271,314 @@ export function generateMatchPdf(data: MatchPdfData) {
   const pdf = new jsPDF('p', 'mm', 'a4');
   const pageW = pdf.internal.pageSize.getWidth();
   const pageH = pdf.internal.pageSize.getHeight();
-  const margin = 12;
+  const margin = 14;
   const contentW = pageW - margin * 2;
   let y = margin;
 
+  const INK: [number, number, number] = [26, 26, 26];
+  const MUTED: [number, number, number] = [110, 110, 110];
+  const RULE: [number, number, number] = [222, 222, 222];
+  const HEADROW: [number, number, number] = [244, 244, 244];
+  const ACCENT: [number, number, number] = [175, 30, 45];
+
+  const setInk = (c: [number, number, number]) => pdf.setTextColor(c[0], c[1], c[2]);
+
   const checkPage = (needed: number) => {
-    if (y + needed > pageH - margin) {
+    if (y + needed > pageH - margin - 8) {
       pdf.addPage();
       y = margin;
     }
   };
-  const drawLine = (yPos: number) => {
-    pdf.setDrawColor(180, 180, 180);
-    pdf.setLineWidth(0.3);
+
+  const rule = (yPos: number, color = RULE) => {
+    pdf.setDrawColor(color[0], color[1], color[2]);
+    pdf.setLineWidth(0.2);
     pdf.line(margin, yPos, pageW - margin, yPos);
   };
 
-  pdf.setFillColor(30, 58, 95);
-  pdf.rect(0, 0, pageW, 28, 'F');
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(16);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('MATCH SCORECARD', pageW / 2, 11, { align: 'center' });
-  pdf.setFontSize(10);
-  pdf.setFont('helvetica', 'normal');
-  pdf.text(`${team1.team_name}  vs  ${team2.team_name}`, pageW / 2, 18, { align: 'center' });
-  pdf.setFontSize(8);
-  pdf.text(`${match.format} • ${match.overs_per_innings} overs per side`, pageW / 2, 24, { align: 'center' });
-  y = 34;
+  const sectionTitle = (text: string) => {
+    checkPage(12);
+    setInk(INK);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(9);
+    pdf.text(text.toUpperCase(), margin, y + 3.5);
+    pdf.setDrawColor(ACCENT[0], ACCENT[1], ACCENT[2]);
+    pdf.setLineWidth(0.7);
+    pdf.line(margin, y + 5.5, margin + pdf.getTextWidth(text.toUpperCase()), y + 5.5);
+    y += 9;
+  };
 
-  if (match.venue) {
-    pdf.setTextColor(90, 90, 90);
-    pdf.setFontSize(8);
-    pdf.text(`${match.venue.name}, ${match.venue.city}`, pageW / 2, y, { align: 'center' });
+  // ---------- Masthead ----------
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(9);
+  setInk(ACCENT);
+  pdf.text('FULL SCORECARD', margin, y + 3);
+  setInk(MUTED);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(8);
+  pdf.text(match.tournament?.name || 'Match', pageW - margin, y + 3, { align: 'right' });
+  y += 6;
+  rule(y);
+  y += 7;
+
+  setInk(INK);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(15);
+  pdf.text(`${team1.team_name} vs ${team2.team_name}`, margin, y + 2);
+  y += 7;
+
+  setInk(MUTED);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(8.5);
+  const metaBits = [
+    match.venue ? `${match.venue.name}, ${match.venue.city}` : null,
+    match.match_date ? new Date(match.match_date).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }) : null,
+    `${match.format} • ${match.overs_per_innings} overs per side`,
+  ].filter(Boolean) as string[];
+  pdf.text(metaBits.join('  |  '), margin, y + 2);
+  y += 6;
+
+  if (match.toss_winner_id) {
+    const tossTeam = match.toss_winner_id === team1.id ? team1.team_name : team2.team_name;
+    pdf.text(`Toss: ${tossTeam}, elected to ${match.toss_decision || 'bat'} first`, margin, y + 2);
     y += 6;
   }
 
-  if (matchResult) {
-    pdf.setFillColor(245, 245, 220);
-    pdf.rect(margin, y - 2, contentW, 10, 'F');
-    pdf.setTextColor(30, 58, 95);
-    pdf.setFontSize(11);
+  // Innings score line-up (cricinfo header block)
+  innings.forEach((inn, idx) => {
+    const battingName = inn.batting_team_id === team1.id ? team1.team_name : team2.team_name;
+    const ov = `${Math.floor(inn.total_overs)}.${Math.round((inn.total_overs % 1) * 10)}`;
+    checkPage(8);
+    setInk(INK);
     pdf.setFont('helvetica', 'bold');
-    pdf.text(matchResult, pageW / 2, y + 5, { align: 'center' });
-    y += 14;
-  }
+    pdf.setFontSize(10);
+    pdf.text(battingName, margin, y + 3);
+    pdf.text(`${inn.total_runs}/${inn.total_wickets}`, pageW - margin - 22, y + 3, { align: 'right' });
+    setInk(MUTED);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(8);
+    pdf.text(`(${ov} ov)`, pageW - margin, y + 3, { align: 'right' });
+    y += 6 + (idx === innings.length - 1 ? 1 : 0);
+  });
 
+  if (matchResult) {
+    y += 1;
+    setInk(ACCENT);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(9);
+    pdf.text(matchResult, margin, y + 3);
+    y += 7;
+  }
+  rule(y);
+  y += 8;
+
+  // ---------- Innings blocks ----------
   for (let innIdx = 0; innIdx < innings.length; innIdx++) {
     const analysis = analyseInnings(data, innIdx);
     if (!analysis) continue;
-    const { inn, batTeamName, fullBatsmen, fullBowlers, fow, overGroups } = analysis;
+    const {
+      inn, batTeamName, fullBatsmen, fullBowlers, fow, overGroups,
+      extraBreakdown, totalExtras, didNotBat, runRate,
+    } = analysis;
     const oversDisplay = `${Math.floor(inn.total_overs)}.${Math.round((inn.total_overs % 1) * 10)}`;
 
-    checkPage(12);
-    pdf.setFillColor(30, 58, 95);
-    pdf.rect(margin, y, contentW, 9, 'F');
-    pdf.setTextColor(255, 255, 255);
-    pdf.setFontSize(10);
+    // Innings banner
+    checkPage(14);
+    pdf.setFillColor(HEADROW[0], HEADROW[1], HEADROW[2]);
+    pdf.rect(margin, y, contentW, 8, 'F');
+    pdf.setFillColor(ACCENT[0], ACCENT[1], ACCENT[2]);
+    pdf.rect(margin, y, 1.4, 8, 'F');
+    setInk(INK);
     pdf.setFont('helvetica', 'bold');
-    pdf.text(`${batTeamName} — Innings ${inn.innings_number}`, margin + 4, y + 6);
-    pdf.text(`${inn.total_runs}/${inn.total_wickets} (${oversDisplay} ov)`, pageW - margin - 4, y + 6, { align: 'right' });
-    y += 13;
+    pdf.setFontSize(9.5);
+    pdf.text(`${batTeamName} Innings`, margin + 4, y + 5.5);
+    pdf.text(`${inn.total_runs}/${inn.total_wickets}  (${oversDisplay} ov, RR ${runRate.toFixed(2)})`, pageW - margin - 2, y + 5.5, {
+      align: 'right',
+    });
+    y += 12;
 
+    // Batting table
+    const batX = [margin, margin + 62, margin + 112, margin + 124, margin + 136, margin + 148, margin + contentW];
     checkPage(10);
-    pdf.setFillColor(235, 235, 235);
-    pdf.rect(margin, y, contentW, 7, 'F');
-    pdf.setTextColor(80, 80, 80);
-    pdf.setFontSize(7);
+    setInk(MUTED);
     pdf.setFont('helvetica', 'bold');
-    const batColX = [margin + 3, margin + 50, margin + 105, margin + 118, margin + 130, margin + 142, margin + 155];
-    ['Batsman', 'How Out', 'R', 'B', '4s', '6s', 'SR'].forEach((h, i) => pdf.text(h, batColX[i], y + 5));
-    y += 9;
-
-    pdf.setFont('helvetica', 'normal');
     pdf.setFontSize(7);
-    fullBatsmen.forEach((bat, idx) => {
-      checkPage(7);
-      if (idx % 2 === 0) {
-        pdf.setFillColor(248, 248, 248);
-        pdf.rect(margin, y - 1, contentW, 6.5, 'F');
-      }
-      pdf.setTextColor(30, 30, 30);
+    pdf.text('BATTING', batX[0], y + 3);
+    ['R', 'B', '4s', '6s'].forEach((h, i) => pdf.text(h, batX[2 + i], y + 3, { align: 'right' }));
+    pdf.text('SR', batX[6], y + 3, { align: 'right' });
+    y += 5;
+    rule(y);
+    y += 1;
+
+    fullBatsmen.forEach(bat => {
+      checkPage(8);
+      setInk(INK);
       pdf.setFont('helvetica', 'bold');
-      pdf.text(bat.name.substring(0, 22), batColX[0], y + 3.5);
+      pdf.setFontSize(8);
+      pdf.text(bat.name.substring(0, 28), batX[0], y + 4);
+      setInk(MUTED);
       pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(100, 100, 100);
-      pdf.text(bat.howOut.substring(0, 24), batColX[1], y + 3.5);
-      pdf.setTextColor(30, 30, 30);
+      pdf.setFontSize(7.5);
+      pdf.text((bat.isOut ? bat.howOut : 'not out').substring(0, 30), batX[1], y + 4);
+      setInk(INK);
       pdf.setFont('helvetica', 'bold');
-      pdf.text(bat.runs.toString(), batColX[2], y + 3.5);
+      pdf.setFontSize(8);
+      pdf.text(String(bat.runs), batX[2], y + 4, { align: 'right' });
       pdf.setFont('helvetica', 'normal');
-      pdf.text(bat.balls.toString(), batColX[3], y + 3.5);
-      pdf.text(bat.fours.toString(), batColX[4], y + 3.5);
-      pdf.text(bat.sixes.toString(), batColX[5], y + 3.5);
-      pdf.text(bat.sr.toFixed(1), batColX[6], y + 3.5);
-      y += 6.5;
+      pdf.text(String(bat.balls), batX[3], y + 4, { align: 'right' });
+      pdf.text(String(bat.fours), batX[4], y + 4, { align: 'right' });
+      pdf.text(String(bat.sixes), batX[5], y + 4, { align: 'right' });
+      pdf.text(bat.sr.toFixed(2), batX[6], y + 4, { align: 'right' });
+      y += 5.6;
+      pdf.setDrawColor(238, 238, 238);
+      pdf.setLineWidth(0.15);
+      pdf.line(margin, y - 0.6, pageW - margin, y - 0.6);
     });
 
+    // Extras + total
     checkPage(14);
-    drawLine(y);
-    y += 2;
-    pdf.setTextColor(80, 80, 80);
-    pdf.setFontSize(7);
-    pdf.setFont('helvetica', 'normal');
-    pdf.text(`Extras: ${inn.extras}`, margin + 3, y + 4);
+    y += 1.5;
+    setInk(INK);
     pdf.setFont('helvetica', 'bold');
-    pdf.setTextColor(30, 30, 30);
-    pdf.text(`Total: ${inn.total_runs}/${inn.total_wickets} (${oversDisplay} ov)`, pageW - margin - 4, y + 4, { align: 'right' });
+    pdf.setFontSize(8);
+    pdf.text('Extras', batX[0], y + 4);
+    setInk(MUTED);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(7.5);
+    pdf.text(
+      `(b ${extraBreakdown.b}, lb ${extraBreakdown.lb}, w ${extraBreakdown.w}, nb ${extraBreakdown.nb})`,
+      batX[1],
+      y + 4,
+    );
+    setInk(INK);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(8);
+    pdf.text(String(totalExtras || inn.extras), batX[2], y + 4, { align: 'right' });
+    y += 6.5;
+    rule(y);
+    y += 1;
+
+    checkPage(8);
+    setInk(INK);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(8.5);
+    pdf.text('TOTAL', batX[0], y + 4);
+    setInk(MUTED);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(7.5);
+    pdf.text(`${oversDisplay} Ov (RR ${runRate.toFixed(2)})`, batX[1], y + 4);
+    setInk(INK);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(9);
+    pdf.text(`${inn.total_runs}/${inn.total_wickets}`, batX[6], y + 4, { align: 'right' });
     y += 8;
+
+    if (didNotBat.length) {
+      checkPage(10);
+      setInk(MUTED);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(7.5);
+      pdf.text('Did not bat:', margin, y + 3);
+      pdf.setFont('helvetica', 'normal');
+      pdf.splitTextToSize(didNotBat.join(', '), contentW - 22).forEach((line: string, i: number) => {
+        checkPage(5);
+        pdf.text(line, margin + 20, y + 3 + i * 3.6);
+      });
+      y += 4 + Math.max(1, pdf.splitTextToSize(didNotBat.join(', '), contentW - 22).length) * 3.6;
+    }
 
     if (fow.length > 0) {
       checkPage(12);
-      pdf.setFontSize(7);
+      setInk(MUTED);
       pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(80, 80, 80);
-      pdf.text('Fall of Wickets:', margin + 3, y + 3);
-      y += 5;
+      pdf.setFontSize(7.5);
+      pdf.text('Fall of wickets:', margin, y + 3);
       pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(6.5);
-      const fowText = fow.map(f => `${f.wicketNum}-${f.score} (${f.batsmanName}, ${f.overs})`).join('  •  ');
-      pdf.splitTextToSize(fowText, contentW - 6).forEach((line: string) => {
+      const fowText = fow.map(f => `${f.wicketNum}-${f.score} (${f.batsmanName}, ${f.overs} ov)`).join(', ');
+      const lines = pdf.splitTextToSize(fowText, contentW - 26) as string[];
+      lines.forEach((line, i) => {
         checkPage(5);
-        pdf.text(line, margin + 3, y + 3);
-        y += 4;
+        pdf.text(line, margin + 24, y + 3 + i * 3.6);
       });
-      y += 2;
+      y += 4 + lines.length * 3.6;
     }
 
-    checkPage(12);
-    drawLine(y);
+    // Bowling table
     y += 3;
-    pdf.setFillColor(235, 235, 235);
-    pdf.rect(margin, y, contentW, 7, 'F');
-    pdf.setTextColor(80, 80, 80);
-    pdf.setFontSize(7);
+    checkPage(14);
+    const bowX = [margin, margin + 62, margin + 76, margin + 92, margin + 104, margin + 122, margin + 136, margin + contentW];
+    setInk(MUTED);
     pdf.setFont('helvetica', 'bold');
-    const bowlColX = [margin + 3, margin + 55, margin + 78, margin + 98, margin + 118, margin + 138];
-    ['Bowler', 'O', 'M', 'R', 'W', 'Eco'].forEach((h, i) => pdf.text(h, bowlColX[i], y + 5));
-    y += 9;
-
-    pdf.setFont('helvetica', 'normal');
     pdf.setFontSize(7);
-    fullBowlers.forEach((bow, idx) => {
-      checkPage(7);
-      if (idx % 2 === 0) {
-        pdf.setFillColor(248, 248, 248);
-        pdf.rect(margin, y - 1, contentW, 6.5, 'F');
-      }
-      pdf.setTextColor(30, 30, 30);
+    pdf.text('BOWLING', bowX[0], y + 3);
+    ['O', 'M', 'R', 'W', 'ECON', 'WD'].forEach((h, i) => pdf.text(h, bowX[1 + i], y + 3, { align: 'right' }));
+    pdf.text('NB', bowX[7], y + 3, { align: 'right' });
+    y += 5;
+    rule(y);
+    y += 1;
+
+    fullBowlers.forEach(bow => {
+      checkPage(8);
+      setInk(INK);
       pdf.setFont('helvetica', 'bold');
-      pdf.text(bow.name.substring(0, 25), bowlColX[0], y + 3.5);
+      pdf.setFontSize(8);
+      pdf.text(bow.name.substring(0, 28), bowX[0], y + 4);
       pdf.setFont('helvetica', 'normal');
-      pdf.text(bow.overs, bowlColX[1], y + 3.5);
-      pdf.text(bow.maidens.toString(), bowlColX[2], y + 3.5);
-      pdf.text(bow.runs.toString(), bowlColX[3], y + 3.5);
+      pdf.text(bow.overs, bowX[1], y + 4, { align: 'right' });
+      pdf.text(String(bow.maidens), bowX[2], y + 4, { align: 'right' });
+      pdf.text(String(bow.runs), bowX[3], y + 4, { align: 'right' });
       pdf.setFont('helvetica', 'bold');
-      pdf.text(bow.wickets.toString(), bowlColX[4], y + 3.5);
+      pdf.text(String(bow.wickets), bowX[4], y + 4, { align: 'right' });
       pdf.setFont('helvetica', 'normal');
-      pdf.text(bow.economy, bowlColX[5], y + 3.5);
-      y += 6.5;
+      pdf.text(bow.economy, bowX[5], y + 4, { align: 'right' });
+      pdf.text(String(bow.wides), bowX[6], y + 4, { align: 'right' });
+      pdf.text(String(bow.noBalls), bowX[7], y + 4, { align: 'right' });
+      y += 5.6;
+      pdf.setDrawColor(238, 238, 238);
+      pdf.setLineWidth(0.15);
+      pdf.line(margin, y - 0.6, pageW - margin, y - 0.6);
     });
-    y += 4;
 
-    checkPage(10);
-    drawLine(y);
-    y += 3;
-    pdf.setFontSize(8);
-    pdf.setFont('helvetica', 'bold');
-    pdf.setTextColor(30, 58, 95);
-    pdf.text('Ball-by-Ball Commentary', margin + 3, y + 4);
-    y += 8;
-
+    // Over-by-over
+    y += 5;
+    sectionTitle('Over by over');
     Array.from(overGroups.entries())
       .sort((a, b) => a[0] - b[0])
       .forEach(([overNum, overBalls]) => {
-        checkPage(10);
-        pdf.setFontSize(7);
+        checkPage(8);
+        setInk(INK);
         pdf.setFont('helvetica', 'bold');
-        pdf.setTextColor(30, 58, 95);
-        pdf.text(`Over ${overNum + 1} (${playerName(overBalls[0]?.bowler_id)})`, margin + 3, y + 3);
-        const overRuns = overBalls.reduce((s, b) => s + b.runs_scored + b.extras, 0);
+        pdf.setFontSize(7.5);
+        pdf.text(`Ov ${overNum + 1}`, margin, y + 3);
+        setInk(MUTED);
         pdf.setFont('helvetica', 'normal');
-        pdf.setTextColor(60, 60, 60);
-        pdf.text(overBalls.map(getBallNotation).join('  '), margin + 60, y + 3);
+        pdf.text(playerName(overBalls[0]?.bowler_id).substring(0, 20), margin + 12, y + 3);
+        setInk(INK);
+        pdf.text(overBalls.map(getBallNotation).join('  '), margin + 62, y + 3);
+        const overRuns = overBalls.reduce((s, b) => s + b.runs_scored + b.extras, 0);
         pdf.setFont('helvetica', 'bold');
-        pdf.setTextColor(30, 30, 30);
-        pdf.text(`= ${overRuns}`, pageW - margin - 4, y + 3, { align: 'right' });
-        y += 5.5;
+        pdf.text(`${overRuns} runs`, pageW - margin, y + 3, { align: 'right' });
+        y += 5;
       });
 
     y += 6;
+    rule(y);
+    y += 8;
   }
 
-  checkPage(10);
-  drawLine(y);
-  y += 4;
-  pdf.setFontSize(7);
-  pdf.setFont('helvetica', 'italic');
-  pdf.setTextColor(150, 150, 150);
-  pdf.text(`Generated by CricBid • ${new Date().toLocaleDateString()}`, pageW / 2, y + 3, { align: 'center' });
+  // ---------- Footer on every page ----------
+  const pages = pdf.getNumberOfPages();
+  for (let i = 1; i <= pages; i++) {
+    pdf.setPage(i);
+    pdf.setDrawColor(RULE[0], RULE[1], RULE[2]);
+    pdf.setLineWidth(0.2);
+    pdf.line(margin, pageH - 12, pageW - margin, pageH - 12);
+    setInk(MUTED);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(6.5);
+    pdf.text(`${team1.team_name} v ${team2.team_name} — full scorecard`, margin, pageH - 8);
+    pdf.text(`Page ${i} of ${pages}`, pageW - margin, pageH - 8, { align: 'right' });
+  }
 
   const t1 = team1.team_name.replace(/\s+/g, '_');
   const t2 = team2.team_name.replace(/\s+/g, '_');

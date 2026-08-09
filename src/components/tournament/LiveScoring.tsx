@@ -40,6 +40,26 @@ export function LiveScoring({
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('summary');
 
+  // A completed (or cancelled) match is history: read-only, no further edits.
+  const isReadOnly = match.status === 'completed' || match.status === 'cancelled';
+  // Limited-overs games have exactly 2 innings. Only long-form (Test / 90+ overs) allows 4.
+  const maxInnings =
+    (match.format as string) === 'Test' || match.overs_per_innings >= 90 ? 4 : 2;
+  const canStartNewInnings = !isReadOnly && innings.length < maxInnings;
+  const allInningsDone = innings.length >= maxInnings && innings.every((i) => i.is_completed);
+
+  const blockIfReadOnly = () => {
+    if (!isReadOnly) return false;
+    toast({
+      title: 'Match completed',
+      description: 'This match is read-only and kept as a record. Editing is disabled.',
+      variant: 'destructive',
+    });
+    return true;
+  };
+
+
+
   // Scoring state
   const [strikerBatsman, setStrikerBatsman] = useState('');
   const [nonStrikerBatsman, setNonStrikerBatsman] = useState('');
@@ -342,8 +362,31 @@ export function LiveScoring({
     fetchInnings();
   }, [match.id]);
 
+  // Live stats: refresh instantly whenever ball-by-ball events or innings totals change.
+  useEffect(() => {
+    const channel = supabase
+      .channel(`match-live-${match.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'match_balls' }, () => {
+        fetchInnings(true);
+      })
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'match_innings', filter: `match_id=eq.${match.id}` },
+        () => {
+          fetchInnings(true);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [match.id]);
+
+
   const fetchInnings = async (skipReconstruct = false) => {
-    setLoading(true);
+    if (!skipReconstruct) setLoading(true);
     const { data } = await supabase
       .from('match_innings')
       .select('*')
@@ -528,6 +571,15 @@ export function LiveScoring({
   };
 
   const startInnings = async (battingTeamId: string, bowlingTeamId: string) => {
+    if (blockIfReadOnly()) return;
+    if (innings.length >= maxInnings) {
+      toast({
+        title: 'No more innings',
+        description: `This match format allows only ${maxInnings} innings.`,
+        variant: 'destructive',
+      });
+      return;
+    }
     const inningsNumber = innings.length + 1;
     const { data, error } = await supabase
       .from('match_innings')
@@ -555,6 +607,7 @@ export function LiveScoring({
   };
 
   const recordBall = async (runs: number, isExtra = false, extraTypeVal = '') => {
+    if (blockIfReadOnly()) return;
     if (!currentInnings) return;
     
     if (!strikerBatsman || !currentBowler) {
@@ -840,6 +893,7 @@ export function LiveScoring({
   };
 
   const undoLastBall = async () => {
+    if (blockIfReadOnly()) return;
     if (!balls.length || !currentInnings) return;
     
     const lastBall = balls[balls.length - 1];
@@ -878,6 +932,7 @@ export function LiveScoring({
   };
 
   const endInnings = async () => {
+    if (blockIfReadOnly()) return;
     if (!currentInnings) return;
     await supabase.from('match_innings').update({ is_completed: true }).eq('id', currentInnings.id);
     toast({ title: 'Innings Completed' });
@@ -885,6 +940,7 @@ export function LiveScoring({
   };
 
   const saveSimpleScore = async () => {
+    if (blockIfReadOnly()) return;
     const existingInn1 = innings.find((i) => i.innings_number === 1);
     const existingInn2 = innings.find((i) => i.innings_number === 2);
 
@@ -1001,10 +1057,10 @@ export function LiveScoring({
       {/* Premium Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 min-h-0 flex flex-col">
         <div className="bg-[hsl(var(--slate-dark))] border-b border-white/10">
-          <TabsList className="grid grid-cols-5 bg-transparent rounded-none gap-0 p-0 h-auto">
+          <TabsList className={`grid ${isReadOnly ? 'grid-cols-4' : 'grid-cols-5'} bg-transparent rounded-none gap-0 p-0 h-auto`}>
             {[
               { value: 'summary', label: 'Summary' },
-              { value: 'scoring', label: 'Scoring' },
+              ...(isReadOnly ? [] : [{ value: 'scoring', label: 'Scoring' }]),
               { value: 'scorecard', label: 'Scorecard' },
               { value: 'balls', label: 'Balls' },
               { value: 'info', label: 'Info' },
@@ -1033,7 +1089,18 @@ export function LiveScoring({
         </TabsContent>
 
         <TabsContent value="scoring" className="flex-1 min-h-0 flex flex-col overflow-auto p-0 m-0">
-          {currentInnings ? (
+          {isReadOnly ? (
+            <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
+              <div className="rounded-full bg-muted p-4">
+                <AlertCircle className="h-7 w-7 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-bold">Match {match.status === 'cancelled' ? 'Cancelled' : 'Completed'}</h3>
+              <p className="max-w-sm text-sm text-muted-foreground">
+                This match is now a permanent record. Scoring is locked — view the Scorecard, Balls
+                and Summary tabs, or download the full scorecard PDF.
+              </p>
+            </div>
+          ) : currentInnings ? (
             <div className="flex flex-col flex-1 min-h-0 relative">
               {/* Premium Score Display */}
               <div className="relative bg-gradient-to-br from-card via-card to-primary/5 p-5 text-center border-b border-border/50">
@@ -1513,7 +1580,7 @@ export function LiveScoring({
                   <Button variant="outline" onClick={endInnings} className="flex-1 rounded-lg border-border/50 font-medium">
                     End Innings
                   </Button>
-                  {innings.length >= 2 && innings.every((i) => i.is_completed) && (
+                  {allInningsDone && (
                     <Button onClick={completeMatch} className="flex-1 rounded-lg bg-gradient-to-r from-primary to-primary/80 font-bold shadow-lg shadow-primary/20">
                       Complete Match
                     </Button>
@@ -1521,12 +1588,14 @@ export function LiveScoring({
                 </div>
               </div>
             </div>
-          ) : (
+          ) : canStartNewInnings ? (
             /* Start Innings */
             <div className="p-6 space-y-5">
               <div className="text-center">
                 <h3 className="text-xl font-bold">Start Innings {innings.length + 1}</h3>
-                <p className="text-sm text-muted-foreground mt-1">Select which team will bat first</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {innings.length === 0 ? 'Select which team will bat first' : 'Select the batting team'}
+                </p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <Button onClick={() => startInnings(team1.id, team2.id)} className="h-28 flex-col rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-xl shadow-primary/20 hover:shadow-primary/30 transition-all">
@@ -1539,8 +1608,20 @@ export function LiveScoring({
                 </Button>
               </div>
             </div>
+          ) : (
+            /* Both innings done — only finalising the match remains */
+            <div className="p-6 space-y-5 text-center">
+              <h3 className="text-xl font-bold">Both Innings Completed</h3>
+              <p className="text-sm text-muted-foreground">
+                This format has {maxInnings} innings. Finalise the match to lock it as a record.
+              </p>
+              <Button onClick={completeMatch} className="w-full h-12 rounded-xl bg-gradient-to-r from-primary to-primary/80 font-bold shadow-lg shadow-primary/20">
+                Complete Match
+              </Button>
+            </div>
           )}
         </TabsContent>
+
 
         {/* ===== PREMIUM SCORECARD ===== */}
         <TabsContent value="scorecard" className="flex-1 min-h-0 overflow-auto p-3 m-0">
@@ -1845,6 +1926,7 @@ export function LiveScoring({
               </div>
             </div>
 
+            {!isReadOnly && (<>
             {/* Quick Score Entry */}
             <div className="rounded-xl border border-border/50 overflow-hidden">
               <div className="bg-muted/30 px-4 py-2.5 border-b border-border/30">
@@ -1905,6 +1987,7 @@ export function LiveScoring({
                 </div>
               </div>
             </div>
+            </>)}
           </div>
         </TabsContent>
       </Tabs>
