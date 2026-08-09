@@ -386,7 +386,7 @@ export function LiveScoring({
 
 
   const fetchInnings = async (skipReconstruct = false) => {
-    setLoading(true);
+    if (!skipReconstruct) setLoading(true);
     const { data } = await supabase
       .from('match_innings')
       .select('*')
