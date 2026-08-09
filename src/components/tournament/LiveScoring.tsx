@@ -1580,7 +1580,7 @@ export function LiveScoring({
                   <Button variant="outline" onClick={endInnings} className="flex-1 rounded-lg border-border/50 font-medium">
                     End Innings
                   </Button>
-                  {innings.length >= 2 && innings.every((i) => i.is_completed) && (
+                  {allInningsDone && (
                     <Button onClick={completeMatch} className="flex-1 rounded-lg bg-gradient-to-r from-primary to-primary/80 font-bold shadow-lg shadow-primary/20">
                       Complete Match
                     </Button>
@@ -1588,12 +1588,14 @@ export function LiveScoring({
                 </div>
               </div>
             </div>
-          ) : (
+          ) : canStartNewInnings ? (
             /* Start Innings */
             <div className="p-6 space-y-5">
               <div className="text-center">
                 <h3 className="text-xl font-bold">Start Innings {innings.length + 1}</h3>
-                <p className="text-sm text-muted-foreground mt-1">Select which team will bat first</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {innings.length === 0 ? 'Select which team will bat first' : 'Select the batting team'}
+                </p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <Button onClick={() => startInnings(team1.id, team2.id)} className="h-28 flex-col rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-xl shadow-primary/20 hover:shadow-primary/30 transition-all">
@@ -1606,8 +1608,20 @@ export function LiveScoring({
                 </Button>
               </div>
             </div>
+          ) : (
+            /* Both innings done — only finalising the match remains */
+            <div className="p-6 space-y-5 text-center">
+              <h3 className="text-xl font-bold">Both Innings Completed</h3>
+              <p className="text-sm text-muted-foreground">
+                This format has {maxInnings} innings. Finalise the match to lock it as a record.
+              </p>
+              <Button onClick={completeMatch} className="w-full h-12 rounded-xl bg-gradient-to-r from-primary to-primary/80 font-bold shadow-lg shadow-primary/20">
+                Complete Match
+              </Button>
+            </div>
           )}
         </TabsContent>
+
 
         {/* ===== PREMIUM SCORECARD ===== */}
         <TabsContent value="scorecard" className="flex-1 min-h-0 overflow-auto p-3 m-0">
