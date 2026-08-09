@@ -1057,10 +1057,10 @@ export function LiveScoring({
       {/* Premium Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 min-h-0 flex flex-col">
         <div className="bg-[hsl(var(--slate-dark))] border-b border-white/10">
-          <TabsList className="grid grid-cols-5 bg-transparent rounded-none gap-0 p-0 h-auto">
+          <TabsList className={`grid ${isReadOnly ? 'grid-cols-4' : 'grid-cols-5'} bg-transparent rounded-none gap-0 p-0 h-auto`}>
             {[
               { value: 'summary', label: 'Summary' },
-              { value: 'scoring', label: 'Scoring' },
+              ...(isReadOnly ? [] : [{ value: 'scoring', label: 'Scoring' }]),
               { value: 'scorecard', label: 'Scorecard' },
               { value: 'balls', label: 'Balls' },
               { value: 'info', label: 'Info' },
