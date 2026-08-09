@@ -362,6 +362,29 @@ export function LiveScoring({
     fetchInnings();
   }, [match.id]);
 
+  // Live stats: refresh instantly whenever ball-by-ball events or innings totals change.
+  useEffect(() => {
+    const channel = supabase
+      .channel(`match-live-${match.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'match_balls' }, () => {
+        fetchInnings(true);
+      })
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'match_innings', filter: `match_id=eq.${match.id}` },
+        () => {
+          fetchInnings(true);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [match.id]);
+
+
   const fetchInnings = async (skipReconstruct = false) => {
     setLoading(true);
     const { data } = await supabase
