@@ -571,6 +571,15 @@ export function LiveScoring({
   };
 
   const startInnings = async (battingTeamId: string, bowlingTeamId: string) => {
+    if (blockIfReadOnly()) return;
+    if (innings.length >= maxInnings) {
+      toast({
+        title: 'No more innings',
+        description: `This match format allows only ${maxInnings} innings.`,
+        variant: 'destructive',
+      });
+      return;
+    }
     const inningsNumber = innings.length + 1;
     const { data, error } = await supabase
       .from('match_innings')
