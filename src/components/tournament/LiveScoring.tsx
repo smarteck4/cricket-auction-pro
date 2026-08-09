@@ -40,6 +40,26 @@ export function LiveScoring({
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('summary');
 
+  // A completed (or cancelled) match is history: read-only, no further edits.
+  const isReadOnly = match.status === 'completed' || match.status === 'cancelled';
+  // Limited-overs games have exactly 2 innings. Only long-form (Test / 90+ overs) allows 4.
+  const maxInnings =
+    (match.format as string) === 'Test' || match.overs_per_innings >= 90 ? 4 : 2;
+  const canStartNewInnings = !isReadOnly && innings.length < maxInnings;
+  const allInningsDone = innings.length >= maxInnings && innings.every((i) => i.is_completed);
+
+  const blockIfReadOnly = () => {
+    if (!isReadOnly) return false;
+    toast({
+      title: 'Match completed',
+      description: 'This match is read-only and kept as a record. Editing is disabled.',
+      variant: 'destructive',
+    });
+    return true;
+  };
+
+
+
   // Scoring state
   const [strikerBatsman, setStrikerBatsman] = useState('');
   const [nonStrikerBatsman, setNonStrikerBatsman] = useState('');
