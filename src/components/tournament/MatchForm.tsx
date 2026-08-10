@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Match, MatchFormat, MatchStatus, Tournament, Venue, FORMAT_OVERS, FORMAT_LABELS } from '@/lib/tournament-types';
+import { Match, MatchFormat, MatchStatus, Tournament, Venue, FORMAT_OVERS, FORMAT_LABELS, getMaxInnings } from '@/lib/tournament-types';
 import { Owner } from '@/lib/types';
 import { supabase } from '@/integrations/supabase/client';
 import { AlertCircle } from 'lucide-react';
