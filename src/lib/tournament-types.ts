@@ -1,4 +1,4 @@
-export type MatchFormat = 'T5' | 'T10' | 'T20' | 'ODI' | 'Custom';
+export type MatchFormat = 'T5' | 'T10' | 'T20' | 'ODI' | 'Test' | 'Custom';
 export type MatchStatus = 'scheduled' | 'live' | 'completed' | 'cancelled';
 export type TournamentStatus = 'upcoming' | 'ongoing' | 'completed';
 
