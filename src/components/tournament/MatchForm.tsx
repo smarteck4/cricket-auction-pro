@@ -207,9 +207,15 @@ export function MatchForm({ match, tournaments, teams, venues, onSubmit, onCance
               <SelectItem value="T10">{FORMAT_LABELS.T10}</SelectItem>
               <SelectItem value="T20">{FORMAT_LABELS.T20}</SelectItem>
               <SelectItem value="ODI">{FORMAT_LABELS.ODI}</SelectItem>
+              <SelectItem value="Test">{FORMAT_LABELS.Test}</SelectItem>
               <SelectItem value="Custom">{FORMAT_LABELS.Custom}</SelectItem>
             </SelectContent>
           </Select>
+          <p className="text-xs text-muted-foreground">
+            {getMaxInnings(format, oversPerInnings) === 4
+              ? 'Long form: 4 innings allowed'
+              : 'Limited overs: exactly 2 innings'}
+          </p>
         </div>
 
         <div className="space-y-2">
@@ -218,7 +224,7 @@ export function MatchForm({ match, tournaments, teams, venues, onSubmit, onCance
             id="overs"
             type="number"
             min={1}
-            max={50}
+            max={200}
             value={oversPerInnings}
             onChange={(e) => setOversPerInnings(parseInt(e.target.value) || 20)}
             disabled={!isCustomFormat}
