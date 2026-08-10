@@ -6,12 +6,17 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Match, MatchInnings, MatchBall } from '@/lib/tournament-types';
+import { Match, MatchInnings, MatchBall, getMaxInnings } from '@/lib/tournament-types';
 import { Player, Owner } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, RotateCcw, AlertCircle, ArrowLeftRight } from 'lucide-react';
 import { MatchSummary } from './MatchSummary';
 import { PlayerNameCell, TeamLogo } from './ScoreAvatars';
+import { ChaseBanner } from './ChaseBanner';
+import { MatchCharts } from './MatchCharts';
+import { MatchSquads } from './MatchSquads';
+import { MatchBallsFeed } from './MatchBallsFeed';
+import { getMatchResultText } from '@/lib/match-pdf';
 
 interface LiveScoringProps {
   match: Match;
@@ -43,8 +48,7 @@ export function LiveScoring({
   // A completed (or cancelled) match is history: read-only, no further edits.
   const isReadOnly = match.status === 'completed' || match.status === 'cancelled';
   // Limited-overs games have exactly 2 innings. Only long-form (Test / 90+ overs) allows 4.
-  const maxInnings =
-    (match.format as string) === 'Test' || match.overs_per_innings >= 90 ? 4 : 2;
+  const maxInnings = getMaxInnings(match.format, match.overs_per_innings);
   const canStartNewInnings = !isReadOnly && innings.length < maxInnings;
   const allInningsDone = innings.length >= maxInnings && innings.every((i) => i.is_completed);
 
@@ -1057,18 +1061,19 @@ export function LiveScoring({
       {/* Premium Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 min-h-0 flex flex-col">
         <div className="bg-[hsl(var(--slate-dark))] border-b border-white/10">
-          <TabsList className={`grid ${isReadOnly ? 'grid-cols-4' : 'grid-cols-5'} bg-transparent rounded-none gap-0 p-0 h-auto`}>
+          <TabsList className={`grid ${isReadOnly ? 'grid-cols-5' : 'grid-cols-6'} bg-transparent rounded-none gap-0 p-0 h-auto`}>
             {[
               { value: 'summary', label: 'Summary' },
               ...(isReadOnly ? [] : [{ value: 'scoring', label: 'Scoring' }]),
               { value: 'scorecard', label: 'Scorecard' },
               { value: 'balls', label: 'Balls' },
+              { value: 'squads', label: 'Squads' },
               { value: 'info', label: 'Info' },
             ].map(tab => (
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
-                className="text-white/50 rounded-none border-b-2 border-transparent py-2.5 text-xs sm:text-sm font-medium transition-all data-[state=active]:text-primary data-[state=active]:border-primary data-[state=active]:bg-transparent bg-transparent hover:text-white/70"
+                className="text-white/50 rounded-none border-b-2 border-transparent py-2.5 text-[11px] sm:text-sm font-medium transition-all data-[state=active]:text-primary data-[state=active]:border-primary data-[state=active]:bg-transparent bg-transparent hover:text-white/70"
               >
                 {tab.label}
               </TabsTrigger>
@@ -1077,6 +1082,17 @@ export function LiveScoring({
         </div>
 
         <TabsContent value="summary" className="flex-1 min-h-0 overflow-auto p-0 m-0">
+          {innings.length > 1 && (
+            <div className="p-3 pb-0">
+              <ChaseBanner
+                innings={innings}
+                allBalls={allInningsBalls}
+                oversPerInnings={match.overs_per_innings}
+                team1={team1}
+                team2={team2}
+              />
+            </div>
+          )}
           <MatchSummary
             match={match}
             team1={team1}
@@ -1086,6 +1102,9 @@ export function LiveScoring({
             innings={innings}
             allBalls={allInningsBalls}
           />
+          <div className="p-3 pt-0">
+            <MatchCharts innings={innings} allBalls={allInningsBalls} team1={team1} team2={team2} />
+          </div>
         </TabsContent>
 
         <TabsContent value="scoring" className="flex-1 min-h-0 flex flex-col overflow-auto p-0 m-0">
@@ -1876,31 +1895,24 @@ export function LiveScoring({
         </TabsContent>
 
         <TabsContent value="balls" className="flex-1 min-h-0 p-4 overflow-auto">
-          <div className="space-y-1.5">
-            {balls.length > 0 ? (
-              balls.slice().reverse().map((ball, i) => (
-                <div key={ball.id} className="flex justify-between items-center p-2.5 bg-muted/30 rounded-lg border border-border/30 hover:bg-muted/50 transition-colors">
-                  <span className="text-sm font-medium">
-                    <span className="text-muted-foreground text-xs mr-2">{ball.over_number}.{ball.ball_number}</span>
-                    {getPlayerName(ball.batsman_id)}
-                  </span>
-                  <span
-                    className={`inline-flex items-center justify-center min-w-[2rem] h-7 rounded-full text-xs font-bold px-2 ${
-                      ball.is_wicket 
-                        ? 'bg-destructive text-white' 
-                        : ball.runs_scored >= 4 
-                        ? 'bg-primary text-white'
-                        : 'bg-secondary text-secondary-foreground'
-                    }`}
-                  >
-                    {getBallDisplay(ball)}
-                  </span>
-                </div>
-              ))
-            ) : (
-              <p className="text-center text-muted-foreground py-8">No balls recorded</p>
-            )}
-          </div>
+          <MatchBallsFeed
+            innings={innings}
+            allBalls={allInningsBalls}
+            team1={team1}
+            team2={team2}
+            players={[...team1Players, ...team2Players]}
+          />
+        </TabsContent>
+
+        <TabsContent value="squads" className="flex-1 min-h-0 p-4 overflow-auto">
+          <MatchSquads
+            team1={team1}
+            team2={team2}
+            team1Players={team1Players}
+            team2Players={team2Players}
+            innings={innings}
+            allBalls={allInningsBalls}
+          />
         </TabsContent>
 
         <TabsContent value="info" className="flex-1 min-h-0 p-5 overflow-auto">
@@ -1909,20 +1921,87 @@ export function LiveScoring({
               <div className="bg-muted/30 rounded-xl p-4 border border-border/30">
                 <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-1">Format</p>
                 <p className="font-bold text-lg">{match.format}</p>
-                <p className="text-xs text-muted-foreground">{match.overs_per_innings} overs</p>
+                <p className="text-xs text-muted-foreground">
+                  {match.overs_per_innings} overs · {maxInnings} innings
+                </p>
               </div>
               <div className="bg-muted/30 rounded-xl p-4 border border-border/30">
                 <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-1">Status</p>
                 <Badge className="mt-1">{match.status}</Badge>
               </div>
             </div>
-            
+
             <div className="bg-muted/30 rounded-xl p-4 border border-border/30">
               <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-2">Teams</p>
               <div className="flex items-center justify-center gap-4">
-                <span className="font-bold text-sm">{team1.team_name}</span>
+                <span className="inline-flex items-center gap-2 font-bold text-sm">
+                  <TeamLogo team={team1} size={24} />{team1.team_name}
+                </span>
                 <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">VS</span>
-                <span className="font-bold text-sm">{team2.team_name}</span>
+                <span className="inline-flex items-center gap-2 font-bold text-sm">
+                  <TeamLogo team={team2} size={24} />{team2.team_name}
+                </span>
+              </div>
+            </div>
+
+            {/* Match details — toss, venue, date, result */}
+            <div className="rounded-xl border border-border/30 overflow-hidden">
+              <div className="bg-muted/30 px-4 py-2.5 border-b border-border/30">
+                <h4 className="font-bold text-sm">Match Details</h4>
+              </div>
+              <div className="divide-y divide-border/30 text-sm">
+                {(() => {
+                  const tossTeam =
+                    match.toss_winner_id === team1.id ? team1 : match.toss_winner_id === team2.id ? team2 : null;
+                  const decision = match.toss_decision === 'bowl' ? 'bowl first' : 'bat first';
+                  const result = getMatchResultText({
+                    match,
+                    team1,
+                    team2,
+                    team1Players,
+                    team2Players,
+                    innings,
+                    allBalls: allInningsBalls,
+                  });
+                  const rows: { label: string; value: string }[] = [
+                    {
+                      label: 'Toss',
+                      value: tossTeam
+                        ? `${tossTeam.team_name} won the toss and elected to ${decision}`
+                        : 'Toss not recorded',
+                    },
+                    { label: 'Tournament', value: match.tournament?.name || '—' },
+                    {
+                      label: 'Venue',
+                      value: match.venue ? `${match.venue.name}, ${match.venue.city}` : 'Venue TBC',
+                    },
+                    {
+                      label: 'Date',
+                      value: match.match_date
+                        ? new Date(match.match_date).toLocaleString(undefined, {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                        : '—',
+                    },
+                    ...innings.map((inn) => ({
+                      label: `Innings ${inn.innings_number}`,
+                      value: `${inn.batting_team_id === team1.id ? team1.team_name : team2.team_name} ${inn.total_runs}/${inn.total_wickets} (${inn.total_overs} ov)`,
+                    })),
+                    ...(result ? [{ label: 'Result', value: result }] : []),
+                  ];
+                  return rows.map((r) => (
+                    <div key={r.label} className="flex gap-3 px-4 py-2.5">
+                      <span className="w-24 shrink-0 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                        {r.label}
+                      </span>
+                      <span className="min-w-0 flex-1 font-medium">{r.value}</span>
+                    </div>
+                  ));
+                })()}
               </div>
             </div>
 
