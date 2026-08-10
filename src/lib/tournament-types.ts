@@ -1,4 +1,4 @@
-export type MatchFormat = 'T5' | 'T10' | 'T20' | 'ODI' | 'Custom';
+export type MatchFormat = 'T5' | 'T10' | 'T20' | 'ODI' | 'Test' | 'Custom';
 export type MatchStatus = 'scheduled' | 'live' | 'completed' | 'cancelled';
 export type TournamentStatus = 'upcoming' | 'ongoing' | 'completed';
 
@@ -115,6 +115,7 @@ export const FORMAT_OVERS: Record<MatchFormat, number> = {
   T10: 10,
   T20: 20,
   ODI: 50,
+  Test: 90,
   Custom: 20,
 };
 
@@ -123,8 +124,13 @@ export const FORMAT_LABELS: Record<MatchFormat, string> = {
   T10: 'T10 (10 Overs)',
   T20: 'T20 (20 Overs)',
   ODI: 'One Day (50 Overs)',
+  Test: 'Test / Long form (90+ Overs, 4 innings)',
   Custom: 'Custom Format',
 };
+
+/** Long-form cricket (Test or 90+ overs a side) plays 4 innings; everything else 2. */
+export const getMaxInnings = (format: MatchFormat | string, oversPerInnings: number): number =>
+  format === 'Test' || oversPerInnings >= 90 ? 4 : 2;
 
 export const STATUS_COLORS: Record<MatchStatus, { bg: string; text: string }> = {
   scheduled: { bg: 'bg-blue-500/10', text: 'text-blue-500' },
