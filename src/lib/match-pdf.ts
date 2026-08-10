@@ -331,18 +331,34 @@ export function generateMatchPdf(data: MatchPdfData) {
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(8.5);
   const metaBits = [
-    match.venue ? `${match.venue.name}, ${match.venue.city}` : null,
-    match.match_date ? new Date(match.match_date).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }) : null,
+    match.tournament?.name || 'Match',
+    match.venue ? `${match.venue.name}, ${match.venue.city}` : 'Venue TBC',
+    match.match_date
+      ? new Date(match.match_date).toLocaleString(undefined, {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      : 'Date TBC',
     `${match.format} • ${match.overs_per_innings} overs per side`,
-  ].filter(Boolean) as string[];
-  pdf.text(metaBits.join('  |  '), margin, y + 2);
-  y += 6;
+  ];
+  pdf.splitTextToSize(metaBits.join('  |  '), contentW).forEach((line: string, i: number) => {
+    pdf.text(line, margin, y + 2 + i * 4);
+  });
+  y += 6 + (pdf.splitTextToSize(metaBits.join('  |  '), contentW).length - 1) * 4;
 
-  if (match.toss_winner_id) {
-    const tossTeam = match.toss_winner_id === team1.id ? team1.team_name : team2.team_name;
-    pdf.text(`Toss: ${tossTeam}, elected to ${match.toss_decision || 'bat'} first`, margin, y + 2);
-    y += 6;
-  }
+  const tossTeamName =
+    match.toss_winner_id === team1.id ? team1.team_name : match.toss_winner_id === team2.id ? team2.team_name : null;
+  pdf.text(
+    tossTeamName
+      ? `Toss: ${tossTeamName} won the toss and elected to ${match.toss_decision === 'bowl' ? 'bowl' : 'bat'} first`
+      : 'Toss: not recorded',
+    margin,
+    y + 2,
+  );
+  y += 6;
 
   // Innings score line-up (cricinfo header block)
   innings.forEach((inn, idx) => {
