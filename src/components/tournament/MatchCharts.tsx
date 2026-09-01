@@ -4,8 +4,10 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  Label,
   Line,
   LineChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -13,13 +15,16 @@ import {
   Legend,
 } from 'recharts';
 import { MatchInnings, MatchBall } from '@/lib/tournament-types';
-import { Owner } from '@/lib/types';
+import { Owner, Player } from '@/lib/types';
+import { computeMilestones } from '@/lib/match-analysis';
 
 interface MatchChartsProps {
   innings: MatchInnings[];
   allBalls: MatchBall[][];
   team1: Owner;
   team2: Owner;
+  team1Players?: Player[];
+  team2Players?: Player[];
 }
 
 interface OverRow {
@@ -27,6 +32,7 @@ interface OverRow {
   runs: number;
   wickets: number;
 }
+
 
 const buildOvers = (balls: MatchBall[]): OverRow[] => {
   const map = new Map<number, OverRow>();
@@ -40,15 +46,30 @@ const buildOvers = (balls: MatchBall[]): OverRow[] => {
 };
 
 /** Manhattan (runs per over + wickets) and worm (cumulative runs) charts. */
-export function MatchCharts({ innings, allBalls, team1, team2 }: MatchChartsProps) {
+export function MatchCharts({
+  innings,
+  allBalls,
+  team1,
+  team2,
+  team1Players = [],
+  team2Players = [],
+}: MatchChartsProps) {
   const perInnings = useMemo(
     () =>
-      innings.map((inn, idx) => ({
-        inn,
-        name: inn.batting_team_id === team1.id ? team1.team_name : team2.team_name,
-        overs: buildOvers(allBalls[idx] || []),
-      })),
-    [innings, allBalls, team1, team2],
+      innings.map((inn, idx) => {
+        const battingIsTeam1 = inn.batting_team_id === team1.id;
+        return {
+          inn,
+          name: battingIsTeam1 ? team1.team_name : team2.team_name,
+          overs: buildOvers(allBalls[idx] || []),
+          milestones: computeMilestones(
+            allBalls[idx] || [],
+            battingIsTeam1 ? team1Players : team2Players,
+            battingIsTeam1 ? team2Players : team1Players,
+          ).filter((m) => m.kind === 'team' || m.kind === 'partnership' || m.kind === 'wicket'),
+        };
+      }),
+    [innings, allBalls, team1, team2, team1Players, team2Players],
   );
 
   const worm = useMemo(() => {
@@ -108,6 +129,22 @@ export function MatchCharts({ innings, allBalls, team1, team2 }: MatchChartsProp
                       />
                     ))}
                   </Bar>
+                  {p.milestones.map((m, mi) => (
+                    <ReferenceLine
+                      key={`${m.label}-${mi}`}
+                      x={m.over}
+                      stroke={m.kind === 'wicket' ? 'hsl(var(--destructive))' : 'hsl(var(--primary))'}
+                      strokeDasharray="4 3"
+                      strokeOpacity={0.7}
+                    >
+                      <Label
+                        value={m.label}
+                        position="top"
+                        fontSize={9}
+                        fill="hsl(var(--muted-foreground))"
+                      />
+                    </ReferenceLine>
+                  ))}
                 </BarChart>
               </ResponsiveContainer>
             </div>

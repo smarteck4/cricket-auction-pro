@@ -1090,6 +1090,7 @@ export function LiveScoring({
                 oversPerInnings={match.overs_per_innings}
                 team1={team1}
                 team2={team2}
+                matchStatus={match.status}
               />
             </div>
           )}
@@ -1102,8 +1103,31 @@ export function LiveScoring({
             innings={innings}
             allBalls={allInningsBalls}
           />
-          <div className="p-3 pt-0">
-            <MatchCharts innings={innings} allBalls={allInningsBalls} team1={team1} team2={team2} />
+          <div className="space-y-4 p-3 pt-0">
+            <FallOfWickets
+              innings={innings}
+              allBalls={allInningsBalls}
+              team1={team1}
+              team2={team2}
+              team1Players={team1Players}
+              team2Players={team2Players}
+            />
+            <MatchCharts
+              innings={innings}
+              allBalls={allInningsBalls}
+              team1={team1}
+              team2={team2}
+              team1Players={team1Players}
+              team2Players={team2Players}
+            />
+            <MatchMilestones
+              innings={innings}
+              allBalls={allInningsBalls}
+              team1={team1}
+              team2={team2}
+              team1Players={team1Players}
+              team2Players={team2Players}
+            />
           </div>
         </TabsContent>
 
