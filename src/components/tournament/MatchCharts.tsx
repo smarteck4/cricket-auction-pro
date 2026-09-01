@@ -129,6 +129,22 @@ export function MatchCharts({
                       />
                     ))}
                   </Bar>
+                  {p.milestones.map((m, mi) => (
+                    <ReferenceLine
+                      key={`${m.label}-${mi}`}
+                      x={m.over}
+                      stroke={m.kind === 'wicket' ? 'hsl(var(--destructive))' : 'hsl(var(--primary))'}
+                      strokeDasharray="4 3"
+                      strokeOpacity={0.7}
+                    >
+                      <Label
+                        value={m.label}
+                        position="top"
+                        fontSize={9}
+                        fill="hsl(var(--muted-foreground))"
+                      />
+                    </ReferenceLine>
+                  ))}
                 </BarChart>
               </ResponsiveContainer>
             </div>
