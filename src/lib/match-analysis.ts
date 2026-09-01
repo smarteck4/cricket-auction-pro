@@ -143,7 +143,7 @@ export function computeMilestones(
         label: `${nextTeamMark} up`,
         detail: `Team ${nextTeamMark} in ${oversText(legal)} ov (${wickets} down)`,
       });
-      nextTeamMark += nextTeamMark % 100 === 0 ? 50 : 50;
+      nextTeamMark += 50;
     }
 
     if (ball.batsman_id && batsmanRun > 0) {
