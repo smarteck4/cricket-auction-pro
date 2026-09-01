@@ -4,8 +4,10 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  Label,
   Line,
   LineChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -13,13 +15,16 @@ import {
   Legend,
 } from 'recharts';
 import { MatchInnings, MatchBall } from '@/lib/tournament-types';
-import { Owner } from '@/lib/types';
+import { Owner, Player } from '@/lib/types';
+import { computeMilestones } from '@/lib/match-analysis';
 
 interface MatchChartsProps {
   innings: MatchInnings[];
   allBalls: MatchBall[][];
   team1: Owner;
   team2: Owner;
+  team1Players?: Player[];
+  team2Players?: Player[];
 }
 
 interface OverRow {
@@ -27,6 +32,7 @@ interface OverRow {
   runs: number;
   wickets: number;
 }
+
 
 const buildOvers = (balls: MatchBall[]): OverRow[] => {
   const map = new Map<number, OverRow>();
