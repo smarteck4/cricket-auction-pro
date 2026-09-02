@@ -470,8 +470,18 @@ export function MatchSummary({
       <div ref={summaryRef} className="rounded-lg overflow-hidden border bg-gradient-to-b from-slate-900 to-slate-800">
         {/* Header */}
         <div className="bg-gradient-to-r from-primary to-primary/80 px-4 py-4">
-          <h2 className="text-xl font-bold text-primary-foreground tracking-tight">MATCH SUMMARY</h2>
-          <p className="text-sm text-primary-foreground/70">{match.format} • {match.overs_per_innings} overs</p>
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-xl font-bold text-primary-foreground tracking-tight">MATCH SUMMARY</h2>
+            {match.status === 'live' && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-background/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary-foreground">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+                Live · auto-updating
+              </span>
+            )}
+          </div>
+          <p className="text-sm text-primary-foreground/70">
+            {match.format} • {match.overs_per_innings} overs • {allBalls.flat().length} balls recorded
+          </p>
         </div>
 
         {/* Teams */}
