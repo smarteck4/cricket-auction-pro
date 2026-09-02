@@ -11,6 +11,7 @@ import Admin from "./pages/Admin";
 import Owner from "./pages/Owner";
 import Players from "./pages/Players";
 import Tournaments from "./pages/Tournaments";
+import Results from "./pages/Results";
 import MatchScoring from "./pages/MatchScoring";
 import AuctionAnalytics from "./pages/AuctionAnalytics";
 import SuperAdmin from "./pages/SuperAdmin";
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="/owner" element={<RequireRole roles={['owner']} requireOwner context="My Team (Owner) page"><Owner /></RequireRole>} />
             <Route path="/players" element={<Players />} />
             <Route path="/tournaments" element={<Tournaments />} />
+            <Route path="/results" element={<Results />} />
             <Route path="/tournaments/match/:matchId/scoring" element={<RequireRole roles={['admin', 'super_admin']} context="Match Scoring page"><MatchScoring /></RequireRole>} />
             <Route path="/analytics" element={<AuctionAnalytics />} />
             <Route path="/super-admin" element={<RequireRole roles={['super_admin']} context="Super Admin page"><SuperAdmin /></RequireRole>} />

@@ -20,6 +20,7 @@ import { Plus, Play, Square, Users, Trash2, Edit, Gavel, Timer, User, AlertCircl
 import { BulkPlayerImport } from '@/components/BulkPlayerImport';
 import { PlayerFormModal, PlayerFormData } from '@/components/PlayerFormModal';
 import { Tabs as RadioTabs, TabsList as RadioTabsList, TabsTrigger as RadioTabsTrigger } from '@/components/ui/tabs';
+import { OwnerPointsStrip } from '@/components/tournament/OwnerPointsStrip';
 import { ALLOWED_IMAGE_TYPES, MAX_IMAGE_SIZE, uploadPlayerImageToCloudinary, destroyCloudinaryAsset, shouldDestroyPreviousAsset } from '@/lib/player-image';
 
 const defaultPlayer: PlayerFormData = {
@@ -586,6 +587,9 @@ export default function Admin() {
 
           {/* AUCTION CONTROL TAB */}
           <TabsContent value="auction">
+            <div className="mb-6">
+              <OwnerPointsStrip owners={owners} leadingOwnerId={currentBidder?.id ?? null} />
+            </div>
             <div className="grid lg:grid-cols-3 gap-6">
               {/* Live Auction View */}
               <div className="lg:col-span-2 space-y-6">

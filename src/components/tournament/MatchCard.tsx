@@ -32,7 +32,7 @@ export function MatchCard({ match, team1, team2, onClick }: MatchCardProps) {
           </Badge>
           <div className="flex items-center gap-1">
             <span className="text-sm text-muted-foreground">{match.format}</span>
-            {match.status === 'completed' && (
+            {(match.status === 'completed' || match.status === 'live') && (
               <MatchDownloadButton match={match} team1={team1} team2={team2} />
             )}
           </div>

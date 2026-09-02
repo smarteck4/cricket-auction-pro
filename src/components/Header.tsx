@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { User, LogOut, Settings, Users, Gavel, UsersRound, Trophy, BarChart3, Menu, Shield } from 'lucide-react';
+import { User, LogOut, Settings, Users, Gavel, UsersRound, Trophy, BarChart3, Menu, Shield, ListChecks } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useState } from 'react';
 
@@ -31,6 +31,7 @@ export function Header() {
     { to: '/players', icon: UsersRound, label: 'Players' },
     { to: '/auction', icon: Gavel, label: 'Auction' },
     { to: '/tournaments', icon: Trophy, label: 'Tournaments' },
+    { to: '/results', icon: ListChecks, label: 'Results' },
     { to: '/analytics', icon: BarChart3, label: 'Analytics' },
   ];
 
