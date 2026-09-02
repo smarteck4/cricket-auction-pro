@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PointsTable } from '@/components/tournament/PointsTable';
 import { StatisticsPanel } from '@/components/tournament/StatisticsPanel';
 import { MatchDownloadButton } from '@/components/tournament/MatchDownloadButton';
-import { BroadcastSkeleton } from '@/components/tournament/BroadcastSkeleton';
+import { TournamentHubSkeleton } from '@/components/tournament/BroadcastSkeleton';
 import {
   Match,
   MatchBall,
@@ -141,7 +141,7 @@ export default function Results() {
         </div>
 
         {loading ? (
-          <BroadcastSkeleton />
+          <TournamentHubSkeleton />
         ) : (
           <>
             <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -203,7 +203,7 @@ export default function Results() {
                             {t1 && t2 && (
                               <p className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-primary">
                                 <Trophy className="h-3.5 w-3.5" />
-                                {getMatchResultText(m, t1, t2, mi)}
+                                {getMatchResultText({ match: m, team1: t1, team2: t2, team1Players: [], team2Players: [], innings: mi, allBalls: [] })}
                               </p>
                             )}
                           </div>
