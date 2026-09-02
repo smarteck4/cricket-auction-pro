@@ -501,7 +501,11 @@ export function MatchSummary({
 
       <Button onClick={exportMatchPDF} disabled={exporting} variant="outline" className="w-full gap-2">
         {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-        {exporting ? 'Generating PDF...' : 'Download Full Scorecard PDF'}
+        {exporting
+          ? 'Generating PDF...'
+          : match.status === 'live'
+            ? 'Download Live Scorecard PDF (current state)'
+            : 'Download Full Scorecard PDF'}
       </Button>
     </div>
   );
