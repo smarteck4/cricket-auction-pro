@@ -586,6 +586,9 @@ export default function Admin() {
 
           {/* AUCTION CONTROL TAB */}
           <TabsContent value="auction">
+            <div className="mb-6">
+              <OwnerPointsStrip owners={owners} leadingOwnerId={currentBidder?.id ?? null} />
+            </div>
             <div className="grid lg:grid-cols-3 gap-6">
               {/* Live Auction View */}
               <div className="lg:col-span-2 space-y-6">
