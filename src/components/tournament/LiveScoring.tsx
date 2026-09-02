@@ -16,6 +16,8 @@ import { ChaseBanner } from './ChaseBanner';
 import { MatchCharts } from './MatchCharts';
 import { MatchSquads } from './MatchSquads';
 import { MatchBallsFeed } from './MatchBallsFeed';
+import { FallOfWickets } from './FallOfWickets';
+import { MatchMilestones } from './MatchMilestones';
 import { getMatchResultText } from '@/lib/match-pdf';
 
 interface LiveScoringProps {
