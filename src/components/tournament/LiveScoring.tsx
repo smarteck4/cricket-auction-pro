@@ -18,6 +18,7 @@ import { MatchSquads } from './MatchSquads';
 import { MatchBallsFeed } from './MatchBallsFeed';
 import { FallOfWickets } from './FallOfWickets';
 import { MatchMilestones } from './MatchMilestones';
+import { PlayingSquadSelector } from './PlayingSquadSelector';
 import { getMatchResultText } from '@/lib/match-pdf';
 
 interface LiveScoringProps {
@@ -26,6 +27,9 @@ interface LiveScoringProps {
   team2: Owner;
   team1Players: Player[];
   team2Players: Player[];
+  /** Full purchased rosters (before playing-squad filtering). */
+  team1Roster?: Player[];
+  team2Roster?: Player[];
   onClose: () => void;
   onMatchUpdate: () => void;
 }
@@ -36,6 +40,8 @@ export function LiveScoring({
   team2,
   team1Players,
   team2Players,
+  team1Roster,
+  team2Roster,
   onClose,
   onMatchUpdate,
 }: LiveScoringProps) {
@@ -1930,7 +1936,18 @@ export function LiveScoring({
           />
         </TabsContent>
 
-        <TabsContent value="squads" className="flex-1 min-h-0 p-4 overflow-auto">
+        <TabsContent value="squads" className="flex-1 min-h-0 p-4 overflow-auto space-y-4">
+          {!isReadOnly && (
+            <PlayingSquadSelector
+              match={match}
+              team1={team1}
+              team2={team2}
+              team1Roster={team1Roster ?? team1Players}
+              team2Roster={team2Roster ?? team2Players}
+              canManage
+              onSaved={onMatchUpdate}
+            />
+          )}
           <MatchSquads
             team1={team1}
             team2={team2}
