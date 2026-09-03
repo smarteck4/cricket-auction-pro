@@ -224,18 +224,25 @@ export default function Auction() {
       )
       .subscribe();
 
-    // Subscribe to owner balance changes so UI updates after bids
-    const ownerChannel = owner ? supabase
+    // Subscribe to every team's points (admin top-ups + bid deductions) and to new bids,
+    // so all owners/spectators see purses and bid history update instantly.
+    const ownerChannel = supabase
       .channel('owner-balance')
       .on(
         'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'owners', filter: `id=eq.${owner.id}` },
+        { event: '*', schema: 'public', table: 'owners' },
         () => {
-          // Refetch data to get updated balance
           fetchData();
         }
       )
-      .subscribe() : null;
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'bids' },
+        () => {
+          fetchData();
+        }
+      )
+      .subscribe();
 
     return () => {
       supabase.removeChannel(auctionChannel);
