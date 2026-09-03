@@ -21,6 +21,8 @@ export default function MatchScoring() {
   const [team2, setTeam2] = useState<Owner | null>(null);
   const [team1Players, setTeam1Players] = useState<Player[]>([]);
   const [team2Players, setTeam2Players] = useState<Player[]>([]);
+  const [team1Roster, setTeam1Roster] = useState<Player[]>([]);
+  const [team2Roster, setTeam2Roster] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -62,6 +64,12 @@ export default function MatchScoring() {
       .from('team_players')
       .select('owner_id, player_id')
       .in('owner_id', [matchData.team1_id, matchData.team2_id]);
+
+    // Playing squads selected for this match (if the admin picked them)
+    const { data: squadData } = await supabase
+      .from('match_squads')
+      .select('team_id, player_id')
+      .eq('match_id', matchId);
 
     // Also fetch all player IDs used in match_balls for this match
     const { data: matchInningsData } = await supabase
@@ -119,8 +127,16 @@ export default function MatchScoring() {
         const allTeam1Ids = [...new Set([...team1PlayerIdsFromRoster, ...team1ExtraIds])];
         const allTeam2Ids = [...new Set([...team2PlayerIdsFromRoster, ...team2ExtraIds])];
 
-        setTeam1Players(playersData.filter(p => allTeam1Ids.includes(p.id)) as Player[]);
-        setTeam2Players(playersData.filter(p => allTeam2Ids.includes(p.id)) as Player[]);
+        const roster1 = playersData.filter(p => allTeam1Ids.includes(p.id)) as Player[];
+        const roster2 = playersData.filter(p => allTeam2Ids.includes(p.id)) as Player[];
+        setTeam1Roster(roster1);
+        setTeam2Roster(roster2);
+
+        // Restrict active players to the selected playing squad when one exists.
+        const squad1 = (squadData || []).filter(s => s.team_id === matchData.team1_id).map(s => s.player_id);
+        const squad2 = (squadData || []).filter(s => s.team_id === matchData.team2_id).map(s => s.player_id);
+        setTeam1Players(squad1.length > 0 ? roster1.filter(p => squad1.includes(p.id) || ballPlayerIds.some(bp => bp.playerId === p.id)) : roster1);
+        setTeam2Players(squad2.length > 0 ? roster2.filter(p => squad2.includes(p.id) || ballPlayerIds.some(bp => bp.playerId === p.id)) : roster2);
       }
     }
 
@@ -177,6 +193,8 @@ export default function MatchScoring() {
             team2={team2}
             team1Players={team1Players}
             team2Players={team2Players}
+            team1Roster={team1Roster}
+            team2Roster={team2Roster}
             onClose={handleBack}
             onMatchUpdate={fetchMatchData}
           />
