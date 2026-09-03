@@ -184,6 +184,22 @@
     font-family: 'Outfit', sans-serif;
     @apply font-semibold tracking-tight;
   }
+
+  /* Scrolling stays fully functional, but scrollbars are visually hidden site-wide. */
+  html,
+  body,
+  * {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar,
+  *::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+  }
 }
 
 @layer components {
