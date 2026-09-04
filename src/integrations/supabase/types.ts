@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      auction_events: {
+        Row: {
+          amount: number | null
+          created_at: string
+          event_type: string
+          id: string
+          message: string
+          owner_id: string | null
+          player_id: string | null
+          points_after: number | null
+          points_before: number | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          event_type: string
+          id?: string
+          message: string
+          owner_id?: string | null
+          player_id?: string | null
+          points_after?: number | null
+          points_before?: number | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          message?: string
+          owner_id?: string | null
+          player_id?: string | null
+          points_after?: number | null
+          points_before?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auction_events_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "owners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auction_events_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bids: {
         Row: {
           bid_amount: number
@@ -844,6 +895,7 @@ export type Database = {
         Args: {
           p_auction_id: string
           p_bid_amount: number
+          p_expected_current_bid?: number
           p_owner_id: string
           p_player_id: string
         }
