@@ -73,16 +73,22 @@ export type BidRpcResult = {
   success?: boolean;
   error?: string;
   error_code?: string;
+  current_bid?: number;
+  current_bidder_id?: string | null;
+  current_bidder_name?: string | null;
 } | null;
 
 export type BidOutcome =
   | { kind: 'success'; bidAmount: number }
   | { kind: 'timer_expired' }
+  | { kind: 'outbid'; currentBid: number; leaderName?: string | null; message: string }
   | { kind: 'error'; code?: string; message: string };
 
 /**
  * Classify the result of place_bid_atomic into a UI outcome.
  * TIMER_EXPIRED is treated as an expected "too late" case rather than a hard error.
+ * BID_OUTBID / ALREADY_HIGHEST are conflict outcomes: another team's bid won the race,
+ * so the UI should re-sync to the true highest bid instead of showing a hard failure.
  */
 export function classifyBidResult(
   result: BidRpcResult,
@@ -93,6 +99,14 @@ export function classifyBidResult(
     if (result?.error_code === 'TIMER_EXPIRED') {
       return { kind: 'timer_expired' };
     }
+    if (result?.error_code === 'BID_OUTBID' || result?.error_code === 'ALREADY_HIGHEST') {
+      return {
+        kind: 'outbid',
+        currentBid: result?.current_bid ?? 0,
+        leaderName: result?.current_bidder_name ?? null,
+        message: result?.error || 'Another team is now the highest bidder',
+      };
+    }
     return {
       kind: 'error',
       code: result?.error_code,
@@ -101,6 +115,7 @@ export function classifyBidResult(
   }
   return { kind: 'success', bidAmount };
 }
+
 
 // ---------------------------------------------------------------------------
 // Bid button gating
