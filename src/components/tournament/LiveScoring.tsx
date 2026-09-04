@@ -388,10 +388,27 @@ export function LiveScoring({
           fetchInnings(true);
         },
       )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'match_squads', filter: `match_id=eq.${match.id}` },
+        () => {
+          onMatchUpdate();
+        },
+      )
       .subscribe();
+
+    // Safety net: if the realtime socket drops, keep the feed fresh by polling.
+    const poll = window.setInterval(() => {
+      if (document.visibilityState === 'visible') fetchInnings(true);
+    }, 8000);
+
+    const onFocus = () => fetchInnings(true);
+    window.addEventListener('focus', onFocus);
 
     return () => {
       supabase.removeChannel(channel);
+      window.clearInterval(poll);
+      window.removeEventListener('focus', onFocus);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [match.id]);
