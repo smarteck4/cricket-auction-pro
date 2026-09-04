@@ -748,6 +748,7 @@ export default function Auction() {
                                       p_player_id: currentPlayer.id,
                                       p_owner_id: owner.id,
                                       p_bid_amount: newBid,
+                                      p_expected_current_bid: currentAuction.current_bid,
                                     })
                                     .then(({ data: result, error: rpcError }) => {
                                       const outcome = classifyBidResult(result as any, rpcError, newBid);
@@ -756,6 +757,14 @@ export default function Auction() {
                                         toast({
                                           title: 'Too late — timer ended',
                                           description: 'The auction timer closed just before your bid reached the server.',
+                                        });
+                                      } else if (outcome.kind === 'outbid') {
+                                        fetchData();
+                                        toast({
+                                          title: 'Outbid',
+                                          description: outcome.leaderName
+                                            ? `${outcome.leaderName} leads with ${outcome.currentBid.toLocaleString()} pts. Bid again to top it.`
+                                            : outcome.message,
                                         });
                                       } else if (outcome.kind === 'error') {
                                         toast({
@@ -770,6 +779,7 @@ export default function Auction() {
                                         });
                                         setCustomBidAmount('');
                                       }
+
                                       setBidding(false);
                                     });
                                 } else {
