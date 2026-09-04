@@ -356,12 +356,14 @@ export default function Auction() {
     
     setBidding(true);
     
-    // Place bid atomically
+    // Place bid atomically. p_expected_current_bid lets the server reject the bid
+    // when another team's bid landed first (simultaneous-bid conflict).
     const { data: result, error: rpcError } = await supabase.rpc('place_bid_atomic', {
       p_auction_id: currentAuction.id,
       p_player_id: currentPlayer.id,
       p_owner_id: owner.id,
       p_bid_amount: newBid,
+      p_expected_current_bid: currentAuction.current_bid,
     });
     
     const outcome = classifyBidResult(result as any, rpcError, newBid);
@@ -371,6 +373,15 @@ export default function Auction() {
       toast({
         title: 'Too late — timer ended',
         description: 'The auction timer closed just before your bid reached the server.',
+      });
+    } else if (outcome.kind === 'outbid') {
+      // Another team won the race — resync to the true highest bid.
+      fetchData();
+      toast({
+        title: 'Outbid',
+        description: outcome.leaderName
+          ? `${outcome.leaderName} leads with ${outcome.currentBid.toLocaleString()} pts. Bid again to top it.`
+          : outcome.message,
       });
     } else if (outcome.kind === 'error') {
       toast({
@@ -384,6 +395,7 @@ export default function Auction() {
         description: `You bid ${outcome.bidAmount} points`,
       });
     }
+
     
     setBidding(false);
   };
