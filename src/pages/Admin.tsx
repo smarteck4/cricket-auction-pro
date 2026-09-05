@@ -5,6 +5,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { Header } from '@/components/Header';
 import { CategoryBadge } from '@/components/CategoryBadge';
 import { BidHistory } from '@/components/BidHistory';
+import { AuctionActivityTimeline } from '@/components/AuctionActivityTimeline';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
