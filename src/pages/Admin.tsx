@@ -23,6 +23,7 @@ import { BulkPlayerImport } from '@/components/BulkPlayerImport';
 import { PlayerFormModal, PlayerFormData } from '@/components/PlayerFormModal';
 import { Tabs as RadioTabs, TabsList as RadioTabsList, TabsTrigger as RadioTabsTrigger } from '@/components/ui/tabs';
 import { OwnerPointsStrip } from '@/components/tournament/OwnerPointsStrip';
+import { ImageUrlOrUpload } from '@/components/ImageUrlOrUpload';
 import { ALLOWED_IMAGE_TYPES, MAX_IMAGE_SIZE, uploadPlayerImageToCloudinary, destroyCloudinaryAsset, shouldDestroyPreviousAsset } from '@/lib/player-image';
 
 const defaultPlayer: PlayerFormData = {
@@ -1018,7 +1019,7 @@ export default function Admin() {
                   <div className="space-y-4">
                     <div><Label>Team Name</Label><Input value={newOwner.team_name} onChange={e => setNewOwner({...newOwner, team_name: e.target.value})} /></div>
                     <div><Label>Total Points</Label><Input type="number" value={newOwner.total_points} onChange={e => setNewOwner({...newOwner, total_points: +e.target.value})} /></div>
-                    <div><Label>Team Logo URL</Label><Input value={newOwner.team_logo_url} onChange={e => setNewOwner({...newOwner, team_logo_url: e.target.value})} /></div>
+                    <div><Label>Team Logo</Label><ImageUrlOrUpload value={newOwner.team_logo_url} onChange={url => setNewOwner({...newOwner, team_logo_url: url})} /></div>
                   </div>
                   <Button onClick={addOwner} className="w-full mt-4 gradient-gold">Add Owner</Button>
                 </DialogContent>
@@ -1050,7 +1051,7 @@ export default function Admin() {
                   <div className="space-y-4">
                     <div><Label>Team Name</Label><Input value={editingOwner.team_name} onChange={e => setEditingOwner({...editingOwner, team_name: e.target.value})} /></div>
                     <div><Label>Total Points</Label><Input type="number" value={editingOwner.total_points} onChange={e => setEditingOwner({...editingOwner, total_points: +e.target.value})} /></div>
-                    <div><Label>Team Logo URL</Label><Input value={editingOwner.team_logo_url || ''} onChange={e => setEditingOwner({...editingOwner, team_logo_url: e.target.value})} /></div>
+                    <div><Label>Team Logo</Label><ImageUrlOrUpload value={editingOwner.team_logo_url || ''} onChange={url => setEditingOwner({...editingOwner, team_logo_url: url})} /></div>
                   </div>
                 )}
                 <Button onClick={updateOwner} className="w-full mt-4 gradient-gold">Save Changes</Button>
