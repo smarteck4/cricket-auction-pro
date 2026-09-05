@@ -27,7 +27,7 @@ export function ImageUrlOrUpload({
 
   const handleFile = async (file: File) => {
     const check = validateImageFile(file);
-    if (!check.ok) {
+    if (check.ok === false) {
       toast({
         title: check.reason === 'type' ? 'Unsupported image type' : 'Image too large',
         description: check.reason === 'type' ? 'Use JPG, PNG, WEBP or GIF.' : 'Maximum size is 5MB.',
