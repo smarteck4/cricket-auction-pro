@@ -5,6 +5,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { Header } from '@/components/Header';
 import { CategoryBadge } from '@/components/CategoryBadge';
 import { BidHistory } from '@/components/BidHistory';
+import { AuctionActivityTimeline } from '@/components/AuctionActivityTimeline';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -747,6 +749,10 @@ export default function Admin() {
                 {currentAuction?.is_active && currentPlayer && (
                   <BidHistory playerId={currentPlayer.id} owners={owners} />
                 )}
+
+                {/* Live auction activity timeline (bids + point changes) */}
+                <AuctionActivityTimeline className="card-shadow" />
+
 
                 {/* Timer Settings */}
                 <Card className="card-shadow">

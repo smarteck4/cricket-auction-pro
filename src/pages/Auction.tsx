@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { BidHistory } from '@/components/BidHistory';
+import { AuctionActivityTimeline } from '@/components/AuctionActivityTimeline';
+
 import { useToast } from '@/hooks/use-toast';
 import { Player, Owner, CurrentAuction, MIN_TEAM_REQUIREMENTS, ROLE_LABELS, PlayerCategory, TeamPlayer } from '@/lib/types';
 import { Gavel, Users, TrendingUp, Clock, User, AlertCircle, Square, Timer, ListOrdered, Maximize2, Plus } from 'lucide-react';
@@ -865,6 +867,10 @@ export default function Auction() {
             {currentAuction?.is_active && currentPlayer && (
               <BidHistory playerId={currentPlayer.id} owners={owners} />
             )}
+
+            {/* Live auction activity timeline (bids + point changes) */}
+            <AuctionActivityTimeline className="card-shadow" />
+
 
             {/* Upcoming Players */}
             <Card className="card-shadow">
