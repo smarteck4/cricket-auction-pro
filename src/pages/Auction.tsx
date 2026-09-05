@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { BidHistory } from '@/components/BidHistory';
+import { AuctionActivityTimeline } from '@/components/AuctionActivityTimeline';
+
 import { useToast } from '@/hooks/use-toast';
 import { Player, Owner, CurrentAuction, MIN_TEAM_REQUIREMENTS, ROLE_LABELS, PlayerCategory, TeamPlayer } from '@/lib/types';
 import { Gavel, Users, TrendingUp, Clock, User, AlertCircle, Square, Timer, ListOrdered, Maximize2, Plus } from 'lucide-react';
