@@ -748,6 +748,10 @@ export default function Admin() {
                   <BidHistory playerId={currentPlayer.id} owners={owners} />
                 )}
 
+                {/* Live auction activity timeline (bids + point changes) */}
+                <AuctionActivityTimeline className="card-shadow" />
+
+
                 {/* Timer Settings */}
                 <Card className="card-shadow">
                   <CardHeader><CardTitle>Timer Settings</CardTitle></CardHeader>
