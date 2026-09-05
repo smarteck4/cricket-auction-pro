@@ -866,6 +866,10 @@ export default function Auction() {
               <BidHistory playerId={currentPlayer.id} owners={owners} />
             )}
 
+            {/* Live auction activity timeline (bids + point changes) */}
+            <AuctionActivityTimeline className="card-shadow" />
+
+
             {/* Upcoming Players */}
             <Card className="card-shadow">
               <CardHeader className="pb-3">
