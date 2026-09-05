@@ -471,39 +471,56 @@ export type Database = {
       }
       owners: {
         Row: {
+          captain_id: string | null
           created_at: string | null
           created_by: string | null
           id: string
+          real_team_key: string | null
           remaining_points: number
           team_logo_url: string | null
           team_name: string
+          team_short_code: string | null
           total_points: number
           updated_at: string | null
           user_id: string | null
         }
         Insert: {
+          captain_id?: string | null
           created_at?: string | null
           created_by?: string | null
           id?: string
+          real_team_key?: string | null
           remaining_points?: number
           team_logo_url?: string | null
           team_name: string
+          team_short_code?: string | null
           total_points?: number
           updated_at?: string | null
           user_id?: string | null
         }
         Update: {
+          captain_id?: string | null
           created_at?: string | null
           created_by?: string | null
           id?: string
+          real_team_key?: string | null
           remaining_points?: number
           team_logo_url?: string | null
           team_name?: string
+          team_short_code?: string | null
           total_points?: number
           updated_at?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "owners_captain_id_fkey"
+            columns: ["captain_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       player_match_stats: {
         Row: {
