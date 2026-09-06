@@ -8,7 +8,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PlayerAvatar, TeamLogo } from './ScoreAvatars';
-import { Save, Users } from 'lucide-react';
+import { Save, Users, Wand2 } from 'lucide-react';
+import { pickPlayingXI } from '@/lib/playing-xi';
 
 interface PlayingSquadSelectorProps {
   match: Match;
@@ -82,6 +83,13 @@ export function PlayingSquadSelector({
   };
 
   const valid = sel1.length === teamSize && sel2.length === teamSize;
+
+  const autoFill = () => {
+    const size = Math.min(teamSize, maxPossible);
+    setSel1(pickPlayingXI(team1Roster, size, { captainId: team1.captain_id }).map((p) => p.id));
+    setSel2(pickPlayingXI(team2Roster, size, { captainId: team2.captain_id }).map((p) => p.id));
+    toast({ title: 'Playing XI auto-filled', description: 'Best players by category, captains included.' });
+  };
 
   const save = async () => {
     if (!valid) {
@@ -199,6 +207,10 @@ export function PlayingSquadSelector({
               ? `Ready: ${teamSize} v ${teamSize}`
               : `Both teams must have exactly ${teamSize} players (${sel1.length} vs ${sel2.length}).`}
           </p>
+          <Button size="sm" variant="outline" onClick={autoFill} className="gap-2">
+            <Wand2 className="h-4 w-4" />
+            Auto-pick XI
+          </Button>
           <Button size="sm" onClick={save} disabled={!valid || saving} className="gap-2">
             <Save className="h-4 w-4" />
             {saving ? 'Saving...' : 'Save playing squads'}
