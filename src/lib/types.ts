@@ -24,6 +24,9 @@ export interface Owner {
   user_id: string | null;
   team_name: string;
   team_logo_url: string | null;
+  real_team_key?: string | null;
+  team_short_code?: string | null;
+  captain_id?: string | null;
   total_points: number;
   remaining_points: number;
   created_at: string;

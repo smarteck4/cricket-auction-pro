@@ -24,6 +24,7 @@ import { PlayerFormModal, PlayerFormData } from '@/components/PlayerFormModal';
 import { Tabs as RadioTabs, TabsList as RadioTabsList, TabsTrigger as RadioTabsTrigger } from '@/components/ui/tabs';
 import { OwnerPointsStrip } from '@/components/tournament/OwnerPointsStrip';
 import { ImageUrlOrUpload } from '@/components/ImageUrlOrUpload';
+import { TeamMappingCard } from '@/components/tournament/TeamMappingCard';
 import { ALLOWED_IMAGE_TYPES, MAX_IMAGE_SIZE, uploadPlayerImageToCloudinary, destroyCloudinaryAsset, shouldDestroyPreviousAsset } from '@/lib/player-image';
 
 const defaultPlayer: PlayerFormData = {
@@ -34,7 +35,13 @@ const defaultPlayer: PlayerFormData = {
   fifties: 0, centuries: 0,
 };
 
-const defaultOwner = { team_name: '', total_points: 10000, team_logo_url: '' };
+const defaultOwner = {
+  team_name: '',
+  total_points: 10000,
+  team_logo_url: '',
+  real_team_key: null as string | null,
+  team_short_code: null as string | null,
+};
 
 export default function Admin() {
   const { user, role, loading: authLoading } = useAuth();
@@ -43,6 +50,7 @@ export default function Admin() {
   
   const [players, setPlayers] = useState<Player[]>([]);
   const [owners, setOwners] = useState<Owner[]>([]);
+  const [rostersByOwner, setRostersByOwner] = useState<Record<string, Player[]>>({});
   const [categorySettings, setCategorySettings] = useState<CategorySetting[]>([]);
   const [loading, setLoading] = useState(true);
   const [playerDialogOpen, setPlayerDialogOpen] = useState(false);
@@ -102,12 +110,22 @@ export default function Admin() {
 
 
   const fetchData = async () => {
-    const [playersRes, ownersRes, settingsRes, auctionRes] = await Promise.all([
+    const [playersRes, ownersRes, settingsRes, auctionRes, rosterRes] = await Promise.all([
       supabase.from('players').select('*').order('category'),
       supabase.from('owners').select('*'),
       supabase.from('category_settings').select('*'),
       supabase.from('current_auction').select('*').order('created_at', { ascending: false }).limit(1).maybeSingle(),
+      supabase.from('team_players').select('owner_id, player:players(*)'),
     ]);
+
+    if (rosterRes.data) {
+      const grouped: Record<string, Player[]> = {};
+      for (const row of rosterRes.data as { owner_id: string; player: Player | null }[]) {
+        if (!row.player) continue;
+        (grouped[row.owner_id] ||= []).push(row.player);
+      }
+      setRostersByOwner(grouped);
+    }
     
     if (playersRes.data) setPlayers(playersRes.data as Player[]);
     if (ownersRes.data) setOwners(ownersRes.data as Owner[]);
@@ -371,6 +389,8 @@ export default function Admin() {
       total_points: newOwner.total_points,
       remaining_points: newOwner.total_points,
       team_logo_url: newOwner.team_logo_url || null,
+      real_team_key: newOwner.real_team_key || null,
+      team_short_code: newOwner.team_short_code || null,
       created_by: user!.id,
     } as any);
     if (error) {
@@ -389,6 +409,9 @@ export default function Admin() {
       team_name: editingOwner.team_name,
       total_points: editingOwner.total_points,
       team_logo_url: editingOwner.team_logo_url,
+      real_team_key: editingOwner.real_team_key ?? null,
+      team_short_code: editingOwner.team_short_code ?? null,
+      captain_id: editingOwner.captain_id ?? null,
     }).eq('id', editingOwner.id);
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
@@ -1020,6 +1043,11 @@ export default function Admin() {
                     <div><Label>Team Name</Label><Input value={newOwner.team_name} onChange={e => setNewOwner({...newOwner, team_name: e.target.value})} /></div>
                     <div><Label>Total Points</Label><Input type="number" value={newOwner.total_points} onChange={e => setNewOwner({...newOwner, total_points: +e.target.value})} /></div>
                     <div><Label>Team Logo</Label><ImageUrlOrUpload value={newOwner.team_logo_url} onChange={url => setNewOwner({...newOwner, team_logo_url: url})} /></div>
+                    <TeamMappingCard
+                      owner={{ ...(newOwner as unknown as Owner), id: 'new', captain_id: null }}
+                      roster={[]}
+                      onChange={(patch) => setNewOwner({ ...newOwner, ...patch } as typeof newOwner)}
+                    />
                   </div>
                   <Button onClick={addOwner} className="w-full mt-4 gradient-gold">Add Owner</Button>
                 </DialogContent>
@@ -1033,7 +1061,11 @@ export default function Admin() {
                       {o.team_logo_url && <img src={o.team_logo_url} alt={o.team_name} className="w-10 h-10 rounded-full object-cover" />}
                       <h3 className="font-semibold">{o.team_name}</h3>
                     </div>
-                    <p className="text-sm text-muted-foreground mb-3">Points: {o.remaining_points.toLocaleString()} / {o.total_points.toLocaleString()}</p>
+                    <p className="text-sm text-muted-foreground mb-1">Points: {o.remaining_points.toLocaleString()} / {o.total_points.toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      {o.team_short_code ? `${o.team_short_code} · ` : ''}
+                      Captain: {(rostersByOwner[o.id] ?? []).find(p => p.id === o.captain_id)?.name ?? 'not set'}
+                    </p>
                     <div className="flex gap-2">
                       <Button size="sm" variant="outline" onClick={() => setEditingOwner(o)}><Edit className="w-3 h-3" /></Button>
                       <Button size="sm" variant="destructive" onClick={() => deleteOwner(o.id)}><Trash2 className="w-3 h-3" /></Button>
@@ -1052,6 +1084,11 @@ export default function Admin() {
                     <div><Label>Team Name</Label><Input value={editingOwner.team_name} onChange={e => setEditingOwner({...editingOwner, team_name: e.target.value})} /></div>
                     <div><Label>Total Points</Label><Input type="number" value={editingOwner.total_points} onChange={e => setEditingOwner({...editingOwner, total_points: +e.target.value})} /></div>
                     <div><Label>Team Logo</Label><ImageUrlOrUpload value={editingOwner.team_logo_url || ''} onChange={url => setEditingOwner({...editingOwner, team_logo_url: url})} /></div>
+                    <TeamMappingCard
+                      owner={editingOwner}
+                      roster={rostersByOwner[editingOwner.id] ?? []}
+                      onChange={(patch) => setEditingOwner({ ...editingOwner, ...patch })}
+                    />
                   </div>
                 )}
                 <Button onClick={updateOwner} className="w-full mt-4 gradient-gold">Save Changes</Button>

@@ -1,4 +1,5 @@
 import { Player, Owner } from '@/lib/types';
+import { getRealTeam } from '@/lib/real-teams';
 
 const initials = (name?: string | null) =>
   (name ?? '?')
@@ -47,7 +48,10 @@ export function TeamLogo({
   size?: number;
   className?: string;
 }) {
-  const style = { width: size, height: size };
+  const real = getRealTeam(team?.real_team_key);
+  const style = real
+    ? { width: size, height: size, background: real.color, color: real.accent, borderColor: real.accent }
+    : { width: size, height: size };
   return (
     <span
       style={style}
@@ -61,7 +65,7 @@ export function TeamLogo({
           className="h-full w-full object-cover"
         />
       ) : (
-        <span className="text-[9px] font-bold">{initials(team?.team_name)}</span>
+        <span className="text-[9px] font-bold">{real?.shortCode ?? team?.team_short_code ?? initials(team?.team_name)}</span>
       )}
     </span>
   );
