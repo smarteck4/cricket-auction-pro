@@ -86,7 +86,7 @@ export default function Auction() {
     }
 
     syncServerTime();
-    fetchData();
+    fetchData(false);
     const cleanup = setupRealtimeSubscription();
     return () => {
       cleanup();
@@ -94,8 +94,10 @@ export default function Auction() {
     };
   }, [user, owner?.id, authLoading, navigate]);
 
-  const fetchData = async () => {
-    setLoading(true);
+  // silent = background refresh (realtime / post-bid): never flips the full-page
+  // spinner, so bidding feels instant.
+  const fetchData = async (silent = true) => {
+    if (!silent) setLoading(true);
     
     // Fetch current auction, owners, and pending players in parallel
     // Try to find an active auction first, otherwise get the most recent one
@@ -151,7 +153,7 @@ export default function Auction() {
       if (teamData) setTeamPlayers(teamData as any);
     }
     
-    setLoading(false);
+    if (!silent) setLoading(false);
   };
 
   const setupRealtimeSubscription = () => {
