@@ -19,6 +19,14 @@ interface UserWithRole {
   role: string;
 }
 
+interface TeamRow {
+  id: string;
+  team_name: string;
+  user_id: string | null;
+}
+
+const NO_TEAM = 'none';
+
 export default function SuperAdmin() {
   const { user, role, loading } = useAuth();
   const navigate = useNavigate();
@@ -26,12 +34,15 @@ export default function SuperAdmin() {
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [updatingUser, setUpdatingUser] = useState<string | null>(null);
+  const [teams, setTeams] = useState<TeamRow[]>([]);
+  const [assigningUser, setAssigningUser] = useState<string | null>(null);
 
 
 
   useEffect(() => {
     if (role === 'super_admin') {
       fetchUsers();
+      fetchTeams();
     }
   }, [role]);
 
@@ -73,6 +84,47 @@ export default function SuperAdmin() {
     setLoadingUsers(false);
   };
 
+  const fetchTeams = async () => {
+    const { data, error } = await supabase
+      .from('owners')
+      .select('id, team_name, user_id')
+      .order('team_name');
+    if (error) {
+      toast.error('Failed to load teams');
+      return;
+    }
+    setTeams((data || []) as TeamRow[]);
+  };
+
+  // Assign a team (owners row) to a user. A team can only belong to one user, and a
+  // user can only hold one team, so the previous links are cleared first.
+  const handleTeamAssign = async (userId: string, teamId: string) => {
+    setAssigningUser(userId);
+
+    const previous = teams.filter(t => t.user_id === userId && t.id !== teamId);
+    for (const prev of previous) {
+      const { error } = await supabase.from('owners').update({ user_id: null }).eq('id', prev.id);
+      if (error) {
+        toast.error('Failed to release ' + prev.team_name + ': ' + error.message);
+        setAssigningUser(null);
+        return;
+      }
+    }
+
+    if (teamId !== NO_TEAM) {
+      const { error } = await supabase.from('owners').update({ user_id: userId }).eq('id', teamId);
+      if (error) {
+        toast.error('Failed to assign team: ' + error.message);
+        setAssigningUser(null);
+        return;
+      }
+    }
+
+    toast.success(teamId === NO_TEAM ? 'Team unassigned' : 'Team assigned');
+    await fetchTeams();
+    setAssigningUser(null);
+  };
+
   const handleRoleChange = async (userId: string, newRole: string) => {
     setUpdatingUser(userId);
     
@@ -88,6 +140,10 @@ export default function SuperAdmin() {
     } else {
       toast.success('Role updated successfully');
       setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
+      if (newRole !== 'owner') {
+        // Losing the owner role releases any team held by this user.
+        await handleTeamAssign(userId, NO_TEAM);
+      }
     }
     
     setUpdatingUser(null);
@@ -154,13 +210,14 @@ export default function SuperAdmin() {
                     <TableRow>
                       <TableHead>User</TableHead>
                       <TableHead>Current Role</TableHead>
+                      <TableHead>Team</TableHead>
                       <TableHead className="text-right">Change Role</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredUsers.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
                           No users found
                         </TableCell>
                       </TableRow>
@@ -177,6 +234,31 @@ export default function SuperAdmin() {
                             <Badge variant={getRoleBadgeVariant(u.role)} className="capitalize">
                               {u.role.replace('_', ' ')}
                             </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {u.role === 'owner' ? (
+                              <Select
+                                value={teams.find(t => t.user_id === u.id)?.id || NO_TEAM}
+                                onValueChange={(val) => handleTeamAssign(u.id, val)}
+                                disabled={assigningUser === u.id}
+                              >
+                                <SelectTrigger className="w-[170px]">
+                                  <SelectValue placeholder="No team" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value={NO_TEAM}>No team</SelectItem>
+                                  {teams
+                                    .filter(t => !t.user_id || t.user_id === u.id)
+                                    .map(t => (
+                                      <SelectItem key={t.id} value={t.id}>
+                                        {t.team_name}
+                                      </SelectItem>
+                                    ))}
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            )}
                           </TableCell>
                           <TableCell className="text-right">
                             {u.role === 'super_admin' || u.id === user?.id ? (
