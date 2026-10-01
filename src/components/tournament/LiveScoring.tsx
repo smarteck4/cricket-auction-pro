@@ -115,6 +115,8 @@ export function LiveScoring({
   const [team1Score, setTeam1Score] = useState({ runs: 0, wickets: 0, overs: 0 });
   const [team2Score, setTeam2Score] = useState({ runs: 0, wickets: 0, overs: 0 });
   const [winnerId, setWinnerId] = useState('');
+  const [tossWinner, setTossWinner] = useState<string>(match.toss_winner_id ?? '');
+  const [tossDecision, setTossDecision] = useState<'bat' | 'bowl' | ''>((match.toss_decision as 'bat' | 'bowl') ?? '');
 
   const battingTeam = currentInnings?.batting_team_id === team1.id ? team1 : team2;
   const bowlingTeam = currentInnings?.bowling_team_id === team1.id ? team1 : team2;
@@ -1662,19 +1664,65 @@ export function LiveScoring({
               <div className="text-center">
                 <h3 className="text-xl font-bold">Start Innings {innings.length + 1}</h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {innings.length === 0 ? 'Select which team will bat first' : 'Select the batting team'}
+                  {innings.length === 0 ? 'Record the toss to begin' : 'Select the batting team'}
                 </p>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <Button onClick={() => startInnings(team1.id, team2.id)} className="h-28 flex-col rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-xl shadow-primary/20 hover:shadow-primary/30 transition-all">
-                  <span className="text-lg font-bold">{team1.team_name}</span>
-                  <span className="text-xs opacity-70 mt-1">Bats First</span>
-                </Button>
-                <Button onClick={() => startInnings(team2.id, team1.id)} className="h-28 flex-col rounded-xl border-2 border-border/50 hover:border-primary/30 transition-all" variant="outline">
-                  <span className="text-lg font-bold">{team2.team_name}</span>
-                  <span className="text-xs opacity-70 mt-1">Bats First</span>
-                </Button>
-              </div>
+              {innings.length === 0 ? (
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Toss won by</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      {[team1, team2].map((t) => (
+                        <Button key={t.id} variant={tossWinner === t.id ? 'default' : 'outline'} onClick={() => setTossWinner(t.id)} className="h-14 rounded-xl">
+                          {t.team_name}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Elected to</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      {(['bat', 'bowl'] as const).map((d) => (
+                        <Button key={d} variant={tossDecision === d ? 'default' : 'outline'} onClick={() => setTossDecision(d)} className="h-12 rounded-xl capitalize">
+                          {d} first
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  <Button
+                    className="w-full h-12 rounded-xl"
+                    disabled={!tossWinner || !tossDecision}
+                    onClick={async () => {
+                      const other = tossWinner === team1.id ? team2.id : team1.id;
+                      const bat = tossDecision === 'bat' ? tossWinner : other;
+                      const bowl = bat === team1.id ? team2.id : team1.id;
+                      const { error } = await supabase
+                        .from('matches')
+                        .update({ toss_winner_id: tossWinner, toss_decision: tossDecision })
+                        .eq('id', match.id);
+                      if (error) {
+                        toast({ title: 'Error', description: error.message, variant: 'destructive' });
+                        return;
+                      }
+                      await startInnings(bat, bowl);
+                      onMatchUpdate();
+                    }}
+                  >
+                    Save Toss & Start Match
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  <Button onClick={() => startInnings(team1.id, team2.id)} className="h-28 flex-col rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-xl shadow-primary/20 hover:shadow-primary/30 transition-all">
+                    <span className="text-lg font-bold">{team1.team_name}</span>
+                    <span className="text-xs opacity-70 mt-1">Bats</span>
+                  </Button>
+                  <Button onClick={() => startInnings(team2.id, team1.id)} className="h-28 flex-col rounded-xl border-2 border-border/50 hover:border-primary/30 transition-all" variant="outline">
+                    <span className="text-lg font-bold">{team2.team_name}</span>
+                    <span className="text-xs opacity-70 mt-1">Bats</span>
+                  </Button>
+                </div>
+              )}
             </div>
           ) : (
             /* Both innings done — only finalising the match remains */
