@@ -118,7 +118,7 @@ export function StatisticsPanel({ stats, players }: StatisticsPanelProps) {
   return (
     <div className="space-y-6">
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
         <StatCard icon={Trophy} title="Top Run Scorer" value={runsL.value} subtitle={runsL.name} />
         <StatCard icon={Target} title="Top Wicket Taker" value={wktL.value} subtitle={wktL.name} />
         <StatCard icon={Flame} title="Most Sixes" value={sixL.value} subtitle={sixL.name} />
