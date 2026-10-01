@@ -106,37 +106,23 @@ export function StatisticsPanel({ stats, players }: StatisticsPanelProps) {
     </Card>
   );
 
-  const topScorer = topRunScorers[0];
-  const topWicketTaker = topWicketTakers[0];
+  const leader = (key: 'total_runs' | 'wickets' | 'sixes' | 'catches') => {
+    const top = [...allStats].sort((a, b) => b[key] - a[key])[0];
+    return top && top[key] > 0 ? { value: top[key], name: top.player_name } : { value: 0, name: 'No one yet' };
+  };
+  const runsL = leader('total_runs');
+  const wktL = leader('wickets');
+  const sixL = leader('sixes');
+  const catchL = leader('catches');
 
   return (
     <div className="space-y-6">
       {/* Quick Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard
-          icon={Trophy}
-          title="Top Run Scorer"
-          value={topScorer?.total_runs || 0}
-          subtitle={topScorer?.player_name || 'N/A'}
-        />
-        <StatCard
-          icon={Target}
-          title="Top Wicket Taker"
-          value={topWicketTaker?.wickets || 0}
-          subtitle={topWicketTaker?.player_name || 'N/A'}
-        />
-        <StatCard
-          icon={Flame}
-          title="Most Sixes"
-          value={[...allStats].sort((a, b) => b.sixes - a.sixes)[0]?.sixes || 0}
-          subtitle={[...allStats].sort((a, b) => b.sixes - a.sixes)[0]?.player_name || 'N/A'}
-        />
-        <StatCard
-          icon={Hand}
-          title="Most Catches"
-          value={topCatchers[0]?.catches || 0}
-          subtitle={topCatchers[0]?.player_name || 'N/A'}
-        />
+        <StatCard icon={Trophy} title="Top Run Scorer" value={runsL.value} subtitle={runsL.name} />
+        <StatCard icon={Target} title="Top Wicket Taker" value={wktL.value} subtitle={wktL.name} />
+        <StatCard icon={Flame} title="Most Sixes" value={sixL.value} subtitle={sixL.name} />
+        <StatCard icon={Hand} title="Most Catches" value={catchL.value} subtitle={catchL.name} />
       </div>
 
       <Tabs defaultValue="batting">
