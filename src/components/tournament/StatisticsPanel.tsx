@@ -91,15 +91,15 @@ export function StatisticsPanel({ stats, players }: StatisticsPanelProps) {
 
   const StatCard = ({ icon: Icon, title, value, subtitle }: { icon: any; title: string; value: string | number; subtitle?: string }) => (
     <Card>
-      <CardContent className="p-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <Icon className="h-5 w-5 text-primary" />
+      <CardContent className="p-3 sm:p-4">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 shrink-0">
+            <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
           </div>
-          <div>
-            <p className="text-sm text-muted-foreground">{title}</p>
-            <p className="text-xl font-bold">{value}</p>
-            {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+          <div className="min-w-0">
+            <p className="text-[11px] sm:text-sm text-muted-foreground truncate">{title}</p>
+            <p className="text-lg sm:text-xl font-bold leading-tight">{value}</p>
+            {subtitle && <p className="text-[11px] sm:text-xs text-muted-foreground truncate">{subtitle}</p>}
           </div>
         </div>
       </CardContent>
@@ -118,7 +118,7 @@ export function StatisticsPanel({ stats, players }: StatisticsPanelProps) {
   return (
     <div className="space-y-6">
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
         <StatCard icon={Trophy} title="Top Run Scorer" value={runsL.value} subtitle={runsL.name} />
         <StatCard icon={Target} title="Top Wicket Taker" value={wktL.value} subtitle={wktL.name} />
         <StatCard icon={Flame} title="Most Sixes" value={sixL.value} subtitle={sixL.name} />

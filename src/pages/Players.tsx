@@ -92,21 +92,18 @@ export default function Players() {
 
         {/* Status Tabs */}
         <Tabs value={statusFilter} onValueChange={v => setStatusFilter(v as typeof statusFilter)} className="mb-4 sm:mb-6">
-          <TabsList className="w-full grid grid-cols-4 h-auto">
-            <TabsTrigger value="all" className="text-xs sm:text-sm py-2 gap-1">
-              All <Badge variant="secondary" className="ml-0.5 text-[10px] sm:text-xs px-1.5">{statusCounts.all}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="pending" className="text-xs sm:text-sm py-2 gap-1">
-              <span className="hidden xs:inline">Pending</span><span className="xs:hidden">Pend</span>
-              <Badge variant="secondary" className="ml-0.5 text-[10px] sm:text-xs px-1.5">{statusCounts.pending}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="sold" className="text-xs sm:text-sm py-2 gap-1">
-              Sold <Badge variant="secondary" className="ml-0.5 text-[10px] sm:text-xs px-1.5">{statusCounts.sold}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="unsold" className="text-xs sm:text-sm py-2 gap-1">
-              <span className="hidden xs:inline">Unsold</span><span className="xs:hidden">Unsl</span>
-              <Badge variant="secondary" className="ml-0.5 text-[10px] sm:text-xs px-1.5">{statusCounts.unsold}</Badge>
-            </TabsTrigger>
+          <TabsList className="w-full grid grid-cols-2 sm:grid-cols-4 h-auto gap-2">
+            {([
+              ['all', 'All', statusCounts.all],
+              ['pending', 'Pending', statusCounts.pending],
+              ['sold', 'Sold', statusCounts.sold],
+              ['unsold', 'Unsold', statusCounts.unsold],
+            ] as const).map(([v, label, count]) => (
+              <TabsTrigger key={v} value={v} className="text-xs sm:text-sm py-2 gap-1.5 justify-center">
+                {label}
+                <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5">{count}</Badge>
+              </TabsTrigger>
+            ))}
           </TabsList>
         </Tabs>
 
