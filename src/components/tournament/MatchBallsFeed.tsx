@@ -48,11 +48,11 @@ export function MatchBallsFeed({ innings, allBalls, team1, team2, players }: Mat
 
         return (
           <div key={inn.id} className="rounded-xl border border-border/40 overflow-hidden">
-            <div className="flex items-center justify-between bg-muted/40 px-3 py-2">
-              <span className="text-sm font-bold">
+            <div className="flex items-center justify-between gap-3 bg-muted/40 px-3 py-2">
+              <span className="min-w-0 break-words text-sm font-bold leading-snug">
                 {batTeam.team_name} · Innings {inn.innings_number}
               </span>
-              <span className="text-xs text-muted-foreground">
+              <span className="shrink-0 whitespace-nowrap text-xs text-muted-foreground">
                 {inn.total_runs}/{inn.total_wickets}
               </span>
             </div>

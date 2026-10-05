@@ -1844,12 +1844,18 @@ export function LiveScoring({
                 return (
                   <div key={inn.id} className="rounded-xl overflow-hidden border border-border/50 shadow-md">
                     {/* Innings Header */}
-                    <div className="bg-gradient-to-r from-[hsl(var(--slate-dark))] to-[hsl(var(--slate))] px-4 py-2.5 flex justify-between items-center">
-                      <span className="font-bold text-white text-sm tracking-wide inline-flex items-center gap-2 min-w-0">
+                    <div className="bg-gradient-to-r from-[hsl(var(--slate-dark))] to-[hsl(var(--slate))] px-4 py-2.5 flex justify-between items-center gap-3">
+                      <span className="font-bold text-white text-sm tracking-wide flex items-center gap-2 min-w-0 flex-1">
                         <TeamLogo team={batTeam} size={26} />
-                        <span className="truncate">{batTeamName} — Innings {inn.innings_number}</span>
+                        <span className="min-w-0 break-words leading-snug">
+                          {batTeamName}
+                          <span className="block text-[11px] font-medium text-white/60">Innings {inn.innings_number}</span>
+                        </span>
                       </span>
-                      <span className="font-black text-white text-lg">{inn.total_runs}/{inn.total_wickets} <span className="text-white/60 text-xs font-medium">({oversDisplay} ov)</span></span>
+                      <span className="shrink-0 text-right font-black text-white text-lg leading-tight whitespace-nowrap">
+                        {inn.total_runs}/{inn.total_wickets}
+                        <span className="block text-white/60 text-xs font-medium">({oversDisplay} ov)</span>
+                      </span>
                     </div>
 
                     {/* Batting Table */}
