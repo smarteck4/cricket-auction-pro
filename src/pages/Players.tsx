@@ -61,6 +61,13 @@ export default function Players() {
     });
   }, [players, searchQuery, statusFilter, categoryFilter, roleFilter]);
 
+  const PAGE_SIZE = 10;
+  const [page, setPage] = useState(1);
+  useEffect(() => { setPage(1); }, [searchQuery, statusFilter, categoryFilter, roleFilter]);
+  const totalPages = Math.max(1, Math.ceil(filteredPlayers.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pagedPlayers = filteredPlayers.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
   const statusCounts = useMemo(() => ({
     all: players.length,
     pending: players.filter(p => p.auction_status === 'pending').length,
@@ -158,7 +165,7 @@ export default function Players() {
             </div>
 
             <div className="mt-3 text-xs sm:text-sm text-muted-foreground">
-              Showing {filteredPlayers.length} of {players.length} players
+              Showing {filteredPlayers.length === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filteredPlayers.length)} of {filteredPlayers.length} players
             </div>
           </CardContent>
         </Card>
@@ -178,8 +185,9 @@ export default function Players() {
             </CardContent>
           </Card>
         ) : (
+          <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-            {filteredPlayers.map(player => (
+            {pagedPlayers.map(player => (
               <div key={player.id} className="relative">
                 <PlayerCard player={player} onClick={() => setSelectedPlayer(player)} />
                 {player.auction_status === 'sold' && (
@@ -192,6 +200,22 @@ export default function Players() {
               </div>
             ))}
           </div>
+          {totalPages > 1 && (
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+              <Button variant="outline" size="sm" disabled={safePage === 1} onClick={() => { setPage(safePage - 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+                Previous
+              </Button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(n => (
+                <Button key={n} size="sm" variant={n === safePage ? 'default' : 'outline'} className="w-9 px-0" onClick={() => { setPage(n); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+                  {n}
+                </Button>
+              ))}
+              <Button variant="outline" size="sm" disabled={safePage === totalPages} onClick={() => { setPage(safePage + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+                Next
+              </Button>
+            </div>
+          )}
+          </>
         )}
       </main>
 
