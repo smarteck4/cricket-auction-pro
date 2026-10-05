@@ -957,6 +957,56 @@ export default function Auction() {
           </div>
         </div>
       </main>
+
+      {/* Mobile sticky owner bid dock */}
+      {role === 'owner' && owner && currentAuction?.is_active && currentPlayer && (() => {
+        const counts: Record<PlayerCategory, number> = { platinum: 0, gold: 0, silver: 0, emerging: 0 };
+        teamPlayers.forEach((tp) => { if (tp.player) counts[tp.player.category]++; });
+        const nextBid = currentAuction.current_bid + getBidIncrement();
+        const affordable = canBid(nextBid);
+        const closed = isBidWindowClosed(clockSynced, timeRemaining);
+        const leading = currentAuction.current_bidder_id === owner.id;
+        return (
+          <>
+            <div className="h-44 lg:hidden" aria-hidden />
+            <div className="fixed inset-x-0 bottom-0 z-40 lg:hidden border-t border-border bg-background/95 backdrop-blur-md px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-2xl">
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="rounded-lg bg-muted/60 py-1.5">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Current</p>
+                  <p className="font-display text-base font-bold leading-tight">{currentAuction.current_bid.toLocaleString()}</p>
+                </div>
+                <div className={`rounded-lg py-1.5 ${timeRemaining <= 5 ? 'bg-destructive/15 text-destructive' : 'bg-muted/60'}`}>
+                  <p className="text-[10px] uppercase tracking-wider opacity-70">Time</p>
+                  <p className="font-display text-base font-bold leading-tight">{currentAuction.timer_started_at ? `${timeRemaining}s` : '—'}</p>
+                </div>
+                <div className="rounded-lg bg-muted/60 py-1.5">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Your pts</p>
+                  <p className="font-display text-base font-bold leading-tight text-primary">{owner.remaining_points.toLocaleString()}</p>
+                </div>
+              </div>
+              <div className="mt-2 flex items-center justify-between gap-1 overflow-x-auto">
+                {(Object.keys(MIN_TEAM_REQUIREMENTS) as PlayerCategory[]).map((c) => {
+                  const done = counts[c] >= MIN_TEAM_REQUIREMENTS[c];
+                  return (
+                    <span key={c} className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize border ${done ? 'border-primary/40 text-primary' : 'border-border text-muted-foreground'} ${c === currentPlayer.category ? 'ring-1 ring-primary' : ''}`}>
+                      {c} {counts[c]}/{MIN_TEAM_REQUIREMENTS[c]}
+                    </span>
+                  );
+                })}
+              </div>
+              <Button
+                size="lg"
+                className="mt-2 w-full h-12 gradient-gold text-base font-bold"
+                onClick={placeBid}
+                disabled={leading || isBidButtonDisabled({ bidding, clockSynced, timeRemaining, canAfford: affordable })}
+              >
+                <Gavel className="w-5 h-5 mr-2" />
+                {closed ? 'Timer Expired' : leading ? 'You are leading' : !affordable ? 'Not enough points' : `Bid ${nextBid.toLocaleString()} pts`}
+              </Button>
+            </div>
+          </>
+        );
+      })()}
     </div>
   );
 }
