@@ -1861,16 +1861,16 @@ export function LiveScoring({
                     {/* Batting Table */}
                     {innBalls.length > 0 && (
                       <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
+                        <table className="w-full text-xs sm:text-sm [&_td]:px-1.5 [&_th]:px-1.5 sm:[&_td]:px-2.5 sm:[&_th]:px-2.5">
                           <thead>
                             <tr className="border-b bg-muted/30">
-                              <th className="text-left p-2.5 font-semibold text-xs text-muted-foreground uppercase tracking-wide">Batsman</th>
-                              <th className="text-left p-2.5 font-medium text-xs max-w-[100px]"></th>
-                              <th className="text-center p-2.5 font-semibold text-xs text-muted-foreground w-8">R</th>
-                              <th className="text-center p-2.5 font-semibold text-xs text-muted-foreground w-8">B</th>
-                              <th className="text-center p-2.5 font-semibold text-xs text-muted-foreground w-8">4s</th>
-                              <th className="text-center p-2.5 font-semibold text-xs text-muted-foreground w-8">6s</th>
-                              <th className="text-center p-2.5 font-semibold text-xs text-muted-foreground w-12">SR</th>
+                              <th className="text-left py-2.5 font-semibold text-xs text-muted-foreground uppercase tracking-wide">Batsman</th>
+                              <th className="hidden sm:table-cell text-left py-2.5 font-medium text-xs max-w-[100px]"></th>
+                              <th className="text-center py-2.5 font-semibold text-xs text-muted-foreground w-8">R</th>
+                              <th className="text-center py-2.5 font-semibold text-xs text-muted-foreground w-8">B</th>
+                              <th className="text-center py-2.5 font-semibold text-xs text-muted-foreground w-8">4s</th>
+                              <th className="text-center py-2.5 font-semibold text-xs text-muted-foreground w-8">6s</th>
+                              <th className="text-center py-2.5 font-semibold text-xs text-muted-foreground w-12">SR</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1880,13 +1880,16 @@ export function LiveScoring({
                               if (!stats || !player) return null;
                               return (
                                 <tr key={id} className="border-b border-border/30 last:border-0 hover:bg-muted/20 transition-colors">
-                                  <td className="p-2.5 text-xs sm:text-sm"><PlayerNameCell player={player} /></td>
-                                  <td className="p-2.5 text-xs text-muted-foreground max-w-[100px] truncate italic">{stats.howOut}</td>
-                                  <td className="text-center p-2.5 font-black text-primary">{stats.runs}</td>
-                                  <td className="text-center p-2.5 text-muted-foreground">{stats.balls}</td>
-                                  <td className="text-center p-2.5">{stats.fours}</td>
-                                  <td className="text-center p-2.5">{stats.sixes}</td>
-                                  <td className="text-center p-2.5 text-muted-foreground text-xs">{stats.balls > 0 ? ((stats.runs / stats.balls) * 100).toFixed(1) : '0.0'}</td>
+                                  <td className="py-2.5 text-xs sm:text-sm max-w-[150px] sm:max-w-none">
+                                    <PlayerNameCell player={player} size={22} />
+                                    <span className="sm:hidden block truncate pl-[30px] text-[10px] italic text-muted-foreground">{stats.howOut}</span>
+                                  </td>
+                                  <td className="hidden sm:table-cell py-2.5 text-xs text-muted-foreground max-w-[100px] truncate italic">{stats.howOut}</td>
+                                  <td className="text-center py-2.5 font-black text-primary">{stats.runs}</td>
+                                  <td className="text-center py-2.5 text-muted-foreground">{stats.balls}</td>
+                                  <td className="text-center py-2.5">{stats.fours}</td>
+                                  <td className="text-center py-2.5">{stats.sixes}</td>
+                                  <td className="text-center py-2.5 text-muted-foreground text-[11px] sm:text-xs">{stats.balls > 0 ? ((stats.runs / stats.balls) * 100).toFixed(1) : '0.0'}</td>
                                 </tr>
                               );
                             })}
@@ -1896,9 +1899,9 @@ export function LiveScoring({
                     )}
 
                     {/* Extras & Total */}
-                    <div className="border-t border-border/30 px-4 py-2.5 flex justify-between text-sm bg-muted/20">
+                    <div className="border-t border-border/30 px-3 sm:px-4 py-2.5 flex flex-wrap justify-between gap-x-3 gap-y-1 text-xs sm:text-sm bg-muted/20">
                       <span className="text-muted-foreground">Extras: <span className="font-semibold text-foreground">{inn.extras}</span></span>
-                      <span className="font-black">Total: {inn.total_runs}/{inn.total_wickets} ({oversDisplay} ov)</span>
+                      <span className="font-black whitespace-nowrap">Total: {inn.total_runs}/{inn.total_wickets} ({oversDisplay} ov)</span>
                     </div>
 
                     {/* Fall of Wickets */}
@@ -1920,7 +1923,7 @@ export function LiveScoring({
                     {/* Bowling Table */}
                     {innBalls.length > 0 && (
                       <div className="border-t border-border/30 overflow-x-auto">
-                        <table className="w-full text-sm">
+                        <table className="w-full text-xs sm:text-sm [&_td]:!px-1.5 [&_th]:!px-1.5 sm:[&_td]:!px-2.5 sm:[&_th]:!px-2.5 [&_td:first-child]:max-w-[150px] sm:[&_td:first-child]:max-w-none">
                           <thead>
                             <tr className="border-b bg-muted/30">
                               <th className="text-left p-2.5 font-semibold text-xs text-muted-foreground uppercase tracking-wide">Bowler</th>
