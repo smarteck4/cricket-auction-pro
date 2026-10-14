@@ -46,7 +46,9 @@ export function SponsorsMarquee({ className = '' }: { className?: string }) {
       >
         {loop.map((s, i) => (
           <div key={`${s.id}-${i}`} className="flex shrink-0 items-center gap-2 px-2">
-            <img src={s.logo_url} alt={s.name} loading="lazy" className="h-8 sm:h-10 w-auto max-w-[120px] object-contain" />
+            <div className="flex h-9 w-24 sm:h-12 sm:w-32 shrink-0 items-center justify-center rounded-md bg-background/40 p-1">
+              <img src={s.logo_url} alt={s.name} loading="lazy" decoding="async" className="block h-full w-full object-contain" />
+            </div>
             <span className="hidden sm:inline text-xs font-semibold text-muted-foreground whitespace-nowrap">{s.name}</span>
           </div>
         ))}

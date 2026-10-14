@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Player, PlayerCategory, PlayerRole, ROLE_LABELS, CATEGORY_LABELS } from '@/lib/types';
 import { Search, X, User, Target, TrendingUp, Zap, Award, CircleDot } from 'lucide-react';
 import { PlayerListExport } from '@/components/PlayerListExport';
+import { PlayerTournamentHistory } from '@/components/PlayerTournamentHistory';
 
 type PlayerWithBuyer = Player & {
   buyer_team?: string;
@@ -341,6 +342,8 @@ export default function Players() {
                     </div>
                   </CardContent>
                 </Card>
+
+                <PlayerTournamentHistory playerId={selectedPlayer.id} />
               </div>
             </>
           )}
