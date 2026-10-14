@@ -1,3 +1,4 @@
+import { SponsorsMarquee } from '@/components/SponsorsMarquee';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useCountdownBeep } from '@/hooks/useCountdownBeep';
 import { useBidAlert } from '@/hooks/useBidAlert';
@@ -559,6 +560,7 @@ export default function Auction() {
           </div>
         </div>
 
+        <SponsorsMarquee className="mb-6" />
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Auction Area */}
           <div className="lg:col-span-2 space-y-6">

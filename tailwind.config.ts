@@ -103,6 +103,7 @@ export default {
   			sm: 'calc(var(--radius) - 4px)'
   		},
   		keyframes: {
+			'sponsor-marquee': { from: { transform: 'translateX(0)' }, to: { transform: 'translateX(-50%)' } },
   			'accordion-down': {
   				from: { height: '0' },
   				to: { height: 'var(--radix-accordion-content-height)' }
@@ -149,6 +150,7 @@ export default {
   			}
   		},
   		animation: {
+			'sponsor-marquee': 'sponsor-marquee 30s linear infinite',
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out',
   			'fade-in': 'fade-in 0.4s ease-out',

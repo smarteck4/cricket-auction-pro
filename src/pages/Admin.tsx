@@ -24,6 +24,8 @@ import { PlayerFormModal, PlayerFormData } from '@/components/PlayerFormModal';
 import { Tabs as RadioTabs, TabsList as RadioTabsList, TabsTrigger as RadioTabsTrigger } from '@/components/ui/tabs';
 import { OwnerPointsStrip } from '@/components/tournament/OwnerPointsStrip';
 import { ImageUrlOrUpload } from '@/components/ImageUrlOrUpload';
+import { SponsorsManager } from '@/components/SponsorsManager';
+import { SponsorsMarquee } from '@/components/SponsorsMarquee';
 import { TeamMappingCard } from '@/components/tournament/TeamMappingCard';
 import { ALLOWED_IMAGE_TYPES, MAX_IMAGE_SIZE, uploadPlayerImageToCloudinary, destroyCloudinaryAsset, shouldDestroyPreviousAsset } from '@/lib/player-image';
 
@@ -615,6 +617,7 @@ export default function Admin() {
           <TabsContent value="auction">
             <div className="mb-6">
               <OwnerPointsStrip owners={owners} leadingOwnerId={currentBidder?.id ?? null} />
+              <SponsorsMarquee className="mt-4" />
             </div>
             <div className="grid lg:grid-cols-3 gap-6">
               {/* Live Auction View */}
@@ -776,6 +779,7 @@ export default function Admin() {
 
                 {/* Live auction activity timeline (bids + point changes) */}
                 <AuctionActivityTimeline className="card-shadow" />
+                <SponsorsManager className="card-shadow" />
 
 
                 {/* Timer Settings */}
