@@ -10,6 +10,7 @@ interface MatchSquadsProps {
   team2Players: Player[];
   innings: MatchInnings[];
   allBalls: MatchBall[][];
+  roles?: Map<string, 'captain' | 'vice_captain'>;
 }
 
 const ROLE_LABEL: Record<string, string> = {
@@ -26,6 +27,7 @@ export function MatchSquads({
   team2Players,
   innings,
   allBalls,
+  roles,
 }: MatchSquadsProps) {
   const batted = new Set<string>();
   const bowled = new Set<string>();
@@ -53,7 +55,14 @@ export function MatchSquads({
           <div key={p.id} className="flex items-center gap-2.5 px-3 py-2">
             <PlayerAvatar player={p} size={30} />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold">{p.name}</p>
+              <p className="truncate text-sm font-semibold">
+                {p.name}
+                {roles?.get(p.id) && (
+                  <span className="ml-1.5 rounded bg-primary px-1 py-0.5 text-[10px] font-bold text-primary-foreground">
+                    {roles.get(p.id) === 'captain' ? 'C' : 'VC'}
+                  </span>
+                )}
+              </p>
               <p className="text-[11px] text-muted-foreground">
                 {ROLE_LABEL[p.player_role] || p.player_role} · {p.batting_hand === 'left' ? 'LHB' : 'RHB'}
                 {p.nationality ? ` · ${p.nationality}` : ''}

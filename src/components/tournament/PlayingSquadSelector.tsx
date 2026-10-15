@@ -41,18 +41,28 @@ export function PlayingSquadSelector({
   const [sel2, setSel2] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  // captain / vice-captain per team: { 1: {c, vc}, 2: {c, vc} }
+  const [cap, setCap] = useState<Record<1 | 2, { c: string; vc: string }>>({ 1: { c: '', vc: '' }, 2: { c: '', vc: '' } });
 
   useEffect(() => {
     const load = async () => {
       const { data } = await supabase
         .from('match_squads')
-        .select('team_id, player_id')
+        .select('team_id, player_id, squad_role')
         .eq('match_id', match.id);
+      const rows = data || [];
+      const find = (tid: string, role: string) => rows.find((r) => r.team_id === tid && r.squad_role === role)?.player_id || '';
+      setCap({
+        1: { c: find(team1.id, 'captain'), vc: find(team1.id, 'vice_captain') },
+        2: { c: find(team2.id, 'captain'), vc: find(team2.id, 'vice_captain') },
+      });
       const a = (data || []).filter((r) => r.team_id === team1.id).map((r) => r.player_id);
       const b = (data || []).filter((r) => r.team_id === team2.id).map((r) => r.player_id);
       setSel1(a);
       setSel2(b);
+      const minRoster = Math.min(team1Roster.length, team2Roster.length, MAX_SIZE);
       if (a.length >= MIN_SIZE && a.length === b.length) setTeamSize(a.length);
+      else setTeamSize(Math.max(MIN_SIZE, minRoster));
       setLoaded(true);
     };
     load();
@@ -69,6 +79,7 @@ export function PlayingSquadSelector({
     const [sel, setSel] = teamNum === 1 ? [sel1, setSel1] : [sel2, setSel2];
     if (sel.includes(id)) {
       setSel(sel.filter((x) => x !== id));
+      setCap((c) => ({ ...c, [teamNum]: { c: c[teamNum].c === id ? '' : c[teamNum].c, vc: c[teamNum].vc === id ? '' : c[teamNum].vc } }));
       return;
     }
     if (sel.length >= teamSize) {
@@ -82,20 +93,42 @@ export function PlayingSquadSelector({
     setSel([...sel, id]);
   };
 
-  const valid = sel1.length === teamSize && sel2.length === teamSize;
+  const setRole = (teamNum: 1 | 2, id: string, role: 'c' | 'vc') =>
+    setCap((c) => {
+      const cur = { ...c[teamNum] };
+      const other = role === 'c' ? 'vc' : 'c';
+      cur[role] = cur[role] === id ? '' : id;
+      if (cur[other] === id) cur[other] = '';
+      return { ...c, [teamNum]: cur };
+    });
+
+  const capsOk = !!(cap[1].c && cap[1].vc && cap[2].c && cap[2].vc);
+  const valid = sel1.length === teamSize && sel2.length === teamSize && capsOk;
 
   const autoFill = () => {
     const size = Math.min(teamSize, maxPossible);
-    setSel1(pickPlayingXI(team1Roster, size, { captainId: team1.captain_id }).map((p) => p.id));
-    setSel2(pickPlayingXI(team2Roster, size, { captainId: team2.captain_id }).map((p) => p.id));
+    setTeamSize(Math.max(MIN_SIZE, size));
+    const a = pickPlayingXI(team1Roster, size, { captainId: team1.captain_id }).map((p) => p.id);
+    const b = pickPlayingXI(team2Roster, size, { captainId: team2.captain_id }).map((p) => p.id);
+    setSel1(a);
+    setSel2(b);
+    const pick = (ids: string[], capId?: string | null) => {
+      const c = capId && ids.includes(capId) ? capId : ids[0] || '';
+      return { c, vc: ids.find((x) => x !== c) || '' };
+    };
+    setCap({ 1: pick(a, team1.captain_id), 2: pick(b, team2.captain_id) });
     toast({ title: 'Playing XI auto-filled', description: 'Best players by category, captains included.' });
   };
+
+  const roleOf = (t: 1 | 2, id: string) => (cap[t].c === id ? 'captain' : cap[t].vc === id ? 'vice_captain' : null);
 
   const save = async () => {
     if (!valid) {
       toast({
-        title: 'Squads must be equal',
-        description: `Both teams need exactly ${teamSize} players (currently ${sel1.length} vs ${sel2.length}).`,
+        title: capsOk ? 'Squads must be equal' : 'Captain & vice-captain required',
+        description: capsOk
+          ? `Both teams need exactly ${teamSize} players (currently ${sel1.length} vs ${sel2.length}).`
+          : 'Mark one C (captain) and one VC (vice-captain) in each team.',
         variant: 'destructive',
       });
       return;
@@ -108,8 +141,8 @@ export function PlayingSquadSelector({
       return;
     }
     const rows = [
-      ...sel1.map((player_id) => ({ match_id: match.id, team_id: team1.id, player_id })),
-      ...sel2.map((player_id) => ({ match_id: match.id, team_id: team2.id, player_id })),
+      ...sel1.map((player_id) => ({ match_id: match.id, team_id: team1.id, player_id, squad_role: roleOf(1, player_id) })),
+      ...sel2.map((player_id) => ({ match_id: match.id, team_id: team2.id, player_id, squad_role: roleOf(2, player_id) })),
     ];
     const { error } = await supabase.from('match_squads').insert(rows);
     setSaving(false);
@@ -151,6 +184,27 @@ export function PlayingSquadSelector({
                 <p className="truncate text-sm font-semibold">{p.name}</p>
                 <p className="text-[11px] text-muted-foreground">{p.player_role.replace('_', '-')}</p>
               </div>
+              {checked && (
+                <div className="flex shrink-0 gap-1" onClick={(e) => e.preventDefault()}>
+                  {(['c', 'vc'] as const).map((r) => {
+                    const on = cap[teamNum][r] === p.id;
+                    return (
+                      <button
+                        key={r}
+                        type="button"
+                        disabled={!canManage}
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setRole(teamNum, p.id, r); }}
+                        className={`h-7 min-w-[34px] rounded-md border px-1.5 text-[11px] font-bold transition-colors ${
+                          on ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-muted-foreground hover:border-primary/50'
+                        }`}
+                        title={r === 'c' ? 'Captain' : 'Vice-captain'}
+                      >
+                        {r === 'c' ? 'C' : 'VC'}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </label>
           );
         })}
@@ -167,6 +221,9 @@ export function PlayingSquadSelector({
           <Users className="h-4 w-4 text-muted-foreground" />
           <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
             Playing squad selection
+          </span>
+          <span className="text-[11px] text-muted-foreground">
+            Max {Math.max(MIN_SIZE, maxPossible)} v {Math.max(MIN_SIZE, maxPossible)} (smaller roster decides)
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -205,7 +262,9 @@ export function PlayingSquadSelector({
           <p className="text-xs text-muted-foreground">
             {valid
               ? `Ready: ${teamSize} v ${teamSize}`
-              : `Both teams must have exactly ${teamSize} players (${sel1.length} vs ${sel2.length}).`}
+              : sel1.length !== teamSize || sel2.length !== teamSize
+                ? `Both teams must have exactly ${teamSize} players (${sel1.length} vs ${sel2.length}).`
+                : 'Mark C (captain) and VC (vice-captain) for both teams.'}
           </p>
           <Button size="sm" variant="outline" onClick={autoFill} className="gap-2">
             <Wand2 className="h-4 w-4" />
