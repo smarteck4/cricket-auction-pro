@@ -19,6 +19,7 @@ import { MatchBallsFeed } from './MatchBallsFeed';
 import { FallOfWickets } from './FallOfWickets';
 import { MatchMilestones } from './MatchMilestones';
 import { PlayingSquadSelector } from './PlayingSquadSelector';
+import { useSquadRoles, squadsReady } from '@/hooks/useSquadRoles';
 import { getMatchResultText } from '@/lib/match-pdf';
 
 interface LiveScoringProps {
@@ -116,6 +117,8 @@ export function LiveScoring({
   const [team2Score, setTeam2Score] = useState({ runs: 0, wickets: 0, overs: 0 });
   const [winnerId, setWinnerId] = useState('');
   const [tossWinner, setTossWinner] = useState<string>(match.toss_winner_id ?? '');
+  const { rows: squadRows, roles: squadRoles } = useSquadRoles(match.id);
+  const squadsAreReady = squadsReady(squadRows, team1.id, team2.id);
   const [tossDecision, setTossDecision] = useState<'bat' | 'bowl' | ''>((match.toss_decision as 'bat' | 'bowl') ?? '');
 
   const battingTeam = currentInnings?.batting_team_id === team1.id ? team1 : team2;
@@ -1667,7 +1670,14 @@ export function LiveScoring({
                   {innings.length === 0 ? 'Record the toss to begin' : 'Select the batting team'}
                 </p>
               </div>
-              {innings.length === 0 ? (
+              {innings.length === 0 && !squadsAreReady ? (
+                <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-center text-sm">
+                  <p className="font-semibold">Playing squads not ready</p>
+                  <p className="mt-1 text-muted-foreground">
+                    Open the Squads tab, pick an equal number of players for both teams, and mark a C (captain) and VC (vice-captain) for each team before starting the match.
+                  </p>
+                </div>
+              ) : innings.length === 0 ? (
                 <div className="space-y-4">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Toss won by</p>
@@ -2029,6 +2039,7 @@ export function LiveScoring({
             team2Players={team2Players}
             innings={innings}
             allBalls={allInningsBalls}
+            roles={squadRoles}
           />
         </TabsContent>
 
