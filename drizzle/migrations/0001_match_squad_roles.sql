@@ -1,0 +1,1 @@
+ALTER TABLE public.match_squads ADD COLUMN IF NOT EXISTS squad_role text CHECK (squad_role IN ('captain','vice_captain'));
