@@ -24,7 +24,7 @@ import { PlayerFormModal, PlayerFormData } from '@/components/PlayerFormModal';
 import { Tabs as RadioTabs, TabsList as RadioTabsList, TabsTrigger as RadioTabsTrigger } from '@/components/ui/tabs';
 import { OwnerPointsStrip } from '@/components/tournament/OwnerPointsStrip';
 import { ImageUrlOrUpload } from '@/components/ImageUrlOrUpload';
-import { Link } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router-dom';
 import { Megaphone, Palette } from 'lucide-react';
 import { SponsorsMarquee } from '@/components/SponsorsMarquee';
 import { TeamMappingCard } from '@/components/tournament/TeamMappingCard';
@@ -596,10 +596,10 @@ export default function Admin() {
           <h1 className="font-display text-2xl font-bold sm:text-3xl">Admin Panel</h1>
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" size="sm" asChild>
-              <Link to="/admin/sponsors"><Megaphone className="h-4 w-4 mr-1.5" />Sponsors</Link>
+              <RouterLink to="/admin/sponsors"><Megaphone className="h-4 w-4 mr-1.5" />Sponsors</RouterLink>
             </Button>
             <Button variant="outline" size="sm" asChild>
-              <Link to="/admin/theme"><Palette className="h-4 w-4 mr-1.5" />Website Theme</Link>
+              <RouterLink to="/admin/theme"><Palette className="h-4 w-4 mr-1.5" />Website Theme</RouterLink>
             </Button>
           </div>
         </div>
