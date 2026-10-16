@@ -18,12 +18,16 @@ import SuperAdmin from "./pages/SuperAdmin";
 import RoleDebug from "./pages/RoleDebug";
 import NotFound from "./pages/NotFound";
 import { RequireRole } from "@/components/RequireRole";
+import { SiteSettingsProvider } from "@/hooks/useSiteSettings";
+import AdminSponsors from "./pages/AdminSponsors";
+import AdminTheme from "./pages/AdminTheme";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
+      <SiteSettingsProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -33,6 +37,8 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/auction" element={<Auction />} />
             <Route path="/admin" element={<RequireRole roles={['admin', 'super_admin']} context="Admin page"><Admin /></RequireRole>} />
+            <Route path="/admin/sponsors" element={<RequireRole roles={['admin', 'super_admin']} context="Sponsors page"><AdminSponsors /></RequireRole>} />
+            <Route path="/admin/theme" element={<RequireRole roles={['admin', 'super_admin']} context="Theme page"><AdminTheme /></RequireRole>} />
             <Route path="/owner" element={<RequireRole roles={['owner']} requireOwner context="My Team (Owner) page"><Owner /></RequireRole>} />
             <Route path="/players" element={<Players />} />
             <Route path="/tournaments" element={<Tournaments />} />
@@ -46,6 +52,7 @@ const App = () => (
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
+      </SiteSettingsProvider>
     </AuthProvider>
   </QueryClientProvider>
 );

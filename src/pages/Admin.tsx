@@ -24,7 +24,8 @@ import { PlayerFormModal, PlayerFormData } from '@/components/PlayerFormModal';
 import { Tabs as RadioTabs, TabsList as RadioTabsList, TabsTrigger as RadioTabsTrigger } from '@/components/ui/tabs';
 import { OwnerPointsStrip } from '@/components/tournament/OwnerPointsStrip';
 import { ImageUrlOrUpload } from '@/components/ImageUrlOrUpload';
-import { SponsorsManager } from '@/components/SponsorsManager';
+import { Link as RouterLink } from 'react-router-dom';
+import { Megaphone, Palette } from 'lucide-react';
 import { SponsorsMarquee } from '@/components/SponsorsMarquee';
 import { TeamMappingCard } from '@/components/tournament/TeamMappingCard';
 import { ALLOWED_IMAGE_TYPES, MAX_IMAGE_SIZE, uploadPlayerImageToCloudinary, destroyCloudinaryAsset, shouldDestroyPreviousAsset } from '@/lib/player-image';
@@ -591,7 +592,17 @@ export default function Admin() {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container px-3 py-6 sm:px-6 sm:py-8">
-        <h1 className="font-display text-2xl font-bold mb-6 sm:text-3xl sm:mb-8">Admin Panel</h1>
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 sm:mb-8">
+          <h1 className="font-display text-2xl font-bold sm:text-3xl">Admin Panel</h1>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <RouterLink to="/admin/sponsors"><Megaphone className="h-4 w-4 mr-1.5" />Sponsors</RouterLink>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <RouterLink to="/admin/theme"><Palette className="h-4 w-4 mr-1.5" />Website Theme</RouterLink>
+            </Button>
+          </div>
+        </div>
         
       <Tabs defaultValue="auction">
        <TabsList className="mb-6 grid w-full grid-cols-3 gap-1 sm:inline-flex sm:w-fit sm:max-w-full sm:flex-nowrap sm:gap-2">
@@ -779,7 +790,6 @@ export default function Admin() {
 
                 {/* Live auction activity timeline (bids + point changes) */}
                 <AuctionActivityTimeline className="card-shadow" />
-                <SponsorsManager className="card-shadow" />
 
 
                 {/* Timer Settings */}

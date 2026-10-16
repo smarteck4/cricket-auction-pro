@@ -12,10 +12,12 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { User, LogOut, Settings, Users, Gavel, UsersRound, Trophy, BarChart3, Menu, Shield, ListChecks } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useState } from 'react';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 
 export function Header() {
   const { user, role, owner, loading, signOut } = useAuth();
   const navigate = useNavigate();
+  const { settings } = useSiteSettings();
   const [mobileOpen, setMobileOpen] = useState(false);
   const roleLabel = loading ? 'Loading role…' : role ?? 'No role assigned';
 
@@ -39,10 +41,14 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full glass-strong border-b border-border/30">
       <div className="container flex h-14 sm:h-16 items-center justify-between">
         <Link to="/" className="flex items-center gap-2 group">
-          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl gradient-gold flex items-center justify-center neu-flat transition-all duration-300 group-hover:scale-110 group-hover:glow-gold">
-            <Gavel className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />
-          </div>
-          <span className="font-display text-lg sm:text-xl font-bold">CricBid</span>
+          {settings.logo_url ? (
+            <img src={settings.logo_url} alt={settings.site_name ?? 'Logo'} className="h-8 sm:h-10 w-auto max-w-[120px] object-contain" />
+          ) : (
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl gradient-gold flex items-center justify-center neu-flat transition-all duration-300 group-hover:scale-110 group-hover:glow-gold">
+              <Gavel className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />
+            </div>
+          )}
+          <span className="font-display text-lg sm:text-xl font-bold truncate max-w-[140px] sm:max-w-none">{settings.site_name || 'CricBid'}</span>
         </Link>
 
         <nav className="flex items-center gap-1 sm:gap-2">

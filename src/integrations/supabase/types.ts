@@ -712,6 +712,42 @@ export type Database = {
         }
         Relationships: []
       }
+      site_settings: {
+        Row: {
+          font_family: string | null
+          font_size: number | null
+          heading_font: string | null
+          id: boolean
+          logo_url: string | null
+          primary_color: string | null
+          site_name: string | null
+          text_color: string | null
+          updated_at: string
+        }
+        Insert: {
+          font_family?: string | null
+          font_size?: number | null
+          heading_font?: string | null
+          id?: boolean
+          logo_url?: string | null
+          primary_color?: string | null
+          site_name?: string | null
+          text_color?: string | null
+          updated_at?: string
+        }
+        Update: {
+          font_family?: string | null
+          font_size?: number | null
+          heading_font?: string | null
+          id?: boolean
+          logo_url?: string | null
+          primary_color?: string | null
+          site_name?: string | null
+          text_color?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sponsors: {
         Row: {
           created_at: string
@@ -935,6 +971,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin_or_super: { Args: { _user_id: string }; Returns: boolean }
+      match_squads_error: { Args: { p_match_id: string }; Returns: string }
       place_bid_atomic: {
         Args: {
           p_auction_id: string
@@ -946,6 +983,10 @@ export type Database = {
         Returns: Json
       }
       re_auction_player: { Args: { p_player_id: string }; Returns: Json }
+      save_match_squads: {
+        Args: { p_match_id: string; p_rows: Json }
+        Returns: Json
+      }
       update_user_role: {
         Args: {
           p_new_role: Database["public"]["Enums"]["app_role"]

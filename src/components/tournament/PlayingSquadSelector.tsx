@@ -134,17 +134,11 @@ export function PlayingSquadSelector({
       return;
     }
     setSaving(true);
-    const { error: delErr } = await supabase.from('match_squads').delete().eq('match_id', match.id);
-    if (delErr) {
-      setSaving(false);
-      toast({ title: 'Error', description: delErr.message, variant: 'destructive' });
-      return;
-    }
     const rows = [
-      ...sel1.map((player_id) => ({ match_id: match.id, team_id: team1.id, player_id, squad_role: roleOf(1, player_id) })),
-      ...sel2.map((player_id) => ({ match_id: match.id, team_id: team2.id, player_id, squad_role: roleOf(2, player_id) })),
+      ...sel1.map((player_id) => ({ team_id: team1.id, player_id, squad_role: roleOf(1, player_id) })),
+      ...sel2.map((player_id) => ({ team_id: team2.id, player_id, squad_role: roleOf(2, player_id) })),
     ];
-    const { error } = await supabase.from('match_squads').insert(rows);
+    const { error } = await supabase.rpc('save_match_squads', { p_match_id: match.id, p_rows: rows });
     setSaving(false);
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
