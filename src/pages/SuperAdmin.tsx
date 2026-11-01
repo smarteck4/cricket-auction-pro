@@ -38,6 +38,11 @@ export default function SuperAdmin() {
   const [updatingUser, setUpdatingUser] = useState<string | null>(null);
   const [teams, setTeams] = useState<TeamRow[]>([]);
   const [assigningUser, setAssigningUser] = useState<string | null>(null);
+  const [passwordTarget, setPasswordTarget] = useState<UserWithRole | null>(null);
+  const [passwordSecretKey, setPasswordSecretKey] = useState('');
+  const [passwordNew, setPasswordNew] = useState('');
+  const [passwordConfirm, setPasswordConfirm] = useState('');
+  const [savingPassword, setSavingPassword] = useState(false);
 
 
 
@@ -151,6 +156,47 @@ export default function SuperAdmin() {
     setUpdatingUser(null);
   };
 
+  const openPasswordDialog = (u: UserWithRole) => {
+    setPasswordTarget(u);
+    setPasswordSecretKey('');
+    setPasswordNew('');
+    setPasswordConfirm('');
+  };
+
+  const handlePasswordUpdate = async () => {
+    if (!passwordTarget) return;
+    if (passwordNew.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+    if (passwordNew !== passwordConfirm) {
+      toast.error('Passwords do not match');
+      return;
+    }
+    if (passwordTarget.id === user?.id && !passwordSecretKey.trim()) {
+      toast.error('Enter the secret key first');
+      return;
+    }
+    setSavingPassword(true);
+    const { data, error } = await supabase.functions.invoke('update-user-password', {
+      body: {
+        targetUserId: passwordTarget.id,
+        newPassword: passwordNew,
+        secretKey: passwordTarget.id === user?.id ? passwordSecretKey : undefined,
+      },
+    });
+    setSavingPassword(false);
+    const errMessage = (data && typeof data === 'object' && 'error' in (data as any))
+      ? (data as any).error
+      : null;
+    if (error || errMessage) {
+      toast.error(errMessage || 'Failed to update password');
+      return;
+    }
+    toast.success('Password updated for ' + passwordTarget.email);
+    setPasswordTarget(null);
+  };
+
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
       case 'super_admin': return 'destructive';
@@ -213,13 +259,14 @@ export default function SuperAdmin() {
                       <TableHead>User</TableHead>
                       <TableHead>Current Role</TableHead>
                       <TableHead>Team</TableHead>
+                      <TableHead className="text-center">Password</TableHead>
                       <TableHead className="text-right">Change Role</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredUsers.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                           No users found
                         </TableCell>
                       </TableRow>
@@ -262,6 +309,17 @@ export default function SuperAdmin() {
                               <span className="text-xs text-muted-foreground">—</span>
                             )}
                           </TableCell>
+                          <TableCell className="text-center">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              aria-label={'Update password for ' + u.email}
+                              onClick={() => openPasswordDialog(u)}
+                            >
+                              <KeyRound className="w-4 h-4" />
+                            </Button>
+                          </TableCell>
                           <TableCell className="text-right">
                             {u.role === 'super_admin' || u.id === user?.id ? (
                               <span className="text-xs text-muted-foreground">Protected</span>
@@ -297,6 +355,66 @@ export default function SuperAdmin() {
             </div>
           </CardContent>
         </Card>
+
+        <Dialog open={!!passwordTarget} onOpenChange={(open) => !open && setPasswordTarget(null)}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <KeyRound className="w-4 h-4" />
+                Update password
+              </DialogTitle>
+              <DialogDescription>
+                Set a new password for {passwordTarget?.email}
+                {passwordTarget?.id === user?.id && ' — changing your own password requires the secret key.'}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              {passwordTarget?.id === user?.id && (
+                <div className="space-y-2">
+                  <Label htmlFor="password-secret-key">Secret key</Label>
+                  <Input
+                    id="password-secret-key"
+                    type="password"
+                    value={passwordSecretKey}
+                    onChange={(e) => setPasswordSecretKey(e.target.value)}
+                    placeholder="Enter secret key"
+                    autoComplete="off"
+                  />
+                </div>
+              )}
+              <div className="space-y-2">
+                <Label htmlFor="password-new">New password</Label>
+                <Input
+                  id="password-new"
+                  type="password"
+                  value={passwordNew}
+                  onChange={(e) => setPasswordNew(e.target.value)}
+                  placeholder="At least 6 characters"
+                  autoComplete="new-password"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password-confirm">Confirm password</Label>
+                <Input
+                  id="password-confirm"
+                  type="password"
+                  value={passwordConfirm}
+                  onChange={(e) => setPasswordConfirm(e.target.value)}
+                  placeholder="Repeat the new password"
+                  autoComplete="new-password"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setPasswordTarget(null)} disabled={savingPassword}>
+                Cancel
+              </Button>
+              <Button onClick={handlePasswordUpdate} disabled={savingPassword}>
+                {savingPassword ? 'Saving...' : 'Update password'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );
