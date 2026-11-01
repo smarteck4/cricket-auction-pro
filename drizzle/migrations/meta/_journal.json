@@ -22,6 +22,20 @@
       "when": 1792177386484,
       "tag": "0002_squad_validation_and_site_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793556466382,
+      "tag": "0003_tighten_points_and_rosters_read",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793556482436,
+      "tag": "0004_points_visible_all_tournament_states",
+      "breakpoints": true
     }
   ]
 }
