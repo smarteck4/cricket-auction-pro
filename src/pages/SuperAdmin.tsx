@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { FunctionsHttpError } from '@supabase/supabase-js';
 import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -186,11 +187,18 @@ export default function SuperAdmin() {
       },
     });
     setSavingPassword(false);
-    const errMessage = (data && typeof data === 'object' && 'error' in (data as any))
-      ? (data as any).error
-      : null;
-    if (error || errMessage) {
-      toast.error(errMessage || 'Failed to update password');
+    let errMessage: string | null = null;
+    if (error instanceof FunctionsHttpError) {
+      const ctx = await error.context.json().catch(() => null);
+      errMessage = (ctx as any)?.error || null;
+    } else if (error) {
+      errMessage = 'Failed to update password';
+    }
+    if (data && typeof data === 'object' && 'error' in (data as any)) {
+      errMessage = (data as any).error;
+    }
+    if (errMessage) {
+      toast.error(errMessage);
       return;
     }
     toast.success('Password updated for ' + passwordTarget.email);
