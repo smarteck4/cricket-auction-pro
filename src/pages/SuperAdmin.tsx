@@ -435,28 +435,30 @@ export default function SuperAdmin() {
                   />
                 </div>
               )}
-              <div className="space-y-2">
-                <Label htmlFor="password-new">New password</Label>
-                <Input
-                  id="password-new"
-                  type="password"
-                  value={passwordNew}
-                  onChange={(e) => setPasswordNew(e.target.value)}
-                  placeholder="At least 6 characters"
-                  autoComplete="new-password"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password-confirm">Confirm password</Label>
-                <Input
-                  id="password-confirm"
-                  type="password"
-                  value={passwordConfirm}
-                  onChange={(e) => setPasswordConfirm(e.target.value)}
-                  placeholder="Repeat the new password"
-                  autoComplete="new-password"
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password-new">New password</Label>
+                  <PasswordInput
+                    id="password-new"
+                    value={passwordNew}
+                    onChange={setPasswordNew}
+                    placeholder="At least 6 characters"
+                    show={showNewPassword}
+                    onToggle={() => setShowNewPassword((v) => !v)}
+                    autoComplete="new-password"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password-confirm">Confirm password</Label>
+                  <PasswordInput
+                    id="password-confirm"
+                    value={passwordConfirm}
+                    onChange={setPasswordConfirm}
+                    placeholder="Repeat the new password"
+                    show={showConfirmPassword}
+                    onToggle={() => setShowConfirmPassword((v) => !v)}
+                    autoComplete="new-password"
+                  />
+                </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setPasswordTarget(null)} disabled={savingPassword}>
