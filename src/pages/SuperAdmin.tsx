@@ -30,6 +30,48 @@ interface TeamRow {
 
 const NO_TEAM = 'none';
 
+function PasswordInput({
+  id,
+  value,
+  onChange,
+  placeholder,
+  show,
+  onToggle,
+  autoComplete = 'off',
+}: {
+  id: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  show: boolean;
+  onToggle: () => void;
+  autoComplete?: string;
+}) {
+  return (
+    <div className="relative">
+      <Input
+        id={id}
+        type={show ? 'text' : 'password'}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        className="pr-10"
+      />
+      <button
+        type="button"
+        tabIndex={-1}
+        aria-label={show ? 'Hide password' : 'Show password'}
+        onClick={onToggle}
+        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors"
+      >
+        {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+      </button>
+    </div>
+  );
+}
+
+
 export default function SuperAdmin() {
   const { user, role, loading } = useAuth();
   const navigate = useNavigate();
