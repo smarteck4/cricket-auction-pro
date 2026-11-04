@@ -43,7 +43,7 @@ export function FeaturedMatchTile({
   if (!match) {
     return (
       <div className="bc-tile md:col-span-8 p-6 flex flex-col items-center justify-center min-h-[220px] text-center">
-        <Trophy className="h-8 w-8 mb-3 text-broadcast-accent/60" />
+        <Trophy className="h-8 w-8 mb-3 text-broadcast-accent" />
         <p className="bc-label">No featured match</p>
         <p className="text-sm text-broadcast-muted mt-1">Fixtures schedule hone ke baad yahan dikhega</p>
       </div>
@@ -180,7 +180,7 @@ export function StandingsTile({
               <tr key={row.id} className="border-t border-broadcast-fg/5">
                 <td className="py-3 font-bold text-broadcast-fg">
                   <span className="inline-flex items-center gap-2 min-w-0">
-                    <span className="bc-heading text-xs w-4 text-broadcast-accent/70">{i + 1}</span>
+                    <span className="bc-heading text-xs w-4 text-broadcast-accent">{i + 1}</span>
                     <span className="truncate max-w-[7rem]">{row.team?.team_name ?? 'Team'}</span>
                   </span>
                 </td>
@@ -333,7 +333,7 @@ export function TournamentSummaryStrip({
     { label: 'Completed', value: completed, icon: Trophy },
   ];
   return (
-    <div className="bc-tile md:col-span-12 p-4 grid grid-cols-3 divide-x divide-broadcast-fg/5">
+    <div className="bc-tile md:col-span-12 p-4 grid grid-cols-3 divide-x divide-broadcast-fg/15">
       {items.map(({ label, value, icon: Icon }) => (
         <div key={label} className="flex items-center justify-center gap-3">
           <Icon className="h-4 w-4 text-broadcast-accent" />
