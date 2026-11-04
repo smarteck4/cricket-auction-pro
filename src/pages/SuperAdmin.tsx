@@ -43,6 +43,9 @@ export default function SuperAdmin() {
   const [passwordSecretKey, setPasswordSecretKey] = useState('');
   const [passwordNew, setPasswordNew] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
+  const [showSecretKey, setShowSecretKey] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
 
 
