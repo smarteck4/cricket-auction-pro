@@ -35,6 +35,8 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/login" element={<Auth />} />
+
             <Route path="/auction" element={<Auction />} />
             <Route path="/admin" element={<RequireRole roles={['admin', 'super_admin']} context="Admin page"><Admin /></RequireRole>} />
             <Route path="/admin/sponsors" element={<RequireRole roles={['admin', 'super_admin']} context="Sponsors page"><AdminSponsors /></RequireRole>} />

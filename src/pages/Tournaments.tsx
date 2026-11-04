@@ -292,7 +292,7 @@ export default function Tournaments() {
 
           {!selectedTournament ? (
             <div className="bc-tile p-10 text-center">
-              <Trophy className="h-10 w-10 mx-auto mb-4 text-broadcast-accent/60" />
+              <Trophy className="h-10 w-10 mx-auto mb-4 text-broadcast-accent" />
               <p className="bc-heading text-lg text-broadcast-fg uppercase">No tournaments yet</p>
               <p className="text-sm text-broadcast-muted mt-1">
                 {canManage ? 'Naya tournament create karein' : 'Abhi koi tournament organize nahi hua'}

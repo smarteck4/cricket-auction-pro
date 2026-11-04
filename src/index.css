@@ -46,7 +46,7 @@
     --bc-bg: 220 20% 93%;
     --bc-surface: 0 0% 100%;
     --bc-fg: 220 25% 12%;
-    --bc-muted: 220 10% 45%;
+    --bc-muted: 220 12% 36%;
     --bc-accent: 45 93% 47%;
     --bc-accent-2: 158 64% 42%;
 
@@ -170,7 +170,7 @@
     --bc-bg: 220 28% 6%;
     --bc-surface: 220 22% 13%;
     --bc-fg: 220 12% 96%;
-    --bc-muted: 220 10% 58%;
+    --bc-muted: 220 10% 68%;
     --bc-accent: 45 93% 52%;
     --bc-accent-2: 158 64% 45%;
 
@@ -289,10 +289,10 @@
   }
 
   .bc-tile {
-    background: hsl(var(--bc-surface) / 0.55);
+    background: hsl(var(--bc-surface) / 0.65);
     backdrop-filter: blur(20px) saturate(160%);
     -webkit-backdrop-filter: blur(20px) saturate(160%);
-    border: 1px solid hsl(var(--bc-fg) / 0.07);
+    border: 1px solid hsl(var(--bc-fg) / 0.12);
     border-radius: 1rem;
     transition: border-color 200ms ease, transform 200ms ease, box-shadow 200ms ease;
   }

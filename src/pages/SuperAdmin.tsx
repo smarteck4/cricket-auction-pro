@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Shield, Search, UserCog, KeyRound } from 'lucide-react';
+import { Shield, Search, UserCog, KeyRound, Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -30,6 +30,48 @@ interface TeamRow {
 
 const NO_TEAM = 'none';
 
+function PasswordInput({
+  id,
+  value,
+  onChange,
+  placeholder,
+  show,
+  onToggle,
+  autoComplete = 'off',
+}: {
+  id: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  show: boolean;
+  onToggle: () => void;
+  autoComplete?: string;
+}) {
+  return (
+    <div className="relative">
+      <Input
+        id={id}
+        type={show ? 'text' : 'password'}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        className="pr-10"
+      />
+      <button
+        type="button"
+        tabIndex={-1}
+        aria-label={show ? 'Hide password' : 'Show password'}
+        onClick={onToggle}
+        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors"
+      >
+        {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+      </button>
+    </div>
+  );
+}
+
+
 export default function SuperAdmin() {
   const { user, role, loading } = useAuth();
   const navigate = useNavigate();
@@ -43,6 +85,9 @@ export default function SuperAdmin() {
   const [passwordSecretKey, setPasswordSecretKey] = useState('');
   const [passwordNew, setPasswordNew] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
+  const [showSecretKey, setShowSecretKey] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
 
 
@@ -380,38 +425,40 @@ export default function SuperAdmin() {
               {passwordTarget?.id === user?.id && (
                 <div className="space-y-2">
                   <Label htmlFor="password-secret-key">Secret key</Label>
-                  <Input
+                  <PasswordInput
                     id="password-secret-key"
-                    type="password"
                     value={passwordSecretKey}
-                    onChange={(e) => setPasswordSecretKey(e.target.value)}
+                    onChange={setPasswordSecretKey}
                     placeholder="Enter secret key"
-                    autoComplete="off"
+                    show={showSecretKey}
+                    onToggle={() => setShowSecretKey((v) => !v)}
                   />
                 </div>
               )}
-              <div className="space-y-2">
-                <Label htmlFor="password-new">New password</Label>
-                <Input
-                  id="password-new"
-                  type="password"
-                  value={passwordNew}
-                  onChange={(e) => setPasswordNew(e.target.value)}
-                  placeholder="At least 6 characters"
-                  autoComplete="new-password"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password-confirm">Confirm password</Label>
-                <Input
-                  id="password-confirm"
-                  type="password"
-                  value={passwordConfirm}
-                  onChange={(e) => setPasswordConfirm(e.target.value)}
-                  placeholder="Repeat the new password"
-                  autoComplete="new-password"
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password-new">New password</Label>
+                  <PasswordInput
+                    id="password-new"
+                    value={passwordNew}
+                    onChange={setPasswordNew}
+                    placeholder="At least 6 characters"
+                    show={showNewPassword}
+                    onToggle={() => setShowNewPassword((v) => !v)}
+                    autoComplete="new-password"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password-confirm">Confirm password</Label>
+                  <PasswordInput
+                    id="password-confirm"
+                    value={passwordConfirm}
+                    onChange={setPasswordConfirm}
+                    placeholder="Repeat the new password"
+                    show={showConfirmPassword}
+                    onToggle={() => setShowConfirmPassword((v) => !v)}
+                    autoComplete="new-password"
+                  />
+                </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setPasswordTarget(null)} disabled={savingPassword}>
