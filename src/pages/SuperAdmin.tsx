@@ -425,13 +425,13 @@ export default function SuperAdmin() {
               {passwordTarget?.id === user?.id && (
                 <div className="space-y-2">
                   <Label htmlFor="password-secret-key">Secret key</Label>
-                  <Input
+                  <PasswordInput
                     id="password-secret-key"
-                    type="password"
                     value={passwordSecretKey}
-                    onChange={(e) => setPasswordSecretKey(e.target.value)}
+                    onChange={setPasswordSecretKey}
                     placeholder="Enter secret key"
-                    autoComplete="off"
+                    show={showSecretKey}
+                    onToggle={() => setShowSecretKey((v) => !v)}
                   />
                 </div>
               )}
