@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { currentPasswordError } from "./password-update-policy.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -48,6 +49,7 @@ Deno.serve(async (req) => {
     // Validate the request body.
     const body = await req.json().catch(() => null);
     const targetUserId = typeof body?.targetUserId === "string" ? body.targetUserId : "";
+    const currentPassword = typeof body?.currentPassword === "string" ? body.currentPassword : "";
     const newPassword = typeof body?.newPassword === "string" ? body.newPassword : "";
     const secretKey = typeof body?.secretKey === "string" ? body.secretKey : "";
 
@@ -57,11 +59,11 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    if (newPassword.length < 6 || newPassword.length > 72) {
-      return new Response(
-        JSON.stringify({ error: "Password must be 6-72 characters" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+    if (!newPassword) {
+      return new Response(JSON.stringify({ error: "Enter a new password" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Verify the caller is a super_admin (server-side, never client-supplied).
@@ -80,8 +82,36 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Changing your own password additionally requires the secret key.
+    // Self-service changes require both the current password and the secret key.
     if (targetUserId === callerId) {
+      const missingCurrentPassword = currentPasswordError(callerId, targetUserId, currentPassword);
+      if (missingCurrentPassword) {
+        return new Response(JSON.stringify({ error: missingCurrentPassword }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (!userData.user.email) {
+        return new Response(JSON.stringify({ error: "Unable to verify current password" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const passwordCheckClient = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+      );
+      const { error: passwordCheckError } = await passwordCheckClient.auth.signInWithPassword({
+        email: userData.user.email,
+        password: currentPassword,
+      });
+      if (passwordCheckError) {
+        return new Response(JSON.stringify({ error: "Current password is incorrect" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       const expected = (Deno.env.get("SUPER_ADMIN_PASSWORD_KEY") ?? "").trim();
       if (!expected) {
         return new Response(
