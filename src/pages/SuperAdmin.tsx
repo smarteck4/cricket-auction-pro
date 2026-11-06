@@ -82,10 +82,12 @@ export default function SuperAdmin() {
   const [teams, setTeams] = useState<TeamRow[]>([]);
   const [assigningUser, setAssigningUser] = useState<string | null>(null);
   const [passwordTarget, setPasswordTarget] = useState<UserWithRole | null>(null);
+  const [passwordCurrent, setPasswordCurrent] = useState('');
   const [passwordSecretKey, setPasswordSecretKey] = useState('');
   const [passwordNew, setPasswordNew] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [showSecretKey, setShowSecretKey] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
@@ -204,6 +206,7 @@ export default function SuperAdmin() {
 
   const openPasswordDialog = (u: UserWithRole) => {
     setPasswordTarget(u);
+    setPasswordCurrent('');
     setPasswordSecretKey('');
     setPasswordNew('');
     setPasswordConfirm('');
@@ -211,8 +214,8 @@ export default function SuperAdmin() {
 
   const handlePasswordUpdate = async () => {
     if (!passwordTarget) return;
-    if (passwordNew.length < 6) {
-      toast.error('Password must be at least 6 characters');
+    if (!passwordNew) {
+      toast.error('Enter a new password');
       return;
     }
     if (passwordNew !== passwordConfirm) {
@@ -223,10 +226,15 @@ export default function SuperAdmin() {
       toast.error('Enter the secret key first');
       return;
     }
+    if (passwordTarget.id === user?.id && !passwordCurrent) {
+      toast.error('Enter your current password');
+      return;
+    }
     setSavingPassword(true);
     const { data, error } = await supabase.functions.invoke('update-user-password', {
       body: {
         targetUserId: passwordTarget.id,
+        currentPassword: passwordTarget.id === user?.id ? passwordCurrent : undefined,
         newPassword: passwordNew,
         secretKey: passwordTarget.id === user?.id ? passwordSecretKey : undefined,
       },
@@ -418,10 +426,24 @@ export default function SuperAdmin() {
               </DialogTitle>
               <DialogDescription>
                 Set a new password for {passwordTarget?.email}
-                {passwordTarget?.id === user?.id && ' — changing your own password requires the secret key.'}
+                {passwordTarget?.id === user?.id && ' — enter your current password and secret key to continue.'}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
+              {passwordTarget?.id === user?.id && (
+                <div className="space-y-2">
+                  <Label htmlFor="password-current">Current password</Label>
+                  <PasswordInput
+                    id="password-current"
+                    value={passwordCurrent}
+                    onChange={setPasswordCurrent}
+                    placeholder="Enter current password"
+                    show={showCurrentPassword}
+                    onToggle={() => setShowCurrentPassword((v) => !v)}
+                    autoComplete="current-password"
+                  />
+                </div>
+              )}
               {passwordTarget?.id === user?.id && (
                 <div className="space-y-2">
                   <Label htmlFor="password-secret-key">Secret key</Label>
@@ -441,7 +463,7 @@ export default function SuperAdmin() {
                     id="password-new"
                     value={passwordNew}
                     onChange={setPasswordNew}
-                    placeholder="At least 6 characters"
+                    placeholder="Enter a new password"
                     show={showNewPassword}
                     onToggle={() => setShowNewPassword((v) => !v)}
                     autoComplete="new-password"
