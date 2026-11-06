@@ -59,11 +59,11 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    if (!newPassword || newPassword.length > 256) {
-      return new Response(
-        JSON.stringify({ error: "Enter a new password (maximum 256 characters)" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+    if (!newPassword) {
+      return new Response(JSON.stringify({ error: "Enter a new password" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Verify the caller is a super_admin (server-side, never client-supplied).
