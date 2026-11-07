@@ -714,10 +714,12 @@ export type Database = {
       }
       site_settings: {
         Row: {
+          dark_background_color: string | null
           font_family: string | null
           font_size: number | null
           heading_font: string | null
           id: boolean
+          light_background_color: string | null
           logo_url: string | null
           primary_color: string | null
           site_name: string | null
@@ -725,10 +727,12 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          dark_background_color?: string | null
           font_family?: string | null
           font_size?: number | null
           heading_font?: string | null
           id?: boolean
+          light_background_color?: string | null
           logo_url?: string | null
           primary_color?: string | null
           site_name?: string | null
@@ -736,10 +740,12 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          dark_background_color?: string | null
           font_family?: string | null
           font_size?: number | null
           heading_font?: string | null
           id?: boolean
+          light_background_color?: string | null
           logo_url?: string | null
           primary_color?: string | null
           site_name?: string | null
