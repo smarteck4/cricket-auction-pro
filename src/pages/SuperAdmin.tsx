@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { FunctionsHttpError } from '@supabase/supabase-js';
@@ -47,26 +47,46 @@ function PasswordInput({
   onToggle: () => void;
   autoComplete?: string;
 }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const toggleVisibility = () => {
+    const input = inputRef.current;
+    const selectionStart = input?.selectionStart ?? null;
+    const selectionEnd = input?.selectionEnd ?? null;
+
+    onToggle();
+    requestAnimationFrame(() => {
+      const focusedInput = inputRef.current;
+      if (!focusedInput) return;
+      focusedInput.focus({ preventScroll: true });
+      if (selectionStart !== null && selectionEnd !== null) {
+        focusedInput.setSelectionRange(selectionStart, selectionEnd);
+      }
+    });
+  };
+
   return (
     <div className="relative">
       <Input
+        ref={inputRef}
         id={id}
         type={show ? 'text' : 'password'}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         autoComplete={autoComplete}
-        className="pr-10"
+        className="pr-12"
       />
-      <button
+      <Button
         type="button"
-        tabIndex={-1}
         aria-label={show ? 'Hide password' : 'Show password'}
-        onClick={onToggle}
-        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors"
+        onClick={toggleVisibility}
+        variant="ghost"
+        size="icon"
+        className="absolute right-1 top-1/2 h-11 w-11 -translate-y-1/2 touch-manipulation text-muted-foreground hover:text-foreground"
       >
         {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-      </button>
+      </Button>
     </div>
   );
 }
