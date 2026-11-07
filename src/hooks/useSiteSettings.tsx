@@ -6,6 +6,8 @@ export interface SiteSettings {
   heading_font: string | null;
   text_color: string | null;
   primary_color: string | null;
+  light_background_color: string | null;
+  dark_background_color: string | null;
   font_size: number | null;
   site_name: string | null;
   logo_url: string | null;
@@ -16,7 +18,7 @@ export const FONT_OPTIONS = [
   'Lato', 'Open Sans', 'Oswald', 'Rubik', 'Barlow', 'Bebas Neue', 'Teko', 'Nunito', 'Noto Nastaliq Urdu',
 ];
 
-const EMPTY: SiteSettings = { font_family: null, heading_font: null, text_color: null, primary_color: null, font_size: null, site_name: null, logo_url: null };
+const EMPTY: SiteSettings = { font_family: null, heading_font: null, text_color: null, primary_color: null, light_background_color: null, dark_background_color: null, font_size: null, site_name: null, logo_url: null };
 
 /** "#rrggbb" -> "h s% l%" (shadcn token format). */
 export function hexToHslToken(hex: string): string | null {
@@ -52,7 +54,10 @@ function applySettings(s: SiteSettings) {
   if (s.heading_font) { loadFont(s.heading_font); css += `h1, h2, h3, h4, .font-display, .font-heading { font-family: '${s.heading_font}', ui-sans-serif, system-ui, sans-serif !important; }\n`; }
   const fg = s.text_color && hexToHslToken(s.text_color);
   const pr = s.primary_color && hexToHslToken(s.primary_color);
-  if (fg || pr) css += `:root, .dark { ${fg ? `--foreground: ${fg}; --card-foreground: ${fg};` : ''} ${pr ? `--primary: ${pr}; --ring: ${pr};` : ''} }\n`;
+  const lightBackground = s.light_background_color && hexToHslToken(s.light_background_color);
+  const darkBackground = s.dark_background_color && hexToHslToken(s.dark_background_color);
+  if (fg || pr || lightBackground) css += `:root { ${fg ? `--foreground: ${fg}; --card-foreground: ${fg};` : ''} ${pr ? `--primary: ${pr}; --ring: ${pr};` : ''} ${lightBackground ? `--background: ${lightBackground}; --bc-bg: ${lightBackground};` : ''} }\n`;
+  if (fg || pr || darkBackground) css += `.dark { ${fg ? `--foreground: ${fg}; --card-foreground: ${fg};` : ''} ${pr ? `--primary: ${pr}; --ring: ${pr};` : ''} ${darkBackground ? `--background: ${darkBackground}; --bc-bg: ${darkBackground};` : ''} }\n`;
   if (s.font_size) css += `html { font-size: ${s.font_size}px; }\n`;
   let tag = document.getElementById('site-theme-overrides');
   if (!tag) { tag = document.createElement('style'); tag.id = 'site-theme-overrides'; document.head.appendChild(tag); }
