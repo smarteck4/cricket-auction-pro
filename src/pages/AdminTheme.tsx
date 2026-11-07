@@ -45,7 +45,7 @@ export default function AdminTheme() {
     </div>
   );
 
-  const colorInput = (k: 'text_color' | 'primary_color', label: string) => (
+  const colorInput = (k: 'text_color' | 'primary_color' | 'light_background_color' | 'dark_background_color', label: string) => (
     <div className="space-y-2">
       <Label>{label}</Label>
       <div className="flex gap-2">
@@ -88,6 +88,8 @@ export default function AdminTheme() {
             {fontSelect('heading_font', 'Heading font')}
             {colorInput('text_color', 'Text colour')}
             {colorInput('primary_color', 'Main accent colour')}
+            {colorInput('light_background_color', 'Light mode background')}
+            {colorInput('dark_background_color', 'Dark mode background')}
             <div className="space-y-3 sm:col-span-2">
               <Label>Font size: {form.font_size ?? 16}px {form.font_size ? '' : '(default)'}</Label>
               <Slider min={12} max={22} step={1} value={[form.font_size ?? 16]} onValueChange={([v]) => set('font_size', v)} />
@@ -100,11 +102,21 @@ export default function AdminTheme() {
             <p className="text-xs uppercase text-muted-foreground">Preview</p>
             <p className="text-2xl font-bold" style={{ fontFamily: form.heading_font ?? undefined, color: form.primary_color ?? undefined }}>Live Auction Tonight</p>
             <p>Sample body text to preview your font and colour.</p>
+            <div className="grid gap-3 pt-3 sm:grid-cols-2">
+              <div className="rounded-md border border-border p-4" style={{ backgroundColor: form.light_background_color ?? undefined }}>
+                <p className="text-xs font-medium text-muted-foreground">Light mode background</p>
+                <p className="mt-1">Sample content</p>
+              </div>
+              <div className="rounded-md border border-border p-4" style={{ backgroundColor: form.dark_background_color ?? undefined }}>
+                <p className="text-xs font-medium text-muted-foreground">Dark mode background</p>
+                <p className="mt-1">Sample content</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
         <div className="flex flex-wrap justify-end gap-2">
-          <Button variant="outline" disabled={saving} onClick={() => save({ font_family: null, heading_font: null, text_color: null, primary_color: null, font_size: null, site_name: null, logo_url: null })}>
+          <Button variant="outline" disabled={saving} onClick={() => save({ font_family: null, heading_font: null, text_color: null, primary_color: null, light_background_color: null, dark_background_color: null, font_size: null, site_name: null, logo_url: null })}>
             <RotateCcw className="h-4 w-4 mr-1.5" />Reset all to default
           </Button>
           <Button disabled={saving} onClick={() => save(form)}><Save className="h-4 w-4 mr-1.5" />{saving ? 'Saving…' : 'Save theme'}</Button>

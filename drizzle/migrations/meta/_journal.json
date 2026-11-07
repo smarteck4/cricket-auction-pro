@@ -43,6 +43,13 @@
       "when": 1793788761103,
       "tag": "0005_grant_helper_fn_execute_anon",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794093660222,
+      "tag": "0006_site_theme_background_colors",
+      "breakpoints": true
     }
   ]
 }
